@@ -1,0 +1,8 @@
+﻿  Main.cpp
+Main.cpp(123): warning C4244: 'argument': conversion from '::size_t' to 'float', possible loss of data
+  Generating code
+  1 of 164 functions ( 0.6%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  TCP_Practica_1.2.vcxproj -> C:\Users\vgutierrez\source\repos\TCP_Pracitca_1.3\x64\Release\TCP_Practica_1.2.exe
