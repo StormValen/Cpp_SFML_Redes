@@ -2,11 +2,20 @@
 #include <SFML\Network.hpp>
 #include <iostream>
 #include <vector>
+#include <thread>
 #include <cstring>
 
 
 #define MAX_MENSAJES 30
+sf::TcpSocket socket;
 
+std::string thread_recived() {
+	std::size_t received;
+	char buffer_Thread[2000];
+	socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
+	std::cout << buffer_Thread << std::endl;
+	return buffer_Thread;
+}
 
 int main()
 {
@@ -42,7 +51,7 @@ int main()
 
 
 	sf::IpAddress ip = sf::IpAddress::getLocalAddress();
-	sf::TcpSocket socket;
+
 	char connectionType, mode;
 	char buffer[2000];
 	std::size_t received;
@@ -50,12 +59,11 @@ int main()
 
 	std::cout << "Enter (s) for Server, Enter (c) for Client: ";
 	std::cin >> connectionType;
-	if (connectionType == 'c') {
+	/*if (connectionType == 'c') {
 		std::cout << "Enter the server's ip: ";
-		std::cin >> ip;
-	}
+		std::cin >> ip; //192.168.122.143
+	}*/
 	
-
 	if (connectionType == 's')
 	{
 		sf::TcpListener listener;
@@ -67,19 +75,21 @@ int main()
 	}
 	else if (connectionType == 'c')
 	{
-		socket.connect(ip, 50000);
+		socket.connect("192.168.122.143", 50000);
 		Stext += "Client";
 		mode = 'r';
 	}
 
 	socket.send(Stext.c_str(), Stext.length() + 1);
 	socket.receive(buffer, sizeof(buffer), received);
-
-	std::cout << buffer << std::endl;
+	
+std::cout << buffer << std::endl;
+	std::thread tr(&thread_recived);
 
 	bool done = false;
 	while (!done)
 	{
+
 		while (window.isOpen())
 		{
 			sf::Event evento;
@@ -95,7 +105,9 @@ int main()
 						window.close();
 					else if (evento.key.code == sf::Keyboard::Return)
 					{
-						//SEND
+						//SEND			
+						Stext = mensaje;
+						socket.send(Stext.c_str(), Stext.length() + 1);
 						aMensajes.push_back(mensaje);
 						if (aMensajes.size() > 25)
 						{
@@ -114,6 +126,7 @@ int main()
 			}
 			window.draw(separator);
 			//RECIVE
+
 			for (size_t i = 0; i < aMensajes.size(); i++)
 			{
 				std::string chatting = aMensajes[i];
@@ -121,6 +134,7 @@ int main()
 				chattingText.setString(chatting);
 				window.draw(chattingText);
 			}
+			//mensaje = "";
 			std::string mensaje_ = mensaje + "_";
 			text.setString(mensaje_);
 			window.draw(text);
@@ -133,17 +147,4 @@ int main()
 
 	socket.disconnect();
 	return 0;
-
-
-
-
-
-
-
-
-
-
-
-	
-
 }
