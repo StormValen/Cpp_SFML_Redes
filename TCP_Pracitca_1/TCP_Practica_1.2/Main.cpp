@@ -8,13 +8,15 @@
 
 #define MAX_MENSAJES 30
 sf::TcpSocket socket;
-
-std::string thread_recived() {
-	std::size_t received;
-	char buffer_Thread[2000];
-	socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
-	std::cout << buffer_Thread << std::endl;
-	return buffer_Thread;
+sf::Socket::Status status;
+void thread_recived(std::vector<std::string> *aMensajes) {
+	while (true) {
+		std::size_t received;
+		char buffer_Thread[2000];
+		status = socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
+		//std::cout << buffer_Thread << std::endl;
+		aMensajes->push_back(buffer_Thread);
+	}
 }
 
 int main()
@@ -56,6 +58,9 @@ int main()
 	char buffer[2000];
 	std::size_t received;
 	std::string Stext = "Connected to: ";
+	char _mode;
+	//std::cout << "1 --> Blocking + Threading \n 2--> NonBlocking \n 3-->Blocking + SocketSelector" << std::endl;
+	//std::cin >> _mode;
 
 	std::cout << "Enter (s) for Server, Enter (c) for Client: ";
 	std::cin >> connectionType;
@@ -63,33 +68,35 @@ int main()
 		std::cout << "Enter the server's ip: ";
 		std::cin >> ip; //192.168.122.143
 	}*/
-	
+
 	if (connectionType == 's')
 	{
+
 		sf::TcpListener listener;
-		listener.listen(50000);
-		listener.accept(socket);
+		status = listener.listen(50000);
+		status = listener.accept(socket);
 		Stext += "Server";
-		mode = 's';
+		mode = 's';	
 		listener.close();
 	}
 	else if (connectionType == 'c')
 	{
-		socket.connect("192.168.122.143", 50000);
+		status = socket.connect("192.168.122.2", 50000);
 		Stext += "Client";
 		mode = 'r';
+		
 	}
 
 	socket.send(Stext.c_str(), Stext.length() + 1);
 	socket.receive(buffer, sizeof(buffer), received);
 	
-std::cout << buffer << std::endl;
-	std::thread tr(&thread_recived);
+	std::cout << buffer << std::endl;
+
+	std::thread tr(&thread_recived, &aMensajes);
 
 	bool done = false;
 	while (!done)
 	{
-
 		while (window.isOpen())
 		{
 			sf::Event evento;
@@ -106,9 +113,10 @@ std::cout << buffer << std::endl;
 					else if (evento.key.code == sf::Keyboard::Return)
 					{
 						//SEND			
-						Stext = mensaje;
-						socket.send(Stext.c_str(), Stext.length() + 1);
-						aMensajes.push_back(mensaje);
+							Stext = mensaje;
+							status = socket.send(Stext.c_str(), Stext.length() + 1);
+							aMensajes.push_back(mensaje);
+
 						if (aMensajes.size() > 25)
 						{
 							aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
@@ -126,14 +134,13 @@ std::cout << buffer << std::endl;
 			}
 			window.draw(separator);
 			//RECIVE
-
-			for (size_t i = 0; i < aMensajes.size(); i++)
-			{
-				std::string chatting = aMensajes[i];
-				chattingText.setPosition(sf::Vector2f(0, 20 * i));
-				chattingText.setString(chatting);
-				window.draw(chattingText);
-			}
+				for (size_t i = 0; i < aMensajes.size(); i++)
+				{
+					std::string chatting = aMensajes[i];
+					chattingText.setPosition(sf::Vector2f(0, 20 * i));
+					chattingText.setString(chatting);
+					window.draw(chattingText);
+				}
 			//mensaje = "";
 			std::string mensaje_ = mensaje + "_";
 			text.setString(mensaje_);
