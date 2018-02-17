@@ -89,12 +89,31 @@ int main()
 		std::cin >> executingMode;
 
 		sf::TcpListener listener;
-		status = listener.listen(50000);
-		status = listener.accept(socket); //Blocking
-		Stext += "Server";
-		mode = 's';	
-		listener.close();
-		
+		if (executingMode == "b") {
+			status = listener.listen(50000);
+			status = listener.accept(socket); //Blocking
+			if (status != sf::Socket::Done) {
+				std::cout << "Error de puerto" << std::endl;
+			}
+			Stext += "Server";
+			mode = 's';
+			listener.close();
+		}
+		else if (executingMode == "n") {
+			status = listener.listen(50000);
+			status = listener.accept(socket);
+			if (status != sf::Socket::Done) {
+				std::cout << "Error de puerto" << std::endl;
+			}
+			Stext += "Server";
+			mode = 's';
+			listener.setBlocking(false);
+			socket.setBlocking(false);
+			listener.close();
+		}
+		else if (executingMode == "s") {
+			
+		}
 		//Se envia el modo de ejecucion al cliente.
 		socket.send(executingMode.c_str(), executingMode.length() + 1);
 	}
@@ -113,6 +132,7 @@ int main()
 		}
 		else if (executingMode == "n") {
 			std::cout << "INFO: (n) NonBlonking" << std::endl;
+			socket.setBlocking(false);
 		}
 		else if (executingMode == "s") {
 			std::cout << "INFO: (s) Bloking + Socket Selector" << std::endl;
@@ -213,7 +233,84 @@ int main()
 		
 	}
 	else if (executingMode == "n") { //NonBloking
-		
+		done = false;
+		while (!done)
+		{
+			while (window.isOpen())
+			{
+				std::size_t received;
+				char buffer_Thread[2000];
+				status = socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
+				/*if (status == sf::Socket::NotReady) {
+					continue;
+				}*/
+				 if (status == sf::Socket::Done) {
+					aMensajes.push_back(buffer_Thread);
+				}
+				else if (status == sf::Socket::Disconnected) {
+					aMensajes.push_back("Se ha producido una desconexion");
+					socket.disconnect();
+					break;
+				}
+				sf::Event evento;
+				while (window.pollEvent(evento))
+				{
+					switch (evento.type)
+					{
+					case sf::Event::Closed:
+						window.close();
+						break;
+					case sf::Event::KeyPressed:
+						if (evento.key.code == sf::Keyboard::Escape)
+							window.close();
+						else if (evento.key.code == sf::Keyboard::Return)
+						{
+							size_t bytesSent;
+							Stext = mensaje;
+							status = socket.send(Stext.c_str(), Stext.length(), bytesSent);
+							if (status == sf::Socket::Done) {
+								aMensajes.push_back(mensaje);
+							}
+							else if (status == sf::Socket::Disconnected) {
+								aMensajes.push_back("Se ha producido una desconexion");
+								socket.disconnect();
+								break;
+							}
+							else if (status == sf::Socket::Partial) {
+								aMensajes.push_back("No se han enviado todos los datos");
+
+							}
+							/*if (aMensajes.size() > 25)
+							{
+								aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
+							}*/
+							mensaje = ">";
+						}
+						break;
+					case sf::Event::TextEntered:
+						if (evento.text.unicode >= 32 && evento.text.unicode <= 126)
+							mensaje += (char)evento.text.unicode;
+						else if (evento.text.unicode == 8 && mensaje.getSize() > 0)
+							mensaje.erase(mensaje.getSize() - 1, mensaje.getSize());
+						break;
+					}
+				}
+				window.draw(separator);
+				for (size_t i = 0; i < aMensajes.size(); i++)
+				{
+					std::string chatting = aMensajes[i];
+					chattingText.setPosition(sf::Vector2f(0, 20 * i));
+					chattingText.setString(chatting);
+					window.draw(chattingText);
+				}
+				std::string mensaje_ = mensaje + "_";
+				text.setString(mensaje_);
+				window.draw(text);
+
+				window.display();
+				window.clear();
+			}
+		}
 	}
 	else if (executingMode == "s") { //Socket Selector
 		
