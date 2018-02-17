@@ -13,6 +13,7 @@ sf::Socket::Status status;
 std::mutex mu;
 bool done;
 
+// ----- MUTEX ----- //
 void shared_msg(std::vector<std::string> *aMensajes, char buffer[]) {
 	mu.lock();
 	aMensajes->push_back(buffer);
@@ -78,7 +79,7 @@ int main()
 	std::string executingMode;
 	char buffer[2000];
 	std::size_t received;
-	std::string Stext = "Connected to: ";
+	std::string Stext = "";
 
 	std::cout << "Enter (s) for Server, Enter (c) for Client: ";
 	std::cin >> connectionType;
@@ -91,22 +92,23 @@ int main()
 		sf::TcpListener listener;
 		if (executingMode == "b") {
 			status = listener.listen(50000);
-			status = listener.accept(socket); //Blocking
-			if (status != sf::Socket::Done) {
+			status = listener.accept(socket); 
+			if (status != sf::Socket::Done) { //check port
 				std::cout << "Error de puerto" << std::endl;
 			}
-			Stext += "Server";
+			//Stext += "Server";
 			mode = 's';
 			listener.close();
 		}
 		else if (executingMode == "n") {
 			status = listener.listen(50000);
 			status = listener.accept(socket);
-			if (status != sf::Socket::Done) {
+			if (status != sf::Socket::Done) {//check port
 				std::cout << "Error de puerto" << std::endl;
 			}
-			Stext += "Server";
+			//Stext += "Server";
 			mode = 's';
+			//unblock the sockets
 			listener.setBlocking(false);
 			socket.setBlocking(false);
 			listener.close();
@@ -120,7 +122,7 @@ int main()
 	else if (connectionType == 'c')
 	{
 		status = socket.connect("192.168.1.108", 50000);
-		Stext += "Client";
+		//Stext += "Client";
 		mode = 'r';
 
 		//Se recive el modo de ejecucion desde el server.
@@ -132,7 +134,7 @@ int main()
 		}
 		else if (executingMode == "n") {
 			std::cout << "INFO: (n) NonBlonking" << std::endl;
-			socket.setBlocking(false);
+			socket.setBlocking(false); //unblock de socket
 		}
 		else if (executingMode == "s") {
 			std::cout << "INFO: (s) Bloking + Socket Selector" << std::endl;
@@ -238,10 +240,11 @@ int main()
 		{
 			while (window.isOpen())
 			{
+				//RECIVE
 				std::size_t received;
 				char buffer_Thread[2000];
 				status = socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
-				/*if (status == sf::Socket::NotReady) {
+				/*if (status == sf::Socket::NotReady) { //no se necesita, tampoco funciona
 					continue;
 				}*/
 				 if (status == sf::Socket::Done) {
@@ -265,9 +268,10 @@ int main()
 							window.close();
 						else if (evento.key.code == sf::Keyboard::Return)
 						{
+							//SEND
 							size_t bytesSent;
 							Stext = mensaje;
-							status = socket.send(Stext.c_str(), Stext.length(), bytesSent);
+							status = socket.send(Stext.c_str(), Stext.length(), bytesSent); //se modifica el send para comprobar que llega todo el mensaje
 							if (status == sf::Socket::Done) {
 								aMensajes.push_back(mensaje);
 							}
@@ -277,13 +281,16 @@ int main()
 								break;
 							}
 							else if (status == sf::Socket::Partial) {
-								aMensajes.push_back("No se han enviado todos los datos");
-
+								//aMensajes.push_back("No se han enviado todos los datos");
+								//si no llega todo el mensaje hay que hacer un bucle y enviar lo que falta
+								if (Stext.length() > bytesSent) {
+									//std::cout << "Demasiados datos" << std::endl;
+								}
 							}
-							/*if (aMensajes.size() > 25)
+							if (aMensajes.size() > 25)
 							{
 								aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
-							}*/
+							}
 							mensaje = ">";
 						}
 						break;
