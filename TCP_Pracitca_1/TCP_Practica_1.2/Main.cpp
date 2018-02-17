@@ -3,13 +3,21 @@
 #include <iostream>
 #include <vector>
 #include <thread>
+#include <mutex>
 #include <cstring>
 
 
 #define MAX_MENSAJES 30
 sf::TcpSocket socket;
 sf::Socket::Status status;
+std::mutex mu;
 bool done;
+
+void shared_msg(std::vector<std::string> *aMensajes, char buffer[]) {
+	mu.lock();
+	aMensajes->push_back(buffer);
+	mu.unlock();
+}
 
 // ----- BLOCKING THREAD ----- //
 void thread_recived(std::vector<std::string> *aMensajes) {
@@ -18,12 +26,18 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 		std::size_t received;
 		char buffer_Thread[2000];
 		status = socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
-		if (buffer_Thread == ">exit") {
-			aMensajes->push_back("Connexion Finished");
-			tBucle = false;
+		if (status == sf::Socket::Done) {
+			if (buffer_Thread == ">exit") {
+				aMensajes->push_back("La sesion ha finalizado");
+				tBucle = false;
+			}
+			else {
+				shared_msg(aMensajes, buffer_Thread);
+			}
 		}
-		else {
-			aMensajes->push_back(buffer_Thread);
+		else if (status == sf::Socket::Disconnected) {
+			aMensajes->push_back("Se ha producido una desconexion");
+			tBucle = false;
 		}
 	}
 }
@@ -86,7 +100,7 @@ int main()
 	}
 	else if (connectionType == 'c')
 	{
-		status = socket.connect("192.168.1.40", 50000);
+		status = socket.connect("192.168.1.108", 50000);
 		Stext += "Client";
 		mode = 'r';
 
@@ -132,24 +146,41 @@ int main()
 						else if (evento.key.code == sf::Keyboard::Return)
 						{	
 							Stext = mensaje;
-							std::cout << Stext << std::endl;
-
-
-							if (Stext != ">exit") {
+							//std::cout << Stext << std::endl;
+							//if (Stext != ">exit") {
 								
 								status = socket.send(Stext.c_str(), Stext.length() + 1);
-								aMensajes.push_back(mensaje);
+								if (status == sf::Socket::Done) {
+									if (Stext == ">exit") {
+										aMensajes.push_back("La sesion ha finalizado");
+										socket.disconnect();
+										done = true;
+										//window.close();
+										//return 0;
+									}
+									else {
+										//shared_msg(&aMensajes, mensaje);
+										aMensajes.push_back(mensaje);
+									}
+								}
+								else if (status == sf::Socket::Disconnected) {
+									aMensajes.push_back("Se ha producido una desconexion");
+									socket.disconnect();
+									done = true;
+								}
 								if (aMensajes.size() > 25)
 								{
 									aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
 								}
 								mensaje = ">";
-							}
-							else {
-								done = true;
+							//}
+							/*else if(Stext == ">exit"){
+								aMensajes.push_back("La sesion ha finalizado");
 								socket.disconnect();
-								return 0;
-							}
+								done = true;
+								//window.close();
+								//return 0;
+							}*/
 							
 						}
 						break;
