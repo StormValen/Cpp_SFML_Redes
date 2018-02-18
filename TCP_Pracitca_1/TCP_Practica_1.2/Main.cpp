@@ -9,6 +9,9 @@
 
 #define MAX_MENSAJES 30
 sf::TcpSocket socket;
+sf::TcpListener listener;
+sf::SocketSelector socketSelector;
+std::vector<sf::TcpSocket*> clients;
 sf::Socket::Status status;
 std::mutex mu;
 bool done;
@@ -89,7 +92,6 @@ int main()
 		std::cout << "Enter (b) for Blocking + Threading, Enter (n) for NonBlocking, Enter (s) for Blocking + SocketSelector: " << std::endl;
 		std::cin >> executingMode;
 
-		sf::TcpListener listener;
 		if (executingMode == "b") {
 			status = listener.listen(50000);
 			status = listener.accept(socket); 
@@ -114,14 +116,21 @@ int main()
 			listener.close();
 		}
 		else if (executingMode == "s") {
-			
+			status = listener.listen(50000);
+			status = listener.accept(socket);
+			if (status != sf::Socket::Done) { //check port
+				std::cout << "Error de puerto" << std::endl;
+			}
+			//Stext += "Server";
+			mode = 's';
+			listener.close();
 		}
 		//Se envia el modo de ejecucion al cliente.
 		socket.send(executingMode.c_str(), executingMode.length() + 1);
 	}
 	else if (connectionType == 'c')
 	{
-		status = socket.connect("192.168.1.108", 50000);
+		status = socket.connect("192.168.1.33", 50000);
 		//Stext += "Client";
 		mode = 'r';
 
@@ -264,7 +273,7 @@ int main()
 						window.close();
 						break;
 					case sf::Event::KeyPressed:
-						if (evento.key.code == sf::Keyboard::Escape)
+					if (evento.key.code == sf::Keyboard::Escape)
 							window.close();
 						else if (evento.key.code == sf::Keyboard::Return)
 						{
@@ -272,20 +281,27 @@ int main()
 							size_t bytesSent;
 							Stext = mensaje;
 							status = socket.send(Stext.c_str(), Stext.length(), bytesSent); //se modifica el send para comprobar que llega todo el mensaje
-							if (status == sf::Socket::Done) {
-								aMensajes.push_back(mensaje);
-							}
-							else if (status == sf::Socket::Disconnected) {
-								aMensajes.push_back("Se ha producido una desconexion");
-								socket.disconnect();
-								break;
-							}
-							else if (status == sf::Socket::Partial) {
-								//aMensajes.push_back("No se han enviado todos los datos");
-								//si no llega todo el mensaje hay que hacer un bucle y enviar lo que falta
-								if (Stext.length() > bytesSent) {
-									//std::cout << "Demasiados datos" << std::endl;
+							if (status != sf::Socket::Done) {
+								if (status == sf::Socket::Disconnected) {
+									aMensajes.push_back("Se ha producido una desconexion");
+									socket.disconnect();
+									break;
 								}
+								else if (status == sf::Socket::Partial) {
+									//aMensajes.push_back("No se han enviado todos los datos");
+									//si no llega todo el mensaje hay que hacer un bucle y enviar lo que falta
+									while (bytesSent < Stext.length()) {
+										//std::cout << "PArtial" << std::endl;
+										std::string msgRest = "";
+										for (size_t i = bytesSent; i < Stext.length(); i++) {
+											msgRest = Stext[i];
+										}
+										socket.send(msgRest.c_str(), msgRest.length(), bytesSent);
+									}
+								}
+							}
+							else {
+								aMensajes.push_back(mensaje);
 							}
 							if (aMensajes.size() > 25)
 							{
