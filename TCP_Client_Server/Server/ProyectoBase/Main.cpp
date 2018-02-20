@@ -10,7 +10,7 @@ int main()
 		sf::TcpListener listener;
 		listener.listen(50000);
 		listener.accept(socket);
-		textoAEnviar = "Mensaje desde servidor\n";
+		textoAEnviar = "Conectado al servidor";
 
 	std::string texto = "Conexion con ... " + (socket.getRemoteAddress()).toString() + ":" + std::to_string(socket.getRemotePort()) + "\n";
 	std::cout << texto;
