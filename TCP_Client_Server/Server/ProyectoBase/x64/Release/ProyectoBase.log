@@ -1,5 +1,2 @@
-﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: El directorio intermedio (x64\Release\) contiene archivos compartidos de otro proyecto (ProyectoBase.vcxproj). Esto puede dar lugar a un comportamiento incorrecto de limpieza y recompilación.
-  Main.cpp
-Main.cpp(13): error C2039: 'getRemoteParent': no es un miembro de 'sf::TcpSocket'
-  C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\TCP_Client_Server\Server\deps64\include\SFML/Network/TcpListener.hpp(38): note: vea la declaración de 'sf::TcpSocket'
-Main.cpp(13): error C2228: el operando izquierdo de '.toString' debe tener class/struct/union
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (x64\Release\) contains files shared from another project (ProyectoBase.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  ProyectoBase.vcxproj -> D:\Cpp_SFML_Redes\TCP_Client_Server\Server\x64\Release\Server.exe

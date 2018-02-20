@@ -10,8 +10,6 @@
 #define MAX_MENSAJES 30
 sf::TcpSocket socket;
 sf::TcpListener listener;
-sf::SocketSelector socketSelector;
-std::vector<sf::TcpSocket*> clients;
 sf::Socket::Status status;
 std::mutex mu;
 bool done;
@@ -84,7 +82,7 @@ int main()
 	std::size_t received;
 	std::string Stext = "";
 
-	status = socket.connect("192.168.1.33", 50000);
+	status = socket.connect("192.168.122.2", 50000);
 	Stext += "Conexion establecida con un cliente nuevo";
 	mode = 'r';
 
@@ -155,13 +153,6 @@ int main()
 								}
 								mensaje = ">";
 							//}
-							/*else if(Stext == ">exit"){
-								aMensajes.push_back("La sesion ha finalizado");
-								socket.disconnect();
-								done = true;
-								//window.close();
-								//return 0;
-							}*/
 							
 						}
 						break;
@@ -193,7 +184,7 @@ int main()
 		}
 		
 	}
-	/*else if (executingMode == "n") { //NonBloking
+	else if (executingMode == "n") { //NonBloking
 		done = false;
 		while (!done)
 		{
@@ -205,7 +196,7 @@ int main()
 				status = socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
 				/*if (status == sf::Socket::NotReady) { //no se necesita, tampoco funciona
 					continue;
-				}
+				}*/
 				 if (status == sf::Socket::Done) {
 					aMensajes.push_back(buffer_Thread);
 				}
@@ -284,7 +275,7 @@ int main()
 				window.clear();
 			}
 		}
-	}*/
+	}
 	
 	socket.disconnect();
 	return 0;

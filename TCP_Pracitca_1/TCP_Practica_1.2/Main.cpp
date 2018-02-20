@@ -130,7 +130,7 @@ int main()
 	}
 	else if (connectionType == 'c')
 	{
-		status = socket.connect("192.168.1.33", 50000);
+		status = socket.connect("192.168.122.2", 50000);
 		//Stext += "Client";
 		mode = 'r';
 
@@ -159,8 +159,7 @@ int main()
 	if (executingMode == "b") { //Blocking +  Thread
 		std::thread tr(&thread_recived, &aMensajes);
 		done = false;
-		while (!done)
-		{
+
 			while (window.isOpen())
 			{
 				sf::Event evento;
@@ -183,10 +182,8 @@ int main()
 								status = socket.send(Stext.c_str(), Stext.length() + 1);
 								if (status == sf::Socket::Done) {
 									if (Stext == ">exit") {
-										aMensajes.push_back("La sesion ha finalizado");
-										socket.disconnect();
-										done = true;
-										//window.close();
+										aMensajes.push_back("La sesion ha finalizado");				
+										window.close();
 										//return 0;
 									}
 									else {
@@ -196,8 +193,7 @@ int main()
 								}
 								else if (status == sf::Socket::Disconnected) {
 									aMensajes.push_back("Se ha producido una desconexion");
-									socket.disconnect();
-									done = true;
+									window.close();
 								}
 								if (aMensajes.size() > 25)
 								{
@@ -205,14 +201,7 @@ int main()
 								}
 								mensaje = ">";
 							//}
-							/*else if(Stext == ">exit"){
-								aMensajes.push_back("La sesion ha finalizado");
-								socket.disconnect();
-								done = true;
-								//window.close();
-								//return 0;
-							}*/
-							
+													
 						}
 						break;
 					case sf::Event::TextEntered:
@@ -240,9 +229,11 @@ int main()
 				window.display();
 				window.clear();
 			}
+			socket.disconnect();
+			tr.join();
 		}
 		
-	}
+	
 	else if (executingMode == "n") { //NonBloking
 		done = false;
 		while (!done)
