@@ -82,7 +82,7 @@ int main()
 	std::size_t received;
 	std::string Stext = "";
 
-	status = socket.connect("192.168.122.2", 50000);
+	status = socket.connect("192.168.1.40", 50000);
 	Stext += "Conexion establecida con un cliente nuevo";
 	mode = 'r';
 
