@@ -17,9 +17,14 @@ std::mutex mu;
 bool done;
 
 // ----- MUTEX ----- //
-void shared_msg(std::vector<std::string> *aMensajes, char buffer[]) {
+void shared_msg(std::vector<std::string> *aMensajes, sf::String string) {
 	mu.lock();
-	aMensajes->push_back(buffer);
+	aMensajes->push_back(string);
+	if (aMensajes->size() > 25)
+	{
+		aMensajes->erase(aMensajes->begin(), aMensajes->begin() + 1);
+	}
+
 	mu.unlock();
 }
 
@@ -130,7 +135,7 @@ int main()
 	}
 	else if (connectionType == 'c')
 	{
-		status = socket.connect("192.168.122.2", 50000);
+		status = socket.connect("192.168.1.33", 50000);
 		//Stext += "Client";
 		mode = 'r';
 
@@ -187,18 +192,15 @@ int main()
 										//return 0;
 									}
 									else {
-										//shared_msg(&aMensajes, mensaje);
-										aMensajes.push_back(mensaje);
+										shared_msg(&aMensajes, mensaje);
+										//aMensajes.push_back(mensaje);
 									}
 								}
 								else if (status == sf::Socket::Disconnected) {
 									aMensajes.push_back("Se ha producido una desconexion");
 									window.close();
 								}
-								if (aMensajes.size() > 25)
-								{
-									aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
-								}
+								
 								mensaje = ">";
 							//}
 													

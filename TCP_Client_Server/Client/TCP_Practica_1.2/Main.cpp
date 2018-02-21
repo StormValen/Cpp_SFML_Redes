@@ -15,9 +15,13 @@ std::mutex mu;
 bool done;
 
 // ----- MUTEX ----- //
-void shared_msg(std::vector<std::string> *aMensajes, char buffer[]) {
+void shared_msg(std::vector<std::string> *aMensajes, sf::String string) {
 	mu.lock();
-	aMensajes->push_back(buffer);
+	aMensajes->push_back(string);
+	if (aMensajes->size() > 25)
+	{
+		aMensajes->erase(aMensajes->begin(), aMensajes->begin() + 1);
+	}
 	mu.unlock();
 }
 
@@ -28,13 +32,14 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 		std::size_t received;
 		char buffer_Thread[2000];
 		status = socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
+		sf::String string = buffer_Thread;
 		if (status == sf::Socket::Done) {
-			if (buffer_Thread == ">exit") {
+			if (string == ">exit") {
 				aMensajes->push_back("La sesion ha finalizado");
 				tBucle = false;
 			}
 			else {
-				shared_msg(aMensajes, buffer_Thread);
+				shared_msg(aMensajes, string);
 			}
 		}
 		else if (status == sf::Socket::Disconnected) {
@@ -82,22 +87,11 @@ int main()
 	std::size_t received;
 	std::string Stext = "";
 
-	status = socket.connect("192.168.1.40", 50000);
+	status = socket.connect("192.168.1.33", 50000);
 	Stext += "Conexion establecida con un cliente nuevo";
 	mode = 'r';
-
-	//Se recive el modo de ejecucion desde el server.
-	//socket.receive(buffer, sizeof(buffer), received);
-	//executingMode = buffer;
 	executingMode = "b";
-	/*if(executingMode == "b"){
-		std::cout << "INFO: (b) Blocking + Threading" << std::endl;
-	}
-	else if (executingMode == "n") {
-		std::cout << "INFO: (n) NonBlonking" << std::endl;
-		socket.setBlocking(false); //unblock de socket
-	}*/
-		
+	
 	 // ----- CONFIRM CONNECTION ----- //
 	socket.send(Stext.c_str(), Stext.length() + 1);
 	socket.receive(buffer, sizeof(buffer), received);
@@ -106,85 +100,65 @@ int main()
 	// ----- MODOS DE EJECUCION ----- // 
 	if (executingMode == "b") { //Blocking +  Thread
 		std::thread tr(&thread_recived, &aMensajes);
-		done = false;
-		while (!done)
+		while (window.isOpen())
 		{
-			while (window.isOpen())
+			sf::Event evento;
+			while (window.pollEvent(evento))
 			{
-				sf::Event evento;
-				while (window.pollEvent(evento))
+				switch (evento.type)
 				{
-					switch (evento.type)
-					{
-					case sf::Event::Closed:
+				case sf::Event::Closed:
+					window.close();
+					break;
+				case sf::Event::KeyPressed:
+					if (evento.key.code == sf::Keyboard::Escape)
 						window.close();
-						break;
-					case sf::Event::KeyPressed:
-						if (evento.key.code == sf::Keyboard::Escape)
-							window.close();
-						else if (evento.key.code == sf::Keyboard::Return)
-						{	
-							Stext = mensaje;
-							//std::cout << Stext << std::endl;
-							//if (Stext != ">exit") {
-								
-								status = socket.send(Stext.c_str(), Stext.length() + 1);
-								if (status == sf::Socket::Done) {
-									if (Stext == ">exit") {
-										aMensajes.push_back("La sesion ha finalizado");
-										socket.disconnect();
-										done = true;
-										//window.close();
-										//return 0;
-									}
-									else {
-										//shared_msg(&aMensajes, mensaje);
-										aMensajes.push_back(mensaje);
-									}
+					else if (evento.key.code == sf::Keyboard::Return)
+					{	
+						Stext = mensaje;
+						status = socket.send(Stext.c_str(), Stext.length() + 1);
+						if (status == sf::Socket::Done) {
+							if (Stext == ">exit") {
+								aMensajes.push_back("La sesion ha finalizado");
+								window.close();
+							}
+							else {
+								shared_msg(&aMensajes, mensaje);
 								}
-								else if (status == sf::Socket::Disconnected) {
-									aMensajes.push_back("Se ha producido una desconexion");
-									socket.disconnect();
-									done = true;
-								}
-								if (aMensajes.size() > 25)
-								{
-									aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
-								}
-								mensaje = ">";
-							//}
-							
+							}
+							else if (status == sf::Socket::Disconnected) {
+								aMensajes.push_back("Se ha producido una desconexion");
+								window.close();
+							}
+							mensaje = ">";							
 						}
-						break;
-					case sf::Event::TextEntered:
-						if (evento.text.unicode >= 32 && evento.text.unicode <= 126)
-							mensaje += (char)evento.text.unicode;
-						else if (evento.text.unicode == 8 && mensaje.getSize() > 0)
-							mensaje.erase(mensaje.getSize() - 1, mensaje.getSize());
-						break;
-					}
+					break;
+				case sf::Event::TextEntered:
+					if (evento.text.unicode >= 32 && evento.text.unicode <= 126)
+						mensaje += (char)evento.text.unicode;
+					else if (evento.text.unicode == 8 && mensaje.getSize() > 0)
+						mensaje.erase(mensaje.getSize() - 1, mensaje.getSize());
+					break;
 				}
-
-				window.draw(separator);
-				for (size_t i = 0; i < aMensajes.size(); i++)
-				{
-					std::string chatting = aMensajes[i];
-					chattingText.setPosition(sf::Vector2f(0, 20 * i));
-					chattingText.setString(chatting);
-					window.draw(chattingText);
-				}
-				std::string mensaje_ = mensaje + "_";
-				text.setString(mensaje_);
-				window.draw(text);
-
-
-				window.display();
-				window.clear();
 			}
-		}
-		
+			window.draw(separator);
+			for (size_t i = 0; i < aMensajes.size(); i++)
+			{
+				std::string chatting = aMensajes[i];
+				chattingText.setPosition(sf::Vector2f(0, 20 * i));
+				chattingText.setString(chatting);
+				window.draw(chattingText);
+			}
+			std::string mensaje_ = mensaje + "_";
+			text.setString(mensaje_);
+			window.draw(text);
+			window.display();
+			window.clear();
+		}	
+		socket.disconnect();
+		tr.join();
 	}
-	else if (executingMode == "n") { //NonBloking
+/*	else if (executingMode == "n") { //NonBloking
 		done = false;
 		while (!done)
 		{
@@ -194,9 +168,6 @@ int main()
 				std::size_t received;
 				char buffer_Thread[2000];
 				status = socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
-				/*if (status == sf::Socket::NotReady) { //no se necesita, tampoco funciona
-					continue;
-				}*/
 				 if (status == sf::Socket::Done) {
 					aMensajes.push_back(buffer_Thread);
 				}
@@ -276,7 +247,7 @@ int main()
 			}
 		}
 	}
-	
-	socket.disconnect();
+	*/
+	//socket.disconnect();
 	return 0;
 }

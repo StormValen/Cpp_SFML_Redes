@@ -21,13 +21,13 @@ void SocketSelector() {
 	//Socket selector tiene el listener + clients.
 	//Primero comprueba si el listener recibe alguna connexion nueva.
 	//Si no se hace el manage de los clientes.
-
+	std::string string= "Conectado al server";
 	while (!end) {
 		if (mySocketSelector.wait()){
 			if (mySocketSelector.isReady(listener)) {
 				sf::TcpSocket* newClient = new sf::TcpSocket;
 				if (listener.accept(*newClient) == sf::Socket::Done) {
-					myClients.push_back(newClient);
+					myClients.push_back(newClient);	
 					std::cout << "INFO: Client added -> " << newClient->getRemoteAddress() << std::endl;
 					mySocketSelector.add(*newClient);
 				} else {
@@ -39,6 +39,7 @@ void SocketSelector() {
 					//To Do Mange clients
 					//Check receives
 					//Send received mesages
+					
 				}
 			}
 		}
