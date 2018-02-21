@@ -63,7 +63,7 @@ int main()
 		std::cout << "Can't load the font file" << std::endl;
 	}
 
-	sf::String mensaje = " >";
+	sf::String mensaje = ">";
 	sf::Text chattingText(mensaje, font, 14);
 	chattingText.setFillColor(sf::Color(0, 160, 0));
 	chattingText.setStyle(sf::Text::Bold);
@@ -87,13 +87,13 @@ int main()
 	std::size_t received;
 	std::string Stext = "";
 
-	status = socket.connect("192.168.1.33", 50000);
+	status = socket.connect("192.168.1.40", 50000);
 	Stext += "Conexion establecida con un cliente nuevo";
 	mode = 'r';
 	executingMode = "b";
 	
 	 // ----- CONFIRM CONNECTION ----- //
-	socket.send(Stext.c_str(), Stext.length() + 1);
+	//socket.send(Stext.c_str(), Stext.length() + 1);
 	socket.receive(buffer, sizeof(buffer), received);
 	std::cout << buffer << std::endl;
 
