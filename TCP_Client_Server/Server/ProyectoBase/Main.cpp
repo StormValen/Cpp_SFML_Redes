@@ -7,6 +7,7 @@
 #include <cstring>
 
 std::list<sf::TcpSocket*> myClients; //Lista con todos los clientes conectados.
+std::map<int, std::string> players; //mapa de jugadores donde las claves son el port y el nombre de cada jugador
 void SocketSelector() {
 	bool end = false;
 	sf::TcpListener listener;
@@ -26,8 +27,10 @@ void SocketSelector() {
 		if (mySocketSelector.wait()){
 			if (mySocketSelector.isReady(listener)) {
 				sf::TcpSocket* newClient = new sf::TcpSocket;
+				//varaibles para el nombre
+				char name[200];
+				std::size_t received;
 				if (listener.accept(*newClient) == sf::Socket::Done) {
-
 					//Bucle para todos los clientes -> Nuevo cliente conectado.
 					//Antes de añadir el nuevo cliente para no tener que comparalos.
 					for (std::list<sf::TcpSocket*>::iterator it = myClients.begin(); it != myClients.end(); it++) {
@@ -37,9 +40,11 @@ void SocketSelector() {
 					}
 
 					myClients.push_back(newClient);	
-					std::cout << "Client with port: [" << newClient->getRemotePort() << "] CONNECTED" <<std::endl;
+					newClient->receive(name, sizeof(name), received);
+					//se crea un nuevo jugador y se añade
+					players.insert(std::pair<int, std::string>(newClient->getRemotePort(), name));
+					std::cout << "Client with port: [" << newClient->getRemotePort() << "]" <<  "and name" << "[ " << name <<" ]" <<  "CONNECTED" <<std::endl;
 					mySocketSelector.add(*newClient);
-
 					std::string confirmText = "Conected to server";
 					size_t bytesSent;
 					newClient->send(confirmText.c_str(), confirmText.length());

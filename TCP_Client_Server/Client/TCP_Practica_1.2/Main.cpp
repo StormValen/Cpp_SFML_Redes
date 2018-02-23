@@ -32,6 +32,9 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 		std::size_t received;
 		char buffer_Thread[2000];
 		status = socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
+		int timer = 0;
+		//socket.receive(&timer, sizeof(timer), received);
+		//std::cout << timer << std::endl;
 		sf::String string = buffer_Thread;
 		if (status == sf::Socket::Done) {
 			if (string == ">exit") {
@@ -91,7 +94,7 @@ int main()
 	std::size_t received;
 	std::string Stext = "";
 
-	status = socket.connect("192.168.122.2", 50000);
+	status = socket.connect("192.168.1.33", 50000);
 	Stext += "Conexion establecida con un cliente nuevo";
 	mode = 'r';
 	executingMode = "b";
