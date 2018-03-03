@@ -14,6 +14,7 @@ void SocketSelector() {
 	sf::Socket::Status status = listener.listen(50000);
 	if (status != sf::Socket::Done) {
 		std::cout << "ERROR: Can't open listener";
+		exit(0);
 	}
 
 	sf::SocketSelector mySocketSelector;
@@ -87,6 +88,8 @@ void SocketSelector() {
 			}
 		}
 	}
+	listener.close();		//?
+	mySocketSelector.clear();//?
 }
 
 int main()

@@ -94,7 +94,11 @@ int main()
 	std::size_t received;
 	std::string Stext = "";
 
-	status = socket.connect("192.168.1.33", 50000);
+	status = socket.connect("localhost", 50000);
+	if (status != sf::Socket::Done) {
+		std::cout << "ERROR: Can't open listener";
+		exit(0);
+	}
 	Stext += "Conexion establecida con un cliente nuevo";
 	mode = 'r';
 	executingMode = "b";
