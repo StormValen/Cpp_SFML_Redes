@@ -10,6 +10,7 @@ std::list<sf::TcpSocket*> myClients; //Lista con todos los clientes conectados.
 std::map<int, std::string> players; //mapa de jugadores donde las claves son el port y el nombre de cada jugador
 void SocketSelector() {
 	bool end = false;
+	char name[200];
 	sf::TcpListener listener;
 	sf::Socket::Status status = listener.listen(50000);
 	if (status != sf::Socket::Done) {
@@ -28,8 +29,7 @@ void SocketSelector() {
 		if (mySocketSelector.wait()){
 			if (mySocketSelector.isReady(listener)) {
 				sf::TcpSocket* newClient = new sf::TcpSocket;
-				//varaibles para el nombre
-				char name[200];
+
 				std::size_t received;
 				if (listener.accept(*newClient) == sf::Socket::Done) {
 					//Bucle para todos los clientes -> Nuevo cliente conectado.
@@ -58,29 +58,39 @@ void SocketSelector() {
 				for (std::list<sf::TcpSocket*>::iterator it = myClients.begin(); it != myClients.end(); it++){
 					sf::TcpSocket& clientSocketReceive = **it;
 					if (mySocketSelector.isReady(clientSocketReceive)) {
-						std::string mesage;
-						char buffer[2000];
-						std::size_t received;
-						status = clientSocketReceive.receive(buffer, sizeof(buffer), received);
-						if (status == sf::Socket::Done) {
-							mesage = buffer;
-							std::cout << "Client with port: [" << clientSocketReceive.getRemotePort() << "] SEND: " << mesage << std::endl;
-						}
-						else if(status == sf::Socket::Disconnected) {
-							mySocketSelector.remove(clientSocketReceive);
-							std::cout << "Client with port: [" << clientSocketReceive.getRemotePort() << "] DISCONECTED " << std::endl;
-							
+						if (myClients.size() >= 2) {
+							std::string mesage;
+							char buffer[2000];
+							std::size_t received;
+							status = clientSocketReceive.receive(buffer, sizeof(buffer), received);
+							if (status == sf::Socket::Done) {
+								mesage = buffer;
+								std::cout << "Client with port: [" << clientSocketReceive.getRemotePort() << "] SEND: " << mesage << std::endl;
+							}
+							else if (status == sf::Socket::Disconnected) {
+								mySocketSelector.remove(clientSocketReceive);
+								//eliminar el socket de la lista
+								std::cout << "Client with port: [" << clientSocketReceive.getRemotePort() << "] DISCONECTED " << std::endl;
+
+								for (std::list<sf::TcpSocket*>::iterator it = myClients.begin(); it != myClients.end(); it++) {
+									std::string connectedMesage = "--- A client has been disconected ---";
+									sf::TcpSocket& clientSocket = **it;
+									clientSocket.send(connectedMesage.c_str(), connectedMesage.length() + 1);
+								}
+							}
+
 							for (std::list<sf::TcpSocket*>::iterator it = myClients.begin(); it != myClients.end(); it++) {
-								std::string connectedMesage = "--- A client has been disconected ---";
 								sf::TcpSocket& clientSocket = **it;
-								clientSocket.send(connectedMesage.c_str(), connectedMesage.length() + 1);
+								if (clientSocket.getRemotePort() != clientSocketReceive.getRemotePort()) {
+									clientSocket.send(mesage.c_str(), mesage.length() + 1);
+								}
 							}
 						}
-						
-						for (std::list<sf::TcpSocket*>::iterator it = myClients.begin(); it != myClients.end(); it++) {
-							sf::TcpSocket& clientSocket = **it;
-							if (clientSocket.getRemotePort() != clientSocketReceive.getRemotePort()) {
-								clientSocket.send(mesage.c_str(), mesage.length()+1);
+						else {
+							for (std::list<sf::TcpSocket*>::iterator it = myClients.begin(); it != myClients.end(); it++) {
+								std::string connectedMesage = "Wait until a new player connects";
+								sf::TcpSocket& clientSocket = **it;
+								clientSocket.send(connectedMesage.c_str(), connectedMesage.length() + 1);
 							}
 						}
 					}
