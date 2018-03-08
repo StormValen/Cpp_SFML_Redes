@@ -1,0 +1,3 @@
+﻿  Source.cpp
+c:\users\sobre\desktop\platilla_3projects\gameserver\source.cpp(50): warning C4101: 'bytesSent': variable local sin referencia
+  GameServer.vcxproj -> C:\Users\sobre\Desktop\Platilla_3Projects\x64\Debug\GameServer.exe

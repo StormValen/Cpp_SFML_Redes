@@ -1,0 +1,4 @@
+﻿  Source.cpp
+c:\users\sobre\desktop\platilla_3projects\gameclient\source.cpp(160): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
+c:\users\sobre\desktop\platilla_3projects\gameclient\source.cpp(91): warning C4101: 'connectionType': variable local sin referencia
+  GameClient.vcxproj -> C:\Users\sobre\Desktop\Platilla_3Projects\x64\Debug\GameClient.exe

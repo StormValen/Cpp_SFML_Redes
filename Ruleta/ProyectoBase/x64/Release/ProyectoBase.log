@@ -1,9 +1,0 @@
-﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: El directorio intermedio (x64\Release\) contiene archivos compartidos de otro proyecto (ProyectoBase.vcxproj). Esto puede dar lugar a un comportamiento incorrecto de limpieza y recompilación.
-  Main.cpp
-Main.cpp(50): warning C4101: 'bytesSent': variable local sin referencia
-  Generando código
-  247 of 250 functions (98.8%) were compiled, the rest were copied from previous compilation.
-    4 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
-  Generación de código finalizada
-  ProyectoBase.vcxproj -> C:\Users\sobre\Desktop\Ruleta\x64\Release\Server.exe
