@@ -30,7 +30,12 @@ int main()
 	status = sock.receive(packet); //recives las ip y puertos
 	//sock.disconnect();
 	if (status != sf::Socket::Done) {
-		std::cout << "Error no se ha recibido nada" << std::endl;
+		if (status == sf::Socket::Disconnected) {
+			std::cout << "Se ha desconectado un peer" << std::endl;
+		}
+		else {
+			std::cout << "Error no se ha recibido nada" << std::endl;
+		}
 	}
 	else {
 		size_t prob;
