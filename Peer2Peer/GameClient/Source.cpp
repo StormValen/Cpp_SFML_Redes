@@ -15,16 +15,17 @@ struct Direction //almazenar la direccion de cada peer
 	unsigned short port;
 };
 std::vector<Direction> aStr;
+sf::Packet packet;
+Direction direction;
 int main()
 {
 	sf::TcpSocket sock;
 	sf::Socket::Status status;
-	status = sock.connect("192.168.1.34", 50000); //te conectas con el bootstrap
+	status = sock.connect("localhost", 50000); //te conectas con el bootstrap
 	if (status != sf::Socket::Done) {
 		std::cout << "Error" << std::endl;
 	}
-	sf::Packet packet;
-	Direction direction;
+	std::cout << "Connected with the bootstrap" << std::endl;
 	status = sock.receive(packet); //recives las ip y puertos
 	sock.disconnect();
 	if (status != sf::Socket::Done) {
