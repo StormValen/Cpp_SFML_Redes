@@ -27,7 +27,7 @@ int main()
 	}
 	std::cout << "Connected with the bootstrap" << std::endl;
 	status = sock.receive(packet); //recives las ip y puertos
-	sock.disconnect();
+	//sock.disconnect();
 	if (status != sf::Socket::Done) {
 		std::cout << "Error" << std::endl;
 	}
