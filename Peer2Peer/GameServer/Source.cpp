@@ -11,7 +11,7 @@
 
 struct Direction //almazenar la direccion de cada peer
 {
-	std::string IP;
+	sf::IpAddress myIP;
 	unsigned short port;
 };
 std::vector<Direction> aPeers; //almazenar los peers
@@ -34,23 +34,22 @@ int main()
 			if (aPeers.empty()) {
 				//No hay nadie conectado, tienes que añadir la ip y puerto del primer peer pero no le pasas nada
 				direction.port = sock->getRemotePort();
-				direction.IP = "localhost";
+				direction.myIP = sock->getRemoteAddress();
 				aPeers.push_back(direction);
+				std::cout << aPeers[0].myIP;
 			}
 			else {
 				sf::Packet packet;
 				//tienes que enviar al peer las ip y puertos de los otros peers ya conectados
 				packet << aPeers.size();
 				for (int j = 0; j < aPeers.size(); j++){
-					packet << aPeers[j].port; //añadir la IP q peta
-					std::cout << aPeers[j].IP;
+					packet << aPeers[j].port << aPeers[j].myIP.toString(); //añadir la IP q peta
 					//packet << aPeers[j].IP;
 				}
 				sock->send(packet);// envias el paquete con la ip y el puerto
-				direction.IP = "localhost";
+				direction.myIP = sock->getRemoteAddress();
 				direction.port = sock->getRemotePort();
 				aPeers.push_back(direction); //añader el nuevo peer que te ha pedido conexion
-				std::cout << aPeers.size();
 				packet.clear();
 			}
 		}
