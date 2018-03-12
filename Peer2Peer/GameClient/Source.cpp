@@ -18,26 +18,61 @@ struct Direction //almazenar la direccion de cada peer
 std::vector<Direction> aStr;
 sf::Packet packet;
 Direction direction;
-
+sf::TcpSocket sock;
 std::mutex mu;
 
+/*void shared_msg(std::vector<std::string> *aMensajes, sf::String string) {
+	mu.lock();
+	aMensajes->push_back(string);
+	if (aMensajes->size() > 25)
+	{
+		aMensajes->erase(aMensajes->begin(), aMensajes->begin() + 1);
+	}
+	mu.unlock();
+}
 
+// ----- BLOCKING THREAD ----- //
+void thread_recived() {
+	bool tBucle = true;
+	while (tBucle) {
+		sf::Socket::Status status = sock.receive(packet); //recives las ip y puertos
+									   //el primer peer se queda bloqueado aqui por lo q no puede establecer conexiones con los otros
+									   //sock.disconnect();
+		if (status != sf::Socket::Done) {
+			if (status == sf::Socket::Disconnected) {
+				std::cout << "Se ha desconectado un peer" << std::endl;
+			}
+			else {
+				std::cout << "Error no se ha recibido nada" << std::endl;
+			}
+		}
+		else {
+			size_t prob;
+			packet >> prob;
+			for (int i = 0; i < prob; i++) {
+				packet >> direction.port;
+				aStr.push_back(direction); //añades las ip y puertos al vector
+										   //std::cout << prob << " " << aStr.size() << std::endl;
+			}
+		}
+	}
+}*/
 int main()
 {
-	sf::TcpSocket sock;
 	sf::Socket::Status status;
 	status = sock.connect("localhost", 50000); //te conectas con el bootstrap
 	if (status != sf::Socket::Done) {
 		std::cout << "Error al conectarte al bootstrap" << std::endl;
 	}
 	std::cout << "Connected with the bootstrap with port: " << sock.getLocalPort() << std::endl;
-	
+
 	status = sock.receive(packet); //recives las ip y puertos
 	//el primer peer se queda bloqueado aqui por lo q no puede establecer conexiones con los otros
 	//sock.disconnect();
 	if (status != sf::Socket::Done) {
 		if (status == sf::Socket::Disconnected) {
 			std::cout << "Se ha desconectado un peer" << std::endl;
+
 		}
 		else {
 			std::cout << "Error no se ha recibido nada" << std::endl;
@@ -58,24 +93,31 @@ int main()
 		if (status != sf::Socket::Done) {
 			std::cout << "Error al conectarte con el peer de ip: " << aStr[i].myIP << "y puerto: " << aStr[i].port << "mi puerto es: " << sock.getLocalPort()<< std::endl;
 		}
-		std::cout << aStr[i].port << std::endl;
 		aPeers.push_back(sockAux);
 	}
-	while(aPeers.size() < MAX_PLAYERS) {
+	if(aPeers.size() < MAX_PLAYERS) {
 		sf::TcpListener listener;
 		status = listener.listen(sock.getLocalPort()); //si aun no hay 4 jugadores escuchas por tu puerto para tener mas conexiones
 		std::cout << sock.getLocalPort();
 		if (status != sf::Socket::Done) {
 			std::cout << "Error" << std::endl;
 		}
-		for (int i = aPeers.size(); i > MAX_PLAYERS; i--) {
-		sf::TcpSocket *sockNew = new sf::TcpSocket;
-		listener.accept(*sockNew);
-		aPeers.push_back(sockNew);
+		else {
+			while (aPeers.size() < MAX_PLAYERS) { //recorres un bucle desde tu posicion del vector y escuchas hasta que este lleno(si eres el 2 peer, tendras que escuchar 2 vezes)
+				sf::TcpSocket *sockNew = new sf::TcpSocket;
+				status = listener.accept(*sockNew);
+				//status accepts
+				if (status != sf::Socket::Done) {
+					std::cout << "Error al aceptar la conexion " << std::endl;
+				}
+				else {
+					aPeers.push_back(sockNew);
+				}
+			}
 		}
+		sock.disconnect();
 		listener.close();
 	}
-	std::cout << "La sala esta llena" << std::endl;
 
 	//---------------------------establecer conexion-----------------------------------
 	//bool end = false;

@@ -32,11 +32,15 @@ int main()
 		else {
 			Direction direction;
 			if (aPeers.empty()) {
+				sf::Packet packetStart;
 				//No hay nadie conectado, tienes que añadir la ip y puerto del primer peer pero no le pasas nada
 				direction.port = sock->getRemotePort();
 				direction.myIP = sock->getRemoteAddress();
 				aPeers.push_back(direction);
-				std::cout << aPeers[0].myIP;
+				//std::string stringProb = "Wait to more players";
+				//packetStart << stringProb;
+				//sock->send(packetStart);
+				//packetStart.clear();
 			}
 			else {
 				sf::Packet packet;
