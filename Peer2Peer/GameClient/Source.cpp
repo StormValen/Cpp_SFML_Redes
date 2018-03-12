@@ -4,7 +4,7 @@
 #include <list>
 #include <thread>
 #include <mutex>
-#include <cstring>
+#include <string>
 #include <SFML\Graphics.hpp>
 #define MAX_PLAYERS 4
 std::vector<sf::TcpSocket*> aPeers;
@@ -20,6 +20,7 @@ sf::Packet packet;
 Direction direction;
 sf::TcpSocket sock;
 std::mutex mu;
+unsigned short myPort;
 
 /*void shared_msg(std::vector<std::string> *aMensajes, sf::String string) {
 	mu.lock();
@@ -68,7 +69,8 @@ int main()
 
 	status = sock.receive(packet); //recives las ip y puertos
 	//el primer peer se queda bloqueado aqui por lo q no puede establecer conexiones con los otros
-	//sock.disconnect();
+	myPort = sock.getLocalPort();
+	sock.disconnect();
 	if (status != sf::Socket::Done) {
 		if (status == sf::Socket::Disconnected) {
 			std::cout << "Se ha desconectado un peer" << std::endl;
@@ -89,35 +91,28 @@ int main()
 	}
 	for (int i = 0; i < aStr.size(); i++) {
 		sf::TcpSocket *sockAux = new sf::TcpSocket; // creas un nuevo socket para conectarte con cada peer
-		status = sockAux->connect("localhost", aStr[i].port);
+		status = sockAux->connect("localhost", aStr[i-1].port);
 		if (status != sf::Socket::Done) {
-			std::cout << "Error al conectarte con el peer de ip: " << aStr[i].myIP << "y puerto: " << aStr[i].port << "mi puerto es: " << sock.getLocalPort()<< std::endl;
+			std::cout << "Error al conectarte con el peer de ip: " << aStr[i].myIP << "y puerto: " << aStr[i].port << "mi puerto es: " << myPort << std::endl;
 		}
 		aPeers.push_back(sockAux);
 	}
-	if(aPeers.size() < MAX_PLAYERS) {
 		sf::TcpListener listener;
-		status = listener.listen(sock.getLocalPort()); //si aun no hay 4 jugadores escuchas por tu puerto para tener mas conexiones
+		status = listener.listen(myPort); //si aun no hay 4 jugadores escuchas por tu puerto para tener mas conexiones
 		std::cout << sock.getLocalPort();
-		if (status != sf::Socket::Done) {
-			std::cout << "Error" << std::endl;
-		}
-		else {
-			while (aPeers.size() < MAX_PLAYERS) { //recorres un bucle desde tu posicion del vector y escuchas hasta que este lleno(si eres el 2 peer, tendras que escuchar 2 vezes)
-				sf::TcpSocket *sockNew = new sf::TcpSocket;
-				status = listener.accept(*sockNew);
+		while (aPeers.size() < MAX_PLAYERS) { //recorres un bucle desde tu posicion del vector y escuchas hasta que este lleno(si eres el 2 peer, tendras que escuchar 2 vezes)
+			sf::TcpSocket *sockNew = new sf::TcpSocket;
+			status = listener.accept(*sockNew);
 				//status accepts
-				if (status != sf::Socket::Done) {
-					std::cout << "Error al aceptar la conexion " << std::endl;
+			if (status != sf::Socket::Done) {
+			std::cout << "Error al aceptar la conexion " << std::endl;
 				}
-				else {
-					aPeers.push_back(sockNew);
-				}
+			else {
+				aPeers.push_back(sockNew);
 			}
 		}
-		sock.disconnect();
+		//sock.disconnect();
 		listener.close();
-	}
 
 	//---------------------------establecer conexion-----------------------------------
 	//bool end = false;

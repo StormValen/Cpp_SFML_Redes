@@ -4,7 +4,7 @@
 #include <list>
 #include <thread>
 #include <mutex>
-#include <cstring>
+#include <string>
 #include <SFML\Graphics.hpp>
 
 #define MAX_PLAYERS 4
