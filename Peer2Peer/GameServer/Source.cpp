@@ -43,7 +43,7 @@ int main()
 				//tienes que enviar al peer las ip y puertos de los otros peers ya conectados
 				packet << aPeers.size();
 				for (int j = 0; j < aPeers.size(); j++){
-					packet << aPeers[j].port << aPeers[j].myIP.toString(); //añadir la IP q peta
+					packet << aPeers[j].port << "localhost"; //añadir la IP q peta
 					//packet << aPeers[j].IP;
 				}
 				sock->send(packet);// envias el paquete con la ip y el puerto
