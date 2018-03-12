@@ -101,7 +101,6 @@ int main()
 	sock.disconnect();
 		sf::TcpListener listener;
 		status = listener.listen(myPort); //si aun no hay 4 jugadores escuchas por tu puerto para tener mas conexiones
-		std::cout << myPort;
 		if (status != sf::Socket::Done) {
 			std::cout << "no se puede vincular al puerto " << myPort << std::endl;
 		}
@@ -113,6 +112,7 @@ int main()
 				}
 			else {
 				aPeers.push_back(sockNew);
+				std::cout << aPeers.size() << std::endl;
 			}
 		}
 

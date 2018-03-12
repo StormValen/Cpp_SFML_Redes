@@ -38,7 +38,6 @@ int main()
 			packet << (int)aPeers.size();
 			for (int j = 0; j < aPeers.size(); j++) {
 				packet << aPeers[j].port ; //añadir la IP q peta
-				//packet << aPeers[j].IP;
 			}
 			sock.send(packet);// envias el paquete con la ip y el puerto
 			direction.myIP = "localhost";
@@ -46,7 +45,6 @@ int main()
 			aPeers.push_back(direction); //añader el nuevo peer que te ha pedido conexion
 			packet.clear();
 		}
-		//sock->disconnect();
 	}
 	listener.close();
 	return 0;
