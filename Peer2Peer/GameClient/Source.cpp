@@ -12,7 +12,7 @@ std::vector<sf::TcpSocket*> aPeers;
 
 struct Direction //almazenar la direccion de cada peer
 {
-	sf::IpAddress myIP;
+	std::string myIP;
 	unsigned short port;
 };
 std::vector<Direction> aStr;
@@ -70,40 +70,44 @@ int main()
 	status = sock.receive(packet); //recives las ip y puertos
 	//el primer peer se queda bloqueado aqui por lo q no puede establecer conexiones con los otros
 	myPort = sock.getLocalPort();
-	sock.disconnect();
+
 	if (status != sf::Socket::Done) {
 		if (status == sf::Socket::Disconnected) {
 			std::cout << "Se ha desconectado un peer" << std::endl;
-
 		}
 		else {
 			std::cout << "Error no se ha recibido nada" << std::endl;
 		}
 	}
 	else {
-		size_t prob;
+		int prob;
 		packet >> prob;
-		for (int i = 0; i < prob; i++) {
-			packet >> direction.port;
+		for (int i = 1; i <= prob; i++) {
+			packet >> direction.port; //IP
 			aStr.push_back(direction); //añades las ip y puertos al vector
-			//std::cout << prob << " " << aStr.size() << std::endl;
 		}
 	}
-	for (int i = 0; i < aStr.size(); i++) {
+	for (int i = 1; i <= aStr.size(); i++) {
 		sf::TcpSocket *sockAux = new sf::TcpSocket; // creas un nuevo socket para conectarte con cada peer
 		status = sockAux->connect("localhost", aStr[i-1].port);
 		if (status != sf::Socket::Done) {
-			std::cout << "Error al conectarte con el peer de ip: " << aStr[i].myIP << "y puerto: " << aStr[i].port << "mi puerto es: " << myPort << std::endl;
+			std::cout << "Error al conectarte con el peer de ip: " << aStr[i-1].myIP << "y puerto: " << aStr[i-1].port << "mi puerto es: " << myPort << std::endl;
 		}
-		aPeers.push_back(sockAux);
+		else {
+			std::cout << "Conectado con el peer puerto: " << aStr[i - 1].port <<" "  << std::endl;
+			aPeers.push_back(sockAux);
+		}
 	}
+	sock.disconnect();
 		sf::TcpListener listener;
 		status = listener.listen(myPort); //si aun no hay 4 jugadores escuchas por tu puerto para tener mas conexiones
-		std::cout << sock.getLocalPort();
+		std::cout << myPort;
+		if (status != sf::Socket::Done) {
+			std::cout << "no se puede vincular al puerto " << myPort << std::endl;
+		}
 		while (aPeers.size() < MAX_PLAYERS) { //recorres un bucle desde tu posicion del vector y escuchas hasta que este lleno(si eres el 2 peer, tendras que escuchar 2 vezes)
 			sf::TcpSocket *sockNew = new sf::TcpSocket;
 			status = listener.accept(*sockNew);
-				//status accepts
 			if (status != sf::Socket::Done) {
 			std::cout << "Error al aceptar la conexion " << std::endl;
 				}
@@ -111,6 +115,7 @@ int main()
 				aPeers.push_back(sockNew);
 			}
 		}
+
 		//sock.disconnect();
 		listener.close();
 
