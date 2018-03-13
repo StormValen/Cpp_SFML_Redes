@@ -16,9 +16,7 @@ struct Direction //almazenar la direccion de cada peer
 };
 
 struct Player {
-	std::string name;
-	int money, bet, betMoney;
-
+	std::string name, money, bet, betMoney;
 };
 std::vector<Player> Players;
 std::vector<Direction> aStr;
@@ -92,10 +90,11 @@ int main()
 	bool end = false;
 	//std::thread tr(&thread_recived, &aMensajes);
 	while (!end) {
-		sf::Packet recPacket;
+		std::size_t received;
+		char recv[200];
 		for (int i = 0; i < aPeers.size(); i++) {
 			aPeers[i]->setBlocking(false); //nonblocking para que en el recive no se bloquee al prinicpio
-			status = aPeers[i]->receive(recPacket);
+			status = aPeers[i]->receive(recv, sizeof(recv), received);
 			if (status != sf::Socket::Done) {
 				if (status == sf::Socket::Error) {
 					std::cout << "se ha producido un error al enviar entre peers" << std::endl;
@@ -105,20 +104,15 @@ int main()
 				}
 			}
 			else {
-				std::string prob = "";
-				recPacket >> prob;
-				std::cout << prob << std::endl;
-				recPacket.clear();
+				std::cout << recv << std::endl;
 			}
 		}
-		sf::Packet sendPacket;
 		Player player;
 		std::cout << "Bienvenido al casino, cual es tu nombre? " << std::endl;
 		std::cin >> player.name;
 		Players.push_back(player);
-		sendPacket << player.name;
 		for (int i = 0; i < aPeers.size(); i++) {
-			status = aPeers[i-1]->send(sendPacket);
+			status = aPeers[i-1]->send(player.name.c_str(), player.name.length()+1);
 			if (status != sf::Socket::Done) {
 				if (status == sf::Socket::Partial) {
 
