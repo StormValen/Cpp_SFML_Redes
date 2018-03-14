@@ -90,6 +90,31 @@ int main()
 	bool end = false;
 	//std::thread tr(&thread_recived, &aMensajes);
 	while (!end) {
+		Player player;
+		std::string s_mensaje;
+		size_t bSent;
+		std::cout << "Bienvenido al casino, cual es tu nombre? " << std::endl;
+		std::cin >> player.name;
+		std::cout << "Cuanto dinero vas a ingresar para poder jugar?" << std::endl;
+		std::cin >> player.money;
+		for (int i = 0; i < aPeers.size(); i++) {
+			s_mensaje = player.name + player.money;
+			status = aPeers[i]->send(s_mensaje.c_str(), s_mensaje.length() + 1, bSent);
+			if (status != sf::Socket::Done) {
+				if (status == sf::Socket::Partial) {
+					while (bSent < s_mensaje.length()) {
+						std::string msgRest = "";
+						for (size_t i = bSent; i < s_mensaje.length(); i++) {
+							msgRest = s_mensaje[i];
+						}
+						aPeers[i - 1]->send(s_mensaje.c_str(), s_mensaje.length(), bSent);
+					}
+				}
+			}
+			else {
+				Players.push_back(player);
+			}
+		}
 		std::size_t received;
 		char recv[200];
 		for (int i = 0; i < aPeers.size(); i++) {
@@ -107,20 +132,6 @@ int main()
 				std::cout << recv << std::endl;
 			}
 		}
-		Player player;
-		std::cout << "Bienvenido al casino, cual es tu nombre? " << std::endl;
-		std::cin >> player.name;
-		Players.push_back(player);
-		for (int i = 0; i < aPeers.size(); i++) {
-			status = aPeers[i-1]->send(player.name.c_str(), player.name.length()+1);
-			if (status != sf::Socket::Done) {
-				if (status == sf::Socket::Partial) {
 
-				}
-				else {
-					
-				}
-			}
-		}
 	}
 }
