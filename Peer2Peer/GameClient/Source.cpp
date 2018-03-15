@@ -7,7 +7,7 @@
 #include <string>
 #include <SFML\Graphics.hpp>
 #define MAX_PLAYERS 1
-std::vector<sf::TcpSocket*> aPeers;
+
 
 struct Direction //almazenar la direccion de cada peer
 {
@@ -16,10 +16,12 @@ struct Direction //almazenar la direccion de cada peer
 };
 
 struct Player {
-	std::string name, money, bet, betMoney;
+	std::string name;
+	int money, bet, betMoney;
 };
 std::vector<Player> Players;
 std::vector<Direction> aStr;
+std::vector<sf::TcpSocket*> aPeers;
 sf::Packet packet;
 Direction direction;
 sf::TcpSocket sock;
@@ -33,10 +35,8 @@ int main()
 	if (status != sf::Socket::Done) {
 		std::cout << "Error al conectarte al bootstrap" << std::endl;
 	}
-	std::cout << "Connected with the bootstrap with port: " << sock.getLocalPort() << std::endl;
-
+	//std::cout << "Connected with the bootstrap with port: " << sock.getLocalPort() << std::endl;
 	status = sock.receive(packet); //recives las ip y puertos
-	//el primer peer se queda bloqueado aqui por lo q no puede establecer conexiones con los otros
 	myPort = sock.getLocalPort();
 
 	if (status != sf::Socket::Done) {
@@ -62,7 +62,6 @@ int main()
 			std::cout << "Error al conectarte con el peer de ip: " << aStr[i-1].myIP << "y puerto: " << aStr[i-1].port << "mi puerto es: " << myPort << std::endl;
 		}
 		else {
-			std::cout << "Conectado con el peer puerto: " << aStr[i - 1].port <<" "  << std::endl;
 			aPeers.push_back(sockAux);
 		}
 	}
@@ -80,56 +79,68 @@ int main()
 				}
 			else {
 				aPeers.push_back(sockNew);
-				std::cout << aPeers.size() << std::endl;
 			}
 		}
-		std::cout << "Ya estan todos los jugadores listos" << std::endl;
+		std::cout << "Inicio de la partida" << std::endl;
 		listener.close();
 
 	//---------------------------establecer conexion-----------------------------------
-	bool end = false;
-	//std::thread tr(&thread_recived, &aMensajes);
-	while (!end) {
-		Player player;
-		std::string s_mensaje;
-		size_t bSent;
+	bool login = false;
+	Player player;
+	std::string s_mensaje;
+	size_t bSent;
+	std::size_t received;
+	char recv[200];
+	for (int i = 0; i < aPeers.size(); i++) {
+
+		sf::Packet packSend;
+		aPeers[i]->setBlocking(false);
 		std::cout << "Bienvenido al casino, cual es tu nombre? " << std::endl;
 		std::cin >> player.name;
 		std::cout << "Cuanto dinero vas a ingresar para poder jugar?" << std::endl;
 		std::cin >> player.money;
-		for (int i = 0; i < aPeers.size(); i++) {
-			s_mensaje = player.name + player.money;
-			status = aPeers[i]->send(s_mensaje.c_str(), s_mensaje.length() + 1, bSent);
-			if (status != sf::Socket::Done) {
-				if (status == sf::Socket::Partial) {
-					while (bSent < s_mensaje.length()) {
-						std::string msgRest = "";
-						for (size_t i = bSent; i < s_mensaje.length(); i++) {
-							msgRest = s_mensaje[i];
-						}
-						aPeers[i - 1]->send(s_mensaje.c_str(), s_mensaje.length(), bSent);
+		//s_mensaje = player.name;
+		packSend << player.name.c_str() << player.money;
+		status = aPeers[i]->send(packSend);
+		//status = aPeers[i]->send(s_mensaje.c_str(), s_mensaje.length() + 1, bSent);
+		if (status != sf::Socket::Done) {
+			/*if (status == sf::Socket::Partial) {
+				while (bSent < s_mensaje.length()) {
+					std::string msgRest = "";
+					for (size_t i = bSent; i < s_mensaje.length(); i++) {
+						msgRest = s_mensaje[i];
 					}
+					aPeers[i]->send(s_mensaje.c_str(), s_mensaje.length(), bSent);
 				}
-			}
-			else {
-				Players.push_back(player);
-			}
+			}*/
 		}
-		std::size_t received;
-		char recv[200];
+		else {
+			Players.push_back(player);
+		}
+	}
+	while (!login) {
 		for (int i = 0; i < aPeers.size(); i++) {
+			sf::Packet packRecv;
+			//std::cout << aPeers.size();
 			aPeers[i]->setBlocking(false); //nonblocking para que en el recive no se bloquee al prinicpio
-			status = aPeers[i]->receive(recv, sizeof(recv), received);
+			//status = aPeers[i]->receive(recv, sizeof(recv), received);
+			status = aPeers[i]->receive(packRecv);
 			if (status != sf::Socket::Done) {
 				if (status == sf::Socket::Error) {
-					std::cout << "se ha producido un error al enviar entre peers" << std::endl;
+					std::cout << "Se ha producido un error al enviar entre peers" << std::endl;
 				}
 				else if (status == sf::Socket::Disconnected) {
 					std::cout << "Se ha desconectado el peer con puerto : " << aPeers[i]->getRemotePort() << std::endl;
 				}
 			}
 			else {
-				std::cout << recv << std::endl;
+				packRecv >> player.name;
+				Players.push_back(player);
+				//std::cout << Players.size();
+				for (int j = 1; j <= Players.size(); j++) {
+					std::cout << "El jugador "  << Players[j-1].name << " se ha conectado y tiene " << Players[j-1].money << "monedas"  << std::endl;
+				}
+				//login = true;
 			}
 		}
 

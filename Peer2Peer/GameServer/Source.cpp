@@ -47,5 +47,6 @@ int main()
 		}
 	}
 	listener.close();
+	sock.disconnect();
 	return 0;
 }
