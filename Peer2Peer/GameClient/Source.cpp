@@ -83,9 +83,11 @@ void PeerConnection() {
 	listener.close();
 }
 
+
 int main()
 {
 	PeerConnection();
+
 	// ----- WINDOW UI ----- //
 	std::vector<std::string> aMensajes;
 	sf::Vector2i screenDimensions(800, 600);
@@ -113,6 +115,7 @@ int main()
 	sf::RectangleShape separator(sf::Vector2f(800, 5));
 	separator.setFillColor(sf::Color(200, 200, 200, 255));
 	separator.setPosition(0, 550);
+
 	while (window.isOpen())
 	{
 		sf::Event evento;

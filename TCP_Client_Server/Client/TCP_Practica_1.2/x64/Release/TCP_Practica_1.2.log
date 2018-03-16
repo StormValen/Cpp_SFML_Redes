@@ -1,7 +1,7 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: El directorio intermedio (x64\Release\) contiene archivos compartidos de otro proyecto (TCP_Practica_1.2.vcxproj). Esto puede dar lugar a un comportamiento incorrecto de limpieza y recompilación.
   Main.cpp
-Main.cpp(160): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
-Main.cpp(91): warning C4101: 'connectionType': variable local sin referencia
+Main.cpp(161): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
+Main.cpp(92): warning C4101: 'connectionType': variable local sin referencia
   Generando código
   1 of 287 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation

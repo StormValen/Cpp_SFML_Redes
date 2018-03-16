@@ -1,7 +1,2 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: El directorio intermedio (x64\Debug\) contiene archivos compartidos de otro proyecto (GameClient.vcxproj). Esto puede dar lugar a un comportamiento incorrecto de limpieza y recompilación.
-  Source.cpp
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\peer2peer\gameclient\source.cpp(162): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\peer2peer\gameclient\source.cpp(177): warning C4101: 'received': variable local sin referencia
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\peer2peer\gameclient\source.cpp(176): warning C4101: 'bSent': variable local sin referencia
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\peer2peer\gameclient\source.cpp(178): warning C4101: 'recv': variable local sin referencia
   GameClient.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\Peer2Peer\x64\Debug\Peer.exe
