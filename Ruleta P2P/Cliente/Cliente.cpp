@@ -6,9 +6,9 @@
 #include <mutex>
 #include <string>
 #include <SFML\Graphics.hpp>
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 1
 
-enum GameState{ Connected, Logged, Bed, Roll, Winner, Money, EndGame} state;
+enum GameState{ Logged, Bed, Winner, EndGame, Chat} state;
 
 struct Direction //almazenar la direccion de cada peer
 {
@@ -25,7 +25,7 @@ std::vector<Direction> aStr;
 sf::Socket::Status status;
 std::vector<sf::TcpSocket*> aPeers;
 std::vector<std::string> aMensajes;
-
+sf::String mensaje = "";
 
 void msgChat(std::string msg) {
 	aMensajes.push_back(msg);
@@ -118,11 +118,20 @@ void PeerConnection() {
 		msgChat(">" + Players[i].name + " se ha conectado y tiene " + Players[i].money + " monedas");
 	}
 	packLog.clear();
-	state = Connected;
+	state = Logged;
 	listener.close();
 }
 
-void Chat() {
+void MSG() {
+	if (state == Logged) {
+		msgChat("Introduce el dinero de la apusta");
+	}
+	if (state == Bed) {
+		msgChat("Indica el tipo");
+	}
+}
+
+void thread_Chat() {
 	// ----- WINDOW UI ----- //
 	sf::Vector2i screenDimensions(800, 600);
 	sf::RenderWindow window;
@@ -133,8 +142,6 @@ void Chat() {
 	{
 		std::cout << "Can't load the font file" << std::endl;
 	}
-
-	sf::String mensaje = ">";
 
 	sf::Text chattingText(mensaje, font, 14);
 	chattingText.setFillColor(sf::Color(0, 160, 0));
@@ -151,27 +158,36 @@ void Chat() {
 	separator.setPosition(0, 550);
 	while (window.isOpen())
 	{
+		sf::Packet pack;
+		sf::String string;
 		//RECIVE
 		if (state != EndGame) {
 			for (int i = 1; i <= aPeers.size(); i++) {
 				aPeers[i - 1]->setBlocking(false);
-				sf::Packet packRecv;
-				packRecv.clear();
 				//std::cout << aPeers.size();
-				status = aPeers[i-1]->receive(packRecv);
+				status = aPeers[i-1]->receive(pack);
 				if (status != sf::Socket::Done) {
 					 if (status == sf::Socket::Disconnected) {
 						msgChat("Se ha desconectado el peer con puerto : " + aPeers[i-1]->getRemotePort());
 					}
 				}
 				else {
-					sf::String string;
-					packRecv >> string;
-					for (int i = 1; i < Players.size(); i++) {
-						msgChat("[ " + Players[i].name + " ]" +  string);
+					if (state == Logged) {
+						pack >> player.betMoney;
+						string = " Ha apostado " + player.betMoney;
+						for (int i = 1; i < Players.size(); i++) {
+							msgChat("> [ " + Players[i].name + " ]" + string);
+						}
+						//state = Bed;
 					}
+					if (state == Bed) {
+						pack >> player.bet;
+						string = " El" + player.bet + " ha sido su apuesta";
+					}
+					//pack >> string;
+
 				}
-				packRecv.clear();
+				pack.clear();
 			}
 		}
 		sf::Event evento;
@@ -190,11 +206,20 @@ void Chat() {
 				}
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
-					sf::Packet packSend;
-					packSend << mensaje;
+					std::string aux = "";
+					if (state == Logged) {
+						player.betMoney = mensaje;
+						pack << player.betMoney;
+						//state = Bed;
+					}
+					if (state == Bed) {
+						player.bet = mensaje;
+						pack << player.bet;
+						//state = Chat;
+					}
 					for (int i = 1; i <= aPeers.size(); i++) {
 						aPeers[i - 1]->setBlocking(false);
-						status = aPeers[i - 1]->send(packSend);
+						status = aPeers[i - 1]->send(pack);
 						if (status != sf::Socket::Done) {
 							msgChat("Error");
 							if (status == sf::Socket::Disconnected) {
@@ -202,7 +227,8 @@ void Chat() {
 							}
 						}
 						else {
-							msgChat("[Yo] " + mensaje);
+							msgChat("> [Yo] " + mensaje);
+
 						}
 					}
 					if (aMensajes.size() > 25)
@@ -210,7 +236,7 @@ void Chat() {
 						aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
 					}
 					mensaje = ">";
-					packSend.clear();
+					pack.clear();
 				}
 				break;
 			case sf::Event::TextEntered:
@@ -240,9 +266,10 @@ void Chat() {
 int main()
 {
 	PeerConnection();
+	std::thread tr(&thread_Chat);
+	MSG();
 
-	while (state != EndGame) {
-		Chat();
-	}
-	state = EndGame;	
+	//state = EndGame;	
+	tr.join();
+	//msg.join();
 }
