@@ -167,7 +167,9 @@ void Chat() {
 				else {
 					sf::String string;
 					packRecv >> string;
-					msgChat("[ " + player.name + " ]" + string);
+					for (int i = 1; i < Players.size(); i++) {
+						msgChat("[ " + Players[i].name + " ]" +  string);
+					}
 				}
 				packRecv.clear();
 			}
@@ -200,15 +202,15 @@ void Chat() {
 							}
 						}
 						else {
-							msgChat(mensaje);
+							msgChat("[Yo] " + mensaje);
 						}
-						packSend.clear();
 					}
 					if (aMensajes.size() > 25)
 					{
 						aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
 					}
 					mensaje = ">";
+					packSend.clear();
 				}
 				break;
 			case sf::Event::TextEntered:
