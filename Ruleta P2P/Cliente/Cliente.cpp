@@ -19,6 +19,7 @@ struct Direction //almazenar la direccion de cada peer
 struct Player {
 	std::string name, money, bet, betMoney;
 };
+Player player;
 std::vector<Player> Players;
 std::vector<Direction> aStr;
 sf::Socket::Status status;
@@ -87,8 +88,36 @@ void PeerConnection() {
 			aPeers.push_back(sockNew);
 		}
 	}
-	msgChat("Bienvenid@ al casino, porfavor introduce tu nombre.");
-	std::cout << aPeers.size();
+	//LOGIN
+	std::cout << "Bienvenid@ al casino, porfavor introduce tu nombre." << std::endl;
+	std::cin >> player.name;
+	std::cout << "Introduce tu dinero" << std::endl;
+	std::cin >> player.money;
+	Players.push_back(player);
+	sf::Packet packLog;
+	packLog << player.name << player.money;
+	for (int i = 1; i <= aPeers.size(); i++) {
+		status = aPeers[i-1]->send(packLog);
+		if (status != sf::Socket::Done) {
+			std::cout << "Error al enviar" << std::endl;
+		}
+	}
+	packLog.clear();
+	for (int i = 1; i <= aPeers.size(); i++) {
+		status = aPeers[i-1]->receive(packLog);
+		if (status != sf::Socket::Done) {
+			std::cout << "Error al recivir" << std::endl;
+		}
+		else {
+			Player pAux;
+			packLog >> pAux.name >> pAux.money;
+			Players.push_back(pAux);
+		}
+	}
+	for (int i = 1; i < Players.size(); i++) {
+		msgChat(">" + Players[i].name + " se ha conectado y tiene " + Players[i].money + " monedas");
+	}
+	packLog.clear();
 	state = Connected;
 	listener.close();
 }
@@ -120,7 +149,6 @@ void Chat() {
 	sf::RectangleShape separator(sf::Vector2f(800, 5));
 	separator.setFillColor(sf::Color(200, 200, 200, 255));
 	separator.setPosition(0, 550);
-	Player player;
 	while (window.isOpen())
 	{
 		//RECIVE
@@ -137,10 +165,11 @@ void Chat() {
 					}
 				}
 				else {
-					packRecv >> mensaje;
-					msgChat(mensaje);
-					mensaje = ">";
+					sf::String string;
+					packRecv >> string;
+					msgChat("[ " + player.name + " ]" + string);
 				}
+				packRecv.clear();
 			}
 		}
 		sf::Event evento;
@@ -160,18 +189,20 @@ void Chat() {
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
 					sf::Packet packSend;
-					std::string name;
 					packSend << mensaje;
 					for (int i = 1; i <= aPeers.size(); i++) {
 						aPeers[i - 1]->setBlocking(false);
 						status = aPeers[i - 1]->send(packSend);
-						if (status == sf::Socket::Disconnected) {
-							msgChat("Se ha desconectado el peer con puerto : " + aPeers[i - 1]->getRemotePort());
+						if (status != sf::Socket::Done) {
+							msgChat("Error");
+							if (status == sf::Socket::Disconnected) {
+								msgChat("Desconexion");
+							}
 						}
 						else {
-							packSend.clear();
 							msgChat(mensaje);
 						}
+						packSend.clear();
 					}
 					if (aMensajes.size() > 25)
 					{
@@ -212,35 +243,4 @@ int main()
 		Chat();
 	}
 	state = EndGame;	
-	/*bool login = false;
-	Player player;
-	std::string s_mensaje;
-	size_t bSent;
-	std::size_t received;
-	char recv[200];
-	for (int i = 0; i < aPeers.size(); i++) {
-
-		sf::Packet packSend;
-		std::cout << "Bienvenido al casino, cual es tu nombre? " << std::endl;
-		std::cin >> player.name;
-		std::cout << "Cuanto dinero vas a ingresar para poder jugar?" << std::endl;
-		std::cin >> player.money;
-		//s_mensaje = player.name;
-		packSend << player.name.c_str() << player.money;
-		status = aPeers[i]->send(packSend);
-		//status = aPeers[i]->send(s_mensaje.c_str(), s_mensaje.length() + 1, bSent);
-		if (status != sf::Socket::Done) {
-			/*if (status == sf::Socket::Partial) {
-			while (bSent < s_mensaje.length()) {
-			std::string msgRest = "";
-			for (size_t i = bSent; i < s_mensaje.length(); i++) {
-			msgRest = s_mensaje[i];
-			}
-			aPeers[i]->send(s_mensaje.c_str(), s_mensaje.length(), bSent);
-			}
-			}
-		}
-		else {
-			Players.push_back(player);
-		}*/
 }
