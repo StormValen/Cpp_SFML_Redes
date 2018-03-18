@@ -86,6 +86,7 @@ int main()
 	std::string clientName = "";
 	std::cout << "Input your name: ";
 	std::cin >> clientName;
+	
 
 	//  ----- SELECTION MODE ----- //
 	char connectionType, mode;
@@ -129,6 +130,7 @@ int main()
 
 						Stext = mensaje;
 						status = socket.send(Stext.c_str(), Stext.length() + 1);
+						Stext = "[ " + clientName + " ]> " + mensaje;
 						if (status == sf::Socket::Done) {
 							if (Stext == "exit") {
 								aMensajes.push_back("La sesion ha finalizado");
