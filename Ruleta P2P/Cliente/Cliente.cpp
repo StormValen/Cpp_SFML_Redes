@@ -162,15 +162,13 @@ void MSG() {
 	}
 	if (state == nextRound) {
 		msgChat("> Dealer: Para pasar a la siguiente ronda escribir todos ready");
-		while (state == nextRound) {
 			for (int i = 0; i < Players.size(); i++) {
 				if (Players[i].nextRound == true) {
 					msgChat("> Dealer: Comienza la siguiente ronda");
-					state = Logged;
 				}
 				std::cout << Players[i].nextRound << std::endl;
 			}
-		}
+			//state = Logged;
 	}
 }
 
