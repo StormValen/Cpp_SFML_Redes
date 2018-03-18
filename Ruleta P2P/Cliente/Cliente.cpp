@@ -6,7 +6,7 @@
 #include <mutex>
 #include <string>
 #include <SFML\Graphics.hpp>
-#define MAX_PLAYERS 1
+#define MAX_PLAYERS 2
 
 enum GameState{ Logged, Bed, Winner, EndGame, Chat} state;
 
@@ -98,24 +98,27 @@ void PeerConnection() {
 	packLog << player.name << player.money;
 	for (int i = 1; i <= aPeers.size(); i++) {
 		status = aPeers[i-1]->send(packLog);
-		if (status != sf::Socket::Done) {
-			std::cout << "Error al enviar" << std::endl;
+		if (status == sf::Socket::Done) {
+		}
+		else if (status == sf::Socket::Disconnected) {
+			std::cout << "Un peer se ha desconecatado" << std::endl;
 		}
 	}
 	packLog.clear();
 	for (int i = 1; i <= aPeers.size(); i++) {
 		status = aPeers[i-1]->receive(packLog);
-		if (status != sf::Socket::Done) {
-			std::cout << "Error al recivir" << std::endl;
-		}
-		else {
+		if (status == sf::Socket::Done) {
 			Player pAux;
 			packLog >> pAux.name >> pAux.money;
 			Players.push_back(pAux);
 		}
+		else if(status == sf::Socket::Disconnected){
+			std::cout << "Un peer se ha desconecatado" << std::endl;
+
+		}
 	}
 	for (int i = 1; i < Players.size(); i++) {
-		msgChat(">" + Players[i].name + " se ha conectado y tiene " + Players[i].money + " monedas");
+		msgChat("> " + Players[i].name + " se ha conectado y tiene " + Players[i].money + " monedas");
 	}
 	packLog.clear();
 	state = Logged;
@@ -124,10 +127,28 @@ void PeerConnection() {
 
 void MSG() {
 	if (state == Logged) {
-		msgChat("Introduce el dinero de la apusta");
+		msgChat("> Dealer: Introduce el dinero de la apusta");
 	}
 	if (state == Bed) {
-		msgChat("Indica el tipo");
+		msgChat("> Dealer: Introduce un numero del 0 al 34 para decidir a que apostar");
+	}
+	if (state == Chat) {
+		msgChat("> Dealer: Mientras sale el numero ganador y se hacen todos los calculas entrais en el modo chat");
+	}
+	if (state == Winner) {
+		//calcular random
+		//comprobar el numero con el de Player[i].bet
+	/*	for (int i = 0; i < Players.size(); i++) {
+			if (Players[i].bet == random) {
+				//
+			}
+		}*/
+		//si alguno acierta calcular el dinero
+		//actualizar el dinero con Players[i].money
+		//mostrar por el chat el numero y el dinero de cada uno
+	}
+	if (state == EndGame) {
+
 	}
 }
 
@@ -164,31 +185,32 @@ void thread_Chat() {
 		if (state != EndGame) {
 			for (int i = 1; i <= aPeers.size(); i++) {
 				aPeers[i - 1]->setBlocking(false);
-				//std::cout << aPeers.size();
-				status = aPeers[i-1]->receive(pack);
-				if (status != sf::Socket::Done) {
-					 if (status == sf::Socket::Disconnected) {
-						msgChat("Se ha desconectado el peer con puerto : " + aPeers[i-1]->getRemotePort());
-					}
-				}
-				else {
+				status = aPeers[i - 1]->receive(pack);
+
+				if (status == sf::Socket::Done) {
 					if (state == Logged) {
 						pack >> player.betMoney;
-						string = " Ha apostado " + player.betMoney;
-						for (int i = 1; i < Players.size(); i++) {
-							msgChat("> [ " + Players[i].name + " ]" + string);
-						}
-						//state = Bed;
+						string ="> Ha apostado " + player.betMoney;
+						msgChat("> [ " + Players[i].name + " ]" + string);
 					}
-					if (state == Bed) {
+					else if (state == Bed) {
 						pack >> player.bet;
-						string = " El" + player.bet + " ha sido su apuesta";
+						string = " Ha apostado al " + player.bet;
+						msgChat("> [ " + Players[i].name + " ]" + string);
 					}
-					//pack >> string;
+					else if (state == Chat || state == Winner) {
+						pack >> string;
+						msgChat("> [ " + Players[i].name + " ]" + string);
+					}
+					pack.clear();
 
 				}
-				pack.clear();
+				else if (status == sf::Socket::Disconnected) {
+					msgChat("Un peer se ha desconecatado");
+
+				}
 			}
+			
 		}
 		sf::Event evento;
 		while (window.pollEvent(evento))
@@ -217,26 +239,36 @@ void thread_Chat() {
 						pack << player.bet;
 						//state = Chat;
 					}
+					if (state == Chat) {
+						pack << mensaje;
+					}
 					for (int i = 1; i <= aPeers.size(); i++) {
 						aPeers[i - 1]->setBlocking(false);
 						status = aPeers[i - 1]->send(pack);
-						if (status != sf::Socket::Done) {
-							msgChat("Error");
-							if (status == sf::Socket::Disconnected) {
-								msgChat("Desconexion");
-							}
+					}
+					if (status == sf::Socket::Done) {
+						if (mensaje == "exit") {
+							msgChat("Sesion finalizada");
+							state = EndGame;
+							window.close();
+						}
+						if (mensaje == "money") {
+							msgChat("> Tienes " + player.money);
 						}
 						else {
 							msgChat("> [Yo] " + mensaje);
-
 						}
 					}
+					else if (status == sf::Socket::Disconnected) {
+						msgChat("> Un peer se ha desconecatado");
+					}
+					
+					pack.clear();
 					if (aMensajes.size() > 25)
 					{
 						aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
 					}
 					mensaje = ">";
-					pack.clear();
 				}
 				break;
 			case sf::Event::TextEntered:
@@ -267,9 +299,10 @@ int main()
 {
 	PeerConnection();
 	std::thread tr(&thread_Chat);
-	MSG();
+	std::thread game(&MSG);
+	//MSG();
 
 	//state = EndGame;	
 	tr.join();
-	//msg.join();
+	game.join();
 }
