@@ -1,4 +1,1 @@
-﻿  Source.cpp
-d:\repositorios\cpp_sfml_redes\platilla_3projects\gameserver\source.cpp(102): warning C4101: 'bytesSent': variable local sin referencia
-  GameServer.vcxproj -> D:\Repositorios\Cpp_SFML_Redes\Platilla_3Projects\x64\Debug\GameServer.exe
-  GameServer.vcxproj -> D:\Repositorios\Cpp_SFML_Redes\Platilla_3Projects\x64\Debug\GameServer.pdb (Partial PDB)
+﻿

@@ -61,12 +61,12 @@ int main()
 	window.create(sf::VideoMode(screenDimensions.x, screenDimensions.y), "Chat");
 
 	sf::Font font;
-	if (!font.loadFromFile("digital.ttf"))
+	if (!font.loadFromFile("visitor1.ttf"))
 	{
 		std::cout << "Can't load the font file" << std::endl;
 	}
 
-	sf::String mensaje = ">";
+	sf::String mensaje = "";
 	sf::Text chattingText(mensaje, font, 14);
 	chattingText.setFillColor(sf::Color(0, 160, 0));
 	chattingText.setStyle(sf::Text::Bold);
@@ -84,7 +84,7 @@ int main()
 	sf::IpAddress ip = sf::IpAddress::getLocalAddress();
 
 	std::string clientName = "";
-	std::cout << "Input your name: " << std::endl;
+	std::cout << "Input your name: ";
 	std::cin >> clientName;
 
 	//  ----- SELECTION MODE ----- //
@@ -127,10 +127,10 @@ int main()
 					else if (evento.key.code == sf::Keyboard::Return)
 					{
 
-						Stext = "[ " + clientName + " ]   " + mensaje;
+						Stext = mensaje;
 						status = socket.send(Stext.c_str(), Stext.length() + 1);
 						if (status == sf::Socket::Done) {
-							if (Stext == ">exit") {
+							if (Stext == "exit") {
 								aMensajes.push_back("La sesion ha finalizado");
 								window.close();
 							}
@@ -142,7 +142,7 @@ int main()
 							aMensajes.push_back("Se ha producido una desconexion");
 							window.close();
 						}
-						mensaje = ">";
+						mensaje = "";
 					}
 					break;
 				case sf::Event::TextEntered:
