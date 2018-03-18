@@ -6,9 +6,9 @@
 #include <mutex>
 #include <string>
 #include <SFML\Graphics.hpp>
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 1
 
-enum GameState{ Logged, Bed, Winner, EndGame, Chat} state;
+enum GameState{ Logged, Bed, Winner, EndGame, Chat, nextRound} state;
 
 struct Direction //almazenar la direccion de cada peer
 {
@@ -17,7 +17,9 @@ struct Direction //almazenar la direccion de cada peer
 };
 
 struct Player {
-	std::string name, money, bet, betMoney;
+	std::string name;
+	int money, bet, betMoney, moneyWin;
+	bool nextRound = false;
 };
 Player player;
 std::vector<Player> Players;
@@ -118,16 +120,17 @@ void PeerConnection() {
 		}
 	}
 	for (int i = 1; i < Players.size(); i++) {
-		msgChat("> " + Players[i].name + " se ha conectado y tiene " + Players[i].money + " monedas");
+		msgChat("> " + Players[i].name + " se ha conectado y tiene " + std::to_string(Players[i].money) + " monedas");
 	}
 	packLog.clear();
-	state = Logged;
+	state = nextRound;
 	listener.close();
 }
 
 void MSG() {
 	if (state == Logged) {
 		msgChat("> Dealer: Introduce el dinero de la apusta");
+		player.nextRound = false;
 	}
 	if (state == Bed) {
 		msgChat("> Dealer: Introduce un numero del 0 al 34 para decidir a que apostar");
@@ -137,18 +140,37 @@ void MSG() {
 	}
 	if (state == Winner) {
 		//calcular random
-		//comprobar el numero con el de Player[i].bet
-	/*	for (int i = 0; i < Players.size(); i++) {
-			if (Players[i].bet == random) {
-				//
+		srand(time(NULL));
+		int number = rand() % 35;
+		for (int i = 0; i < Players.size(); i++) {
+			if (Players[i].bet == number) {
+				Players[i].moneyWin = Players[i].betMoney * 36;
 			}
-		}*/
-		//si alguno acierta calcular el dinero
-		//actualizar el dinero con Players[i].money
-		//mostrar por el chat el numero y el dinero de cada uno
+			if (Players[i].bet != number) {
+				Players[i].moneyWin = Players[i].betMoney * 0;
+			}
+			Players[i].money += Players[i].moneyWin;
+		}
+		msgChat("> Dealer: Atencion tenemos resultado, el numero ganador ha sido " + std::to_string(number));
+		for (int i = 0; i < Players.size(); i++) {
+			msgChat("> Dealer: " + Players[i].name + " ha ganado en esta ronda " + std::to_string(Players[i].moneyWin));
+			Players[i].bet = 0;
+			Players[i].betMoney = 0;
+			Players[i].moneyWin = 0;
+		}
+		msgChat("> Dealer: Se ha acabado esta ronda, tienes " + std::to_string(player.money));	
 	}
-	if (state == EndGame) {
-
+	if (state == nextRound) {
+		msgChat("> Dealer: Para pasar a la siguiente ronda escribir todos ready");
+		while (state == nextRound) {
+			for (int i = 0; i < Players.size(); i++) {
+				if (Players[i].nextRound == true) {
+					msgChat("> Dealer: Comienza la siguiente ronda");
+					state = Logged;
+				}
+				std::cout << Players[i].nextRound << std::endl;
+			}
+		}
 	}
 }
 
@@ -186,31 +208,38 @@ void thread_Chat() {
 			for (int i = 1; i <= aPeers.size(); i++) {
 				aPeers[i - 1]->setBlocking(false);
 				status = aPeers[i - 1]->receive(pack);
-
 				if (status == sf::Socket::Done) {
 					if (state == Logged) {
 						pack >> player.betMoney;
-						string ="> Ha apostado " + player.betMoney;
+						string ="> Ha apostado " + std::to_string(player.betMoney);
 						msgChat("> [ " + Players[i].name + " ]" + string);
 					}
 					else if (state == Bed) {
 						pack >> player.bet;
-						string = " Ha apostado al " + player.bet;
+						string = " Ha apostado al " + std::to_string(player.bet);
 						msgChat("> [ " + Players[i].name + " ]" + string);
 					}
 					else if (state == Chat || state == Winner) {
 						pack >> string;
 						msgChat("> [ " + Players[i].name + " ]" + string);
 					}
-					pack.clear();
+					else if (state == Chat || state == nextRound) {
+						pack >> string;
+						if (string == "ready") {
+							Players[i].nextRound = true;
+							msgChat("> [ " + Players[i].name + " ]" + string);
 
+						}else{
+							msgChat("> [ " + Players[i].name + " ]" + string);
+						}
+					}
+					pack.clear();
 				}
 				else if (status == sf::Socket::Disconnected) {
 					msgChat("Un peer se ha desconecatado");
 
 				}
-			}
-			
+			}		
 		}
 		sf::Event evento;
 		while (window.pollEvent(evento))
@@ -230,16 +259,19 @@ void thread_Chat() {
 				{
 					std::string aux = "";
 					if (state == Logged) {
-						player.betMoney = mensaje;
+						aux = mensaje;
+						player.betMoney = stoi(aux);
 						pack << player.betMoney;
-						//state = Bed;
 					}
 					if (state == Bed) {
-						player.bet = mensaje;
+						aux = mensaje;
+						player.bet = stoi(aux);
 						pack << player.bet;
-						//state = Chat;
 					}
-					if (state == Chat) {
+					if (state == Chat || state == Winner) {
+						pack << mensaje;
+					}
+					if (state == Chat || state == nextRound) {
 						pack << mensaje;
 					}
 					for (int i = 1; i <= aPeers.size(); i++) {
@@ -254,6 +286,9 @@ void thread_Chat() {
 						}
 						if (mensaje == "money") {
 							msgChat("> Tienes " + player.money);
+						}
+						if (mensaje == "ready") {
+							player.nextRound = true;
 						}
 						else {
 							msgChat("> [Yo] " + mensaje);
