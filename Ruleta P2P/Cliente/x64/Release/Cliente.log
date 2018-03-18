@@ -1,9 +1,9 @@
 ﻿  Cliente.cpp
-Cliente.cpp(168): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-Cliente.cpp(478): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
+Cliente.cpp(165): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+Cliente.cpp(462): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
   Generando código
-  2 of 478 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
+  2 of 477 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    3 functions had inline decision re-evaluated but remain unchanged
+    0 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
   Cliente.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\Ruleta P2P\x64\Release\Cliente.exe

@@ -8,7 +8,7 @@
 #include <SFML\Graphics.hpp>
 #define MAX_PLAYERS 1
 
-enum GameState{ Logged, Bed, Winner, EndGame, Chat} state;
+enum GameState{ Logged, Bed, Winner, EndGame} state;
 
 struct Direction //almazenar la direccion de cada peer
 {
@@ -159,9 +159,6 @@ void MSG() {
 		msgChat("> Dealer: 41-42-43 --> Filas");
 		msgChat("> Dealer: 44-45-46 --> Docenas");
 		msgChat("> Dealer: 47-48 --> 0-18/19-36");
-	}
-	if (state == Chat) {
-		msgChat("> Dealer: Mientras sale el numero ganador y se hacen todos los calculas entrais en el modo chat");
 	}
 	if (state == Winner) {
 		//calcular random
@@ -341,26 +338,19 @@ void thread_Chat() {
 						estados++;
 
 					}
-					else if (state == Chat || state == Winner) {
+					else if (state == Winner) {
 						pack >> string;
-						msgChat("> [ " + Players[i].name + " ]" + string);
-						Players[i - 1].isReady = true;
-						estados++;
-
-					}
-					else if (state == Chat) {
-						pack >> string;
-						if (string == ">ready" && estados == 3) {
+						if (string == "ready") {
 							msgChat("> [ " + Players[i].name + " ]" + string);
 							Players[i - 1].isReady = true;
 							estados++;
 
 						}
-						else{
+						else {
 							msgChat("> [ " + Players[i].name + " ]" + string);
 						}
-						Players[i - 1].isReady = true;
-						estados++;
+						//Players[i - 1].isReady = true;
+						//estados++;
 
 					}
 					pack.clear();
@@ -373,8 +363,7 @@ void thread_Chat() {
 			if (ArePlayersReady()) {
 				if(estados == 1)state = Bed;
 				if (estados == 2)state = Winner;
-				if (estados == 3)state = Chat;
-				if (estados == 4)state = Logged;
+				if (estados == 3)state = Logged;
 				for (int i = 0; i < Players.size(); i++) {
 					Players[i].isReady = false;
 				}
@@ -412,13 +401,13 @@ void thread_Chat() {
 						std::cout << player.bet;
 						Players[1].isReady = true;
 					}
-					if (state == Chat || state == Winner) {
+					if (state == Winner) {
 						pack << mensaje;
-						Players[1].isReady = true;
-					}
-					if (state == Chat) {
-						pack << mensaje;
-						Players[1].isReady = true;
+						if (mensaje == "ready") {
+							Players[1].isReady = true;
+							//estados++;
+						}
+						//Players[1].isReady = true;
 					}
 					for (int i = 1; i <= aPeers.size(); i++) {
 						aPeers[i - 1]->setBlocking(false);
@@ -426,18 +415,14 @@ void thread_Chat() {
 						
 					}
 					if (status == sf::Socket::Done) {
-						if (mensaje == ">exit") {
+						if (mensaje == "exit") {
 							msgChat("Sesion finalizada");
 							state = EndGame;
 							window.close();
 						}
 						if (mensaje == "money") {
 							msgChat("> Tienes " + player.money);
-						}
-						if (mensaje == ">ready" && estados == 3) {
-							Players[1].isReady = true;
-							estados++;
-						}
+						}	
 						else {
 							msgChat("> [Yo] " + mensaje);
 						}
@@ -448,12 +433,11 @@ void thread_Chat() {
 					
 					pack.clear();
 					
-					mensaje = ">";
+					mensaje = "";
 					if (ArePlayersReady()) {
 						if (estados == 1)state = Bed;
 						if (estados == 2)state = Winner;
-						if (estados == 3)state = Chat;
-						if (estados == 4)state = Logged;
+						if (estados == 3)state = Logged;
 
 						for (int i = 0; i < Players.size(); i++) {
 							Players[i].isReady = false;
