@@ -8,7 +8,7 @@
 #include <SFML\Graphics.hpp>
 #define MAX_PLAYERS 1
 
-enum GameState{ Logged, Bed, Winner, EndGame, Chat, nextRound} state;
+enum GameState{ Logged, Bed, Winner, EndGame, Chat} state;
 
 struct Direction //almazenar la direccion de cada peer
 {
@@ -18,8 +18,11 @@ struct Direction //almazenar la direccion de cada peer
 
 struct Player {
 	std::string name;
-	int money, bet, betMoney, moneyWin;
-	bool nextRound = false;
+	int money = 0;
+	int bet = 0;
+	int betMoney = 0;
+	int moneyWin = 0;
+	bool isReady = false;
 };
 Player player;
 std::vector<Player> Players;
@@ -28,11 +31,24 @@ sf::Socket::Status status;
 std::vector<sf::TcpSocket*> aPeers;
 std::vector<std::string> aMensajes;
 sf::String mensaje = "";
+int estados = 0;
 
 void msgChat(std::string msg) {
 	aMensajes.push_back(msg);
+	if (aMensajes.size() > 25)
+	{
+		aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
+	}
 }
 
+bool ArePlayersReady() {
+	for (int i = 0; i < Players.size();i++) {	
+		if (Players[i].isReady == false) {
+			return false;
+		}
+	}
+	return true;
+}
 void PeerConnection() {
 	sf::Packet packet;
 	Direction direction;
@@ -123,17 +139,26 @@ void PeerConnection() {
 		msgChat("> " + Players[i].name + " se ha conectado y tiene " + std::to_string(Players[i].money) + " monedas");
 	}
 	packLog.clear();
-	state = nextRound;
+	state = Logged;
 	listener.close();
 }
 
 void MSG() {
 	if (state == Logged) {
 		msgChat("> Dealer: Introduce el dinero de la apusta");
-		player.nextRound = false;
+		for (int i = 0; i < Players.size(); i++) {
+			estados = 0;
+			Players[i].isReady = false;
+		}
 	}
 	if (state == Bed) {
-		msgChat("> Dealer: Introduce un numero del 0 al 34 para decidir a que apostar");
+		msgChat("> Dealer: A que quieres aposter?");
+		msgChat("> Dealer: 0-36 --> Numero");
+		msgChat("> Dealer: 37-38 --> Rojos/Negros");
+		msgChat("> Dealer: 39-40 --> Pares/Impares");
+		msgChat("> Dealer: 41-42-43 --> Filas");
+		msgChat("> Dealer: 44-45-46 --> Docenas");
+		msgChat("> Dealer: 47-48 --> 0-18/19-36");
 	}
 	if (state == Chat) {
 		msgChat("> Dealer: Mientras sale el numero ganador y se hacen todos los calculas entrais en el modo chat");
@@ -141,17 +166,117 @@ void MSG() {
 	if (state == Winner) {
 		//calcular random
 		srand(time(NULL));
-		int number = rand() % 35;
+		int randomNumber = rand() % 47;
+		int rojos[] = { 1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36 }; //18 -->37
+		int negros[] = { 2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35 }; //18 -->38
+		int par[] = { 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34 }; //19 -->39
+		int impar[] = { 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33 }; //18 -->40
+		int filaA[] = { 3,6,9,12,15,18,21,24,27,30,33,36 }; //12 -->41
+		int filaB[] = { 2,5,8,11,14,17,20,23,26,29,32,35 }; //12 -->42
+		int filaC[] = { 1,4,7,10,13,16,19,22,25,28,31,34 }; //12 -->43
+		int docenaA[] = { 1,2,3,4,5,6,7,8,9,10,11,12 }; //12 -->44
+		int docenaB[] = { 13,14,15,16,17,18,19,20,21,22,23,24 }; //12 -->45
+		int docenaC[] = { 25,26,27,28,29,30,31,32,33,34,35,36 }; //12 -->46
+		int mA[] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18 }; //18 -->47
+		int mB[] = { 19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36 }; //18 -->48
 		for (int i = 0; i < Players.size(); i++) {
-			if (Players[i].bet == number) {
+			if (Players[i].bet == 37) {//rojos
+				for (int i = 0; i < 18; i++) {
+					if (randomNumber == rojos[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 2;
+					}
+				}
+			}
+			if (Players[i].bet == 38) { //apuesta a negros
+				for (int i = 0; i < 18; i++) {
+					if (randomNumber == negros[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 2;
+					}
+				}
+			}
+			if (Players[i].bet == 39) { //apuesta a pares
+				for (int i = 0; i < 19; i++) {
+					if (randomNumber == par[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 2;
+					}
+				}
+			}
+			if (Players[i].bet == 40) { //apuesta a impares
+				for (int i = 0; i < 19; i++) {
+					if (randomNumber == impar[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 2;
+					}
+				}
+			}
+			if (Players[i].bet == 41) { //apuesta a fila 1
+				for (int i = 0; i < 12; i++) {
+					if (randomNumber == filaA[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 3;
+					}
+				}
+			}
+			if (Players[i].bet == 42) { //apuesta a fila 2
+				for (int i = 0; i < 12; i++) {
+					if (randomNumber == filaB[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 3;
+					}
+				}
+			}
+			if (Players[i].bet == 43) { //apuesta a fila 3
+				for (int i = 0; i < 12; i++) {
+					if (randomNumber == filaC[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 3;
+					}
+				}
+			}
+
+			if (Players[i].bet == 44) { //apuesta a docena 1
+				for (int i = 0; i < 12; i++) {
+					if (randomNumber == docenaA[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 3;
+					}
+				}
+			}
+
+			if (Players[i].bet == 45) { //apuesta a docena 2
+				for (int i = 0; i < 12; i++) {
+					if (randomNumber == docenaB[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 3;
+					}
+				}
+			}
+			if (Players[i].bet == 46) { //apuesta a docena 3
+				for (int i = 0; i < 12; i++) {
+					if (randomNumber == docenaC[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 3;
+					}
+				}
+			}
+
+			if (Players[i].bet == 47) { //apuesta a 0-18
+				for (int i = 0; i < 12; i++) {
+					if (randomNumber == mA[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 2;
+					}
+				}
+			}
+
+			if (Players[i].bet == 48) { //apuesta a 18-0
+				for (int i = 0; i < 12; i++) {
+					if (randomNumber == mB[i]) {
+						Players[i].moneyWin = Players[i].betMoney * 2;
+					}
+				}
+			}
+			if (Players[i].bet == randomNumber) {
 				Players[i].moneyWin = Players[i].betMoney * 36;
 			}
-			if (Players[i].bet != number) {
-				Players[i].moneyWin = Players[i].betMoney * 0;
+			else {
+				Players[i].moneyWin = 0;
 			}
 			Players[i].money += Players[i].moneyWin;
 		}
-		msgChat("> Dealer: Atencion tenemos resultado, el numero ganador ha sido " + std::to_string(number));
+		msgChat("> Dealer: Atencion tenemos resultado, el numero ganador ha sido " + std::to_string(randomNumber));
 		for (int i = 0; i < Players.size(); i++) {
 			msgChat("> Dealer: " + Players[i].name + " ha ganado en esta ronda " + std::to_string(Players[i].moneyWin));
 			Players[i].bet = 0;
@@ -159,16 +284,8 @@ void MSG() {
 			Players[i].moneyWin = 0;
 		}
 		msgChat("> Dealer: Se ha acabado esta ronda, tienes " + std::to_string(player.money));	
-	}
-	if (state == nextRound) {
-		msgChat("> Dealer: Para pasar a la siguiente ronda escribir todos ready");
-			for (int i = 0; i < Players.size(); i++) {
-				if (Players[i].nextRound == true) {
-					msgChat("> Dealer: Comienza la siguiente ronda");
-				}
-				std::cout << Players[i].nextRound << std::endl;
-			}
-			//state = Logged;
+		msgChat("> Dealer: Estais en modo chat, podeis hablar de lo que querais");
+		msgChat("Se comenzara la siguiente ronda cuando todo el mundo escriba ready");
 	}
 }
 
@@ -211,25 +328,40 @@ void thread_Chat() {
 						pack >> player.betMoney;
 						string ="> Ha apostado " + std::to_string(player.betMoney);
 						msgChat("> [ " + Players[i].name + " ]" + string);
+							std::cout << Players[i-1].isReady << std::endl;
+							Players[i-1].isReady = true;
+							estados++;
+							std::cout << Players[i-1].isReady << std::endl;
 					}
 					else if (state == Bed) {
 						pack >> player.bet;
 						string = " Ha apostado al " + std::to_string(player.bet);
 						msgChat("> [ " + Players[i].name + " ]" + string);
+						Players[i - 1].isReady = true;
+						estados++;
+
 					}
 					else if (state == Chat || state == Winner) {
 						pack >> string;
 						msgChat("> [ " + Players[i].name + " ]" + string);
-					}
-					else if (state == Chat || state == nextRound) {
-						pack >> string;
-						if (string == "ready") {
-							Players[i].nextRound = true;
-							msgChat("> [ " + Players[i].name + " ]" + string);
+						Players[i - 1].isReady = true;
+						estados++;
 
-						}else{
+					}
+					else if (state == Chat) {
+						pack >> string;
+						if (string == ">ready" && estados == 3) {
+							msgChat("> [ " + Players[i].name + " ]" + string);
+							Players[i - 1].isReady = true;
+							estados++;
+
+						}
+						else{
 							msgChat("> [ " + Players[i].name + " ]" + string);
 						}
+						Players[i - 1].isReady = true;
+						estados++;
+
 					}
 					pack.clear();
 				}
@@ -237,7 +369,18 @@ void thread_Chat() {
 					msgChat("Un peer se ha desconecatado");
 
 				}
-			}		
+			}	
+			if (ArePlayersReady()) {
+				if(estados == 1)state = Bed;
+				if (estados == 2)state = Winner;
+				if (estados == 3)state = Chat;
+				if (estados == 4)state = Logged;
+				for (int i = 0; i < Players.size(); i++) {
+					Players[i].isReady = false;
+				}
+				MSG();
+
+			}
 		}
 		sf::Event evento;
 		while (window.pollEvent(evento))
@@ -258,26 +401,32 @@ void thread_Chat() {
 					std::string aux = "";
 					if (state == Logged) {
 						aux = mensaje;
-						player.betMoney = stoi(aux);
+						player.betMoney = atoi(aux.c_str());
+						Players[1].isReady = true;
 						pack << player.betMoney;
 					}
 					if (state == Bed) {
 						aux = mensaje;
-						player.bet = stoi(aux);
+						player.bet = atoi(aux.c_str());
 						pack << player.bet;
+						std::cout << player.bet;
+						Players[1].isReady = true;
 					}
 					if (state == Chat || state == Winner) {
 						pack << mensaje;
+						Players[1].isReady = true;
 					}
-					if (state == Chat || state == nextRound) {
+					if (state == Chat) {
 						pack << mensaje;
+						Players[1].isReady = true;
 					}
 					for (int i = 1; i <= aPeers.size(); i++) {
 						aPeers[i - 1]->setBlocking(false);
 						status = aPeers[i - 1]->send(pack);
+						
 					}
 					if (status == sf::Socket::Done) {
-						if (mensaje == "exit") {
+						if (mensaje == ">exit") {
 							msgChat("Sesion finalizada");
 							state = EndGame;
 							window.close();
@@ -285,8 +434,9 @@ void thread_Chat() {
 						if (mensaje == "money") {
 							msgChat("> Tienes " + player.money);
 						}
-						if (mensaje == "ready") {
-							player.nextRound = true;
+						if (mensaje == ">ready" && estados == 3) {
+							Players[1].isReady = true;
+							estados++;
 						}
 						else {
 							msgChat("> [Yo] " + mensaje);
@@ -297,11 +447,20 @@ void thread_Chat() {
 					}
 					
 					pack.clear();
-					if (aMensajes.size() > 25)
-					{
-						aMensajes.erase(aMensajes.begin(), aMensajes.begin() + 1);
-					}
+					
 					mensaje = ">";
+					if (ArePlayersReady()) {
+						if (estados == 1)state = Bed;
+						if (estados == 2)state = Winner;
+						if (estados == 3)state = Chat;
+						if (estados == 4)state = Logged;
+
+						for (int i = 0; i < Players.size(); i++) {
+							Players[i].isReady = false;
+						}
+						MSG();
+
+					}
 				}
 				break;
 			case sf::Event::TextEntered:
@@ -331,10 +490,10 @@ void thread_Chat() {
 int main()
 {
 	PeerConnection();
-	std::thread tr(&thread_Chat);
 	std::thread game(&MSG);
-	//MSG();
+	std::thread tr(&thread_Chat);
 
+	//MSG();
 	//state = EndGame;	
 	tr.join();
 	game.join();

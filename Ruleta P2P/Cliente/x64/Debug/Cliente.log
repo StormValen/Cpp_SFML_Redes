@@ -1,4 +1,4 @@
 ﻿  Cliente.cpp
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\ruleta p2p\cliente\cliente.cpp(143): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\ruleta p2p\cliente\cliente.cpp(319): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\ruleta p2p\cliente\cliente.cpp(149): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\ruleta p2p\cliente\cliente.cpp(426): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
   Cliente.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\Ruleta P2P\x64\Debug\Cliente.exe
