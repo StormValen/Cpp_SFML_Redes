@@ -6,7 +6,7 @@
 #include <mutex>
 #include <string>
 #include <SFML\Graphics.hpp>
-#define MAX_PLAYERS 1
+#define MAX_PLAYERS 3
 
 enum GameState{ Logged, Bed, Winner, EndGame} state;
 
@@ -139,7 +139,7 @@ void PeerConnection() {
 		msgChat("> " + Players[i].name + " se ha conectado y tiene " + std::to_string(Players[i].money) + " monedas");
 	}
 	packLog.clear();
-	state = Logged;
+	state = Winner;
 	listener.close();
 }
 
