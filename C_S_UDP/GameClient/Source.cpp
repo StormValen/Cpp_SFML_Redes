@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <signal.h>
 //#include <wait.h>
+#include <thread>
 #include <stdio.h>
 #include <iostream>
 #include <SFML/Graphics.hpp>
@@ -20,10 +21,15 @@
 #define RADIO_AVATAR 25.f
 #define OFFSET_AVATAR 5
 
-float posX, posY;
 enum TipoProceso { RATON, GATO, PADRE };
 char tablero[SIZE_TABLERO];
-
+struct Player
+{
+	float posX, posY;
+	std::string name;
+};
+Player player;
+int ID;
 /**
 * Si vale true --> nos permite marcar casilla con el mouse
 * Si vale false --> No podemos interactuar con el tablero y aparece un letrero de "esperando"
@@ -73,9 +79,9 @@ void Connection(){
 	if (socket.receive(packetLog,IP , port) != sf::Socket::Done) {
 		std::cout << "Error";
 	}
-	int ID;
-	packetLog >> ID >> posX >> posY;
-	std::cout << ID << posX << posY << std::endl;
+
+	packetLog >> player.name >> ID >> player.posX >> player.posY;
+	std::cout << player.name << " Te has conectado, tu ID es: " <<  ID << " y pos " << player.posX << player.posY <<  std::endl;
 }
 
 
@@ -180,12 +186,12 @@ void Gameplay()
 		//TODO: Para pintar el circulito del ratón
 		sf::CircleShape shapeRaton(RADIO_AVATAR);
 		shapeRaton.setFillColor(sf::Color::Blue);
-		sf::Vector2f posicionRaton(posX, posY);
+		sf::Vector2f posicionRaton(player.posX, player.posY);
 		posicionRaton = BoardToWindows(posicionRaton);
 		shapeRaton.setPosition(posicionRaton);
 		window.draw(shapeRaton);
 
-		//Pintamos los cuatro circulitos del gato
+		/*//Pintamos los cuatro circulitos del gato
 		sf::CircleShape shapeGato(RADIO_AVATAR);
 		shapeGato.setFillColor(sf::Color::Red);
 
@@ -211,7 +217,7 @@ void Gameplay()
 		positionGato4 = BoardToWindows(positionGato4);
 		shapeGato.setPosition(positionGato4);
 
-		window.draw(shapeGato);
+		window.draw(shapeGato);*/
 
 
 		if (!tienesTurno)
@@ -253,7 +259,8 @@ void Gameplay()
 
 int main()
 {
-	Connection();
+	std::thread tr(&Connection);
+	//Connection();
 	Gameplay();
 	return 0;
 }

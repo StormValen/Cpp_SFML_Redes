@@ -7,6 +7,15 @@
 #include <cstring>
 
 #define MAX_PLAYERS 4
+struct Player
+{
+	sf::IpAddress IP;
+	unsigned short port;
+	float posX, posY;
+	std::string name;
+};
+int ID;
+std::map<int, Player> Players;
 
 //StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
 
@@ -64,24 +73,37 @@ bool ArePlayersReady() {
 	return true;
 }*/
 void Connection() {
+	srand(time(NULL));
 	sf::UdpSocket socket;
 	sf::Packet packetLog;
 	socket.bind(50000);
-	sf::IpAddress IP;
-	unsigned short port;
-	if (socket.receive(packetLog, IP, port) != sf::Socket::Done) {
-		std::cout << "Error al recivir" << std::endl;
-	}
-	std::string name;
-	packetLog >> name;
-	std::cout << name << std::endl;
-	packetLog.clear();
-	int ID = 1;
-	float posX = 0.0f;
-	float posY = 3.0f;
-	packetLog << ID << posX << posY;
-	if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
-		std::cout << "error";
+	Player player;
+	for (int i = 0; i < MAX_PLAYERS; i++) {
+		sf::IpAddress IP;
+		unsigned short port;
+		if (socket.receive(packetLog, IP, port) != sf::Socket::Done) {
+			std::cout << "Error al recivir" << std::endl;
+		}
+		packetLog >> player.name;
+		player.IP = IP;
+		player.port = port;
+		player.posX = rand() % 8;
+		player.posY = rand() % 8;
+		Players.insert(std::pair<int, Player> (i, player));
+		packetLog.clear();
+		ID = i;
+		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+			packetLog << it->second.name << it->first << it->second.posX << it->second.posY;
+			if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
+				std::cout << "error";
+			}
+			std::cout << it->second.name << it->first << it->second.posX << it->second.posY;
+		}
+		/*packetLog << player.name << i << player.posX << player.posY;
+		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
+			std::cout << "error";
+		}*/
+		packetLog.clear();
 	}
 }
 
