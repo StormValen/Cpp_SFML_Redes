@@ -25,10 +25,12 @@ enum TipoProceso { RATON, GATO, PADRE };
 char tablero[SIZE_TABLERO];
 struct Player
 {
+	int ID;
 	float posX, posY;
 	std::string name;
 };
 Player player;
+std::vector<Player>Players;
 int ID;
 /**
 * Si vale true --> nos permite marcar casilla con el mouse
@@ -79,9 +81,17 @@ void Connection(){
 	if (socket.receive(packetLog,IP , port) != sf::Socket::Done) {
 		std::cout << "Error";
 	}
-
-	packetLog >> player.name >> ID >> player.posX >> player.posY;
-	std::cout << player.name << " Te has conectado, tu ID es: " <<  ID << " y pos " << player.posX << player.posY <<  std::endl;
+	std::string welcome = "";
+	int size =0;
+	packetLog >> size;
+	for (int i = 0; i < size; i++) {
+		packetLog >> player.name >> welcome >> player.ID >> player.posX >> player.posY;
+		Players.push_back(player);
+		std::cout << size << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
+	}
+	/*for (int i = 0; i < Players.size(); i++) {
+		std::cout << size << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
+	}*/
 }
 
 

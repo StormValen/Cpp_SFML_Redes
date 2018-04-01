@@ -92,17 +92,16 @@ void Connection() {
 		Players.insert(std::pair<int, Player> (i, player));
 		packetLog.clear();
 		ID = i;
+		packetLog << (int)Players.size();
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			packetLog << it->second.name << it->first << it->second.posX << it->second.posY;
-			if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
-				std::cout << "error";
-			}
+			std::string welcome = " Bienvenido, te has conectado con el servidor, tu ID es :";
+			packetLog << it->second.name << welcome << it->first << it->second.posX << it->second.posY;
+			std::cout << (int)Players.size();
 			std::cout << it->second.name << it->first << it->second.posX << it->second.posY;
 		}
-		/*packetLog << player.name << i << player.posX << player.posY;
 		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
 			std::cout << "error";
-		}*/
+		}
 		packetLog.clear();
 	}
 }
