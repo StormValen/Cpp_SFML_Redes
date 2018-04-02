@@ -87,11 +87,8 @@ void Connection(){
 	for (int i = 0; i < size; i++) {
 		packetLog >> player.name >> welcome >> player.ID >> player.posX >> player.posY;
 		Players.push_back(player);
-		std::cout << size << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
+		std::cout << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
 	}
-	/*for (int i = 0; i < Players.size(); i++) {
-		std::cout << size << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
-	}*/
 }
 
 
@@ -194,14 +191,29 @@ void Gameplay()
 		}
 
 		//TODO: Para pintar el circulito del ratón
-		sf::CircleShape shapeRaton(RADIO_AVATAR);
+		/*sf::CircleShape shapeRaton(RADIO_AVATAR);
 		shapeRaton.setFillColor(sf::Color::Blue);
 		sf::Vector2f posicionRaton(player.posX, player.posY);
 		posicionRaton = BoardToWindows(posicionRaton);
 		shapeRaton.setPosition(posicionRaton);
-		window.draw(shapeRaton);
+		window.draw(shapeRaton);*/
 
-		/*//Pintamos los cuatro circulitos del gato
+		for (int i = 0; i < Players.size(); i++) {
+			sf::CircleShape shapeRaton(RADIO_AVATAR);
+			if (i == 0) {
+				shapeRaton.setFillColor(sf::Color::Blue);
+			}
+			else if (i != 0) {
+				shapeRaton.setFillColor(sf::Color::Red);
+			}
+
+			sf::Vector2f positionGato1(Players[i].posX, Players[i].posY);
+			positionGato1 = BoardToWindows(positionGato1);
+			shapeRaton.setPosition(positionGato1);
+
+			window.draw(shapeRaton);
+		}
+	/*	//Pintamos los cuatro circulitos del gato
 		sf::CircleShape shapeGato(RADIO_AVATAR);
 		shapeGato.setFillColor(sf::Color::Red);
 
@@ -221,14 +233,8 @@ void Gameplay()
 		positionGato3 = BoardToWindows(positionGato3);
 		shapeGato.setPosition(positionGato3);
 
-		window.draw(shapeGato);
-
-		sf::Vector2f positionGato4(7.f, 0.f);
-		positionGato4 = BoardToWindows(positionGato4);
-		shapeGato.setPosition(positionGato4);
-
 		window.draw(shapeGato);*/
-
+		
 
 		if (!tienesTurno)
 		{
@@ -272,5 +278,6 @@ int main()
 	std::thread tr(&Connection);
 	//Connection();
 	Gameplay();
+	tr.join();
 	return 0;
 }
