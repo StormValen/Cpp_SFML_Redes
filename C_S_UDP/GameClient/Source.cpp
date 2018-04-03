@@ -200,13 +200,12 @@ void Gameplay()
 
 		for (int i = 0; i < Players.size(); i++) {
 			sf::CircleShape shapeRaton(RADIO_AVATAR);
-			if (i == 0) {
+			if (i == player.ID) {
 				shapeRaton.setFillColor(sf::Color::Blue);
 			}
-			else if (i != 0) {
+			else {
 				shapeRaton.setFillColor(sf::Color::Red);
 			}
-
 			sf::Vector2f positionGato1(Players[i].posX, Players[i].posY);
 			positionGato1 = BoardToWindows(positionGato1);
 			shapeRaton.setPosition(positionGato1);
@@ -234,8 +233,6 @@ void Gameplay()
 		shapeGato.setPosition(positionGato3);
 
 		window.draw(shapeGato);*/
-		
-
 		if (!tienesTurno)
 		{
 			//Si no tengo el turno, pinto un letrerito de "Esperando..."
@@ -267,16 +264,13 @@ void Gameplay()
 				window.draw(rect);
 			}
 		}
-
 		window.display();
 	}
-
 }
 
 int main()
 {
 	std::thread tr(&Connection);
-	//Connection();
 	Gameplay();
 	tr.join();
 	return 0;

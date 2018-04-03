@@ -104,6 +104,7 @@ void Connection() {
 		}
 		packetLog.clear();
 	}
+	
 }
 
 /*void SocketSelector() {
