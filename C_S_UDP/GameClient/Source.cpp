@@ -29,6 +29,7 @@ struct Player
 	float posX, posY;
 	std::string name;
 };
+sf::UdpSocket socket;
 Player player;
 std::vector<Player>Players;
 int ID;
@@ -65,21 +66,40 @@ sf::Vector2f BoardToWindows(sf::Vector2f _position)
 {
 	return sf::Vector2f(_position.x*LADO_CASILLA + OFFSET_AVATAR, _position.y*LADO_CASILLA + OFFSET_AVATAR);
 }
+
+void Listen() {
+	sf::Packet pack;
+	sf::IpAddress IP;
+	unsigned short port;
+	if (socket.receive(pack, IP, port) != sf::Socket::Done) {
+		std::cout << "Errorasgagas";
+	}
+	std::string welcome = "";
+	int size = 0;
+	pack >> player.ID >> player.posX >> player.posY;
+	Players.push_back(player);
+	//std::cout << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
+
+}
 void Connection(){
-	sf::UdpSocket socket;
 	sf::Packet packetLog;
 	std::string name;
 	std::cout << "Introduce tu nombre" << std::endl;
 	std::cin >> name;
 	packetLog << name;
-	if (socket.send(packetLog, "localhost", 50000) != sf::Socket::Done) {
-		std::cout << "Error al enviar" << std::endl;
-	}
+	sf::Clock c;
+	c.restart();
+	//if (c.getElapsedTime().asMilliseconds() >= 500) {
+		if (socket.send(packetLog, "localhost", 50000) != sf::Socket::Done) {
+			std::cout << "Error al enviar" << std::endl;	
+		}
+		c.restart();
+	//}
 	packetLog.clear();
 	sf::IpAddress IP;
 	unsigned short port;
 	if (socket.receive(packetLog,IP , port) != sf::Socket::Done) {
-		std::cout << "Error";
+		std::cout << "Error al recivir";
 	}
 	std::string welcome = "";
 	int size =0;
@@ -90,7 +110,6 @@ void Connection(){
 		std::cout << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
 	}
 }
-
 
 /**
 * Contiene el código SFML que captura el evento del clic del mouse y el código que pinta por pantalla
@@ -271,7 +290,9 @@ void Gameplay()
 int main()
 {
 	std::thread tr(&Connection);
+	//std::thread tr2(&Listen);
 	Gameplay();
 	tr.join();
+	//tr2.join();
 	return 0;
 }

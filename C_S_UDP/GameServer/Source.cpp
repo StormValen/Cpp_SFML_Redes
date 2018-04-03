@@ -7,6 +7,8 @@
 #include <cstring>
 
 #define MAX_PLAYERS 4
+sf::UdpSocket socket;
+
 struct Player
 {
 	sf::IpAddress IP;
@@ -18,6 +20,18 @@ int ID;
 std::map<int, Player> Players;
 
 //StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
+void Recorrer() {
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
+			sf::Packet pack;
+			pack << it2->first << it2->second.posX << it2->second.posY;
+			if (socket.send(pack, it->second.IP, it->second.port) != sf::Socket::Done) {
+				std::cout << "error";
+			}
+		}
+	}
+
+}
 
 /*std::list<sf::TcpSocket*> myClients; //Lista con todos los clientes conectados.
 std::string currentState = "chat_mode";
@@ -74,7 +88,6 @@ bool ArePlayersReady() {
 }*/
 void Connection() {
 	srand(time(NULL));
-	sf::UdpSocket socket;
 	sf::Packet packetLog;
 	socket.bind(50000);
 	Player player;
@@ -94,11 +107,15 @@ void Connection() {
 		ID = i;
 		packetLog << (int)Players.size();
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			std::string welcome = " Bienvenido, te has conectado con el servidor, tu ID es :";
-			packetLog << it->second.name << welcome << it->first << it->second.posX << it->second.posY;
-			std::cout << (int)Players.size();
-			std::cout << it->second.name << it->first << it->second.posX << it->second.posY;
+				std::string welcome = " Bienvenido, te has conectado con el servidor, tu ID es :";
+				packetLog << it->second.name << welcome << it->first << it->second.posX << it->second.posY;
+				std::cout << (int)Players.size();
+				std::cout << it->second.name << it->first << it->second.posX << it->second.posY;
 		}
+		//Recorrer();
+		sf::Clock c;
+		c.restart();
+		c.getElapsedTime().asMilliseconds();
 		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
 			std::cout << "error";
 		}
