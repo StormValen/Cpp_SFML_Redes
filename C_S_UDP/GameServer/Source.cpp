@@ -15,6 +15,7 @@ struct Player
 	unsigned short port;
 	float posX, posY;
 	std::string name;
+	sf::Clock timePing;
 };
 int ID;
 std::map<int, Player> Players;
@@ -123,7 +124,17 @@ void Connection() {
 	}
 	
 }
-
+void Ping() {
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		sf::Clock clockP;
+		clockP.restart();
+		sf::Packet packPing;
+		packPing << "PING";
+		if (clockP.getElapsedTime().asSeconds() > 1) {
+			//if(socket.send())
+		}
+	}
+}
 /*void SocketSelector() {
 	bool end = false;
 	

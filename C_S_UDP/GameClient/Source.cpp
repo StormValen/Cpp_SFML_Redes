@@ -29,10 +29,7 @@ struct Player
 	float posX, posY;
 	std::string name;
 };
-sf::UdpSocket socket;
-Player player;
-std::vector<Player>Players;
-int ID;
+
 /**
 * Si vale true --> nos permite marcar casilla con el mouse
 * Si vale false --> No podemos interactuar con el tablero y aparece un letrero de "esperando"
@@ -66,7 +63,10 @@ sf::Vector2f BoardToWindows(sf::Vector2f _position)
 {
 	return sf::Vector2f(_position.x*LADO_CASILLA + OFFSET_AVATAR, _position.y*LADO_CASILLA + OFFSET_AVATAR);
 }
-
+sf::UdpSocket socket;
+Player player;
+std::vector<Player>Players;
+int ID;
 void Listen() {
 	sf::Packet pack;
 	sf::IpAddress IP;
