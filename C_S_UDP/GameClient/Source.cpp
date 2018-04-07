@@ -82,6 +82,7 @@ void Listen() {
 
 }
 void Connection(){
+	bool send = false;
 	sf::Packet packetLog;
 	std::string name;
 	std::cout << "Introduce tu nombre" << std::endl;
@@ -89,12 +90,15 @@ void Connection(){
 	packetLog << name;
 	sf::Clock c;
 	c.restart();
-	//if (c.getElapsedTime().asMilliseconds() >= 500) {
-		if (socket.send(packetLog, "localhost", 50000) != sf::Socket::Done) {
-			std::cout << "Error al enviar" << std::endl;	
+	while (!send) {
+		if (c.getElapsedTime().asMilliseconds() >= 500) {
+			if (socket.send(packetLog, "localhost", 50000) != sf::Socket::Done) {
+				std::cout << "Error al enviar" << std::endl;
+			}
+			c.restart();
+			send = true;
 		}
-		c.restart();
-	//}
+	}
 	packetLog.clear();
 	sf::IpAddress IP;
 	unsigned short port;
@@ -289,10 +293,9 @@ void Gameplay()
 
 int main()
 {
-	std::thread tr(&Connection);
+	Connection();
 	//std::thread tr2(&Listen);
 	Gameplay();
-	tr.join();
 	//tr2.join();
 	return 0;
 }

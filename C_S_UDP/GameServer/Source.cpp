@@ -6,7 +6,7 @@
 #include <mutex>
 #include <cstring>
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 sf::UdpSocket socket;
 
 struct Player
@@ -515,6 +515,5 @@ int main()
 {
 	//SocketSelector();
 	Connection();
-	system("pause");
 	return 0;
 }
