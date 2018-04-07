@@ -6,7 +6,7 @@
 #include <mutex>
 #include <cstring>
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 4
 sf::UdpSocket socket;
 
 struct Player
@@ -17,10 +17,12 @@ struct Player
 	std::string name;
 	sf::Clock timePing;
 };
+
 int ID;
 std::map<int, Player> Players;
 
 //StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
+
 void Recorrer() {
 	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 		for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
@@ -33,6 +35,8 @@ void Recorrer() {
 	}
 
 }
+
+
 
 /*std::list<sf::TcpSocket*> myClients; //Lista con todos los clientes conectados.
 std::string currentState = "chat_mode";
@@ -103,15 +107,28 @@ void Connection() {
 		player.port = port;
 		player.posX = rand() % 8;
 		player.posY = rand() % 8;
-		Players.insert(std::pair<int, Player> (i, player));
+		// Bucle que informa a los anteriores del nuevo jugador
+		/*for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		//std::cout << it->second.name << " --> New player connected:  " << player.name << " " << player.posX << player.posY << std::endl;
+		packetLog << player.name << player.posX << player.posY;
+		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
+		std::cout << "error";
+		}
+		}
+		packetLog.clear();*/
+		Players.insert(std::pair<int, Player>(i, player));
 		packetLog.clear();
 		ID = i;
 		packetLog << (int)Players.size();
+
+
+
+
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-				std::string welcome = " Bienvenido, te has conectado con el servidor, tu ID es :";
-				packetLog << it->second.name << welcome << it->first << it->second.posX << it->second.posY;
-				std::cout << (int)Players.size();
-				std::cout << it->second.name << it->first << it->second.posX << it->second.posY;
+			std::string welcome = " Bienvenido, te has conectado con el servidor, tu ID es :";
+			packetLog << it->second.name << welcome << it->first << it->second.posX << it->second.posY;
+			//std::cout << (int)Players.size();
+			std::cout << it->second.name << it->first << it->second.posX << it->second.posY;
 		}
 		//Recorrer();
 		sf::Clock c;
@@ -526,5 +543,6 @@ int main()
 {
 	//SocketSelector();
 	Connection();
+	// TODO gestion de desconexion y PING
 	return 0;
 }
