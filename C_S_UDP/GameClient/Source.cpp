@@ -125,7 +125,7 @@ void Ping() {
 	bool send = false;
 	std::string ACK;
 	packPing >> ACK;
-	std::cout << ACK;
+	//std::cout << ACK;
 	packPing.clear();
 	ACK = "ACK";
 	packPing << ACK;
@@ -134,8 +134,8 @@ void Ping() {
 			if (socket.send(packPing, "localhost", 50000) != sf::Socket::Done) {
 				std::cout << "Error al enviar" << std::endl;
 			}
-			c.restart();
 			send = true;
+			c.restart();
 		}
 	}
 }
@@ -151,7 +151,7 @@ void Gameplay()
 	while (window.isOpen())
 	{
 		sf::Event event;
-
+		Ping();
 		//Este primer WHILE es para controlar los eventos del mouse
 		while (window.pollEvent(event))
 		{
@@ -318,9 +318,10 @@ void Gameplay()
 int main()
 {
 	Connection();
-	std::thread tr(&Ping);
+	//while (true) {
+		//Ping();
+	//}
 	Gameplay();
-	tr.join();
 
 	return 0;
 }
