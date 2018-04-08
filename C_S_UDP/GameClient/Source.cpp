@@ -115,26 +115,26 @@ void Connection(){
 	}
 }
 void Ping() {
-	//socket.setBlocking(false);
+	socket.setBlocking(false);
 	sf::IpAddress IP;
 	unsigned short port;
 	sf::Packet packPing;
-	if (socket.receive(packPing, IP, port) != sf::Socket::Done) {
-		std::cout << "Error el recivir ping" << std::endl;
-	}
-	bool send = false;
-	std::string ACK;
-	packPing >> ACK;
-	//std::cout << ACK;
-	packPing.clear();
-	ACK = "ACK";
-	packPing <<player.ID <<ACK ;
-	while (!send) {
+	while (true) {
+		if (socket.receive(packPing, IP, port) != sf::Socket::Done) {
+			std::cout << "Error el recivir ping" << std::endl;
+		}
+		std::string ACK;
+		packPing >> ACK;
+		//std::cout << "recive";
+		packPing.clear();
+		ACK = "ACK";
+		packPing << player.ID << ACK;
+
 		if (c.getElapsedTime().asMilliseconds() >= 200) {
 			if (socket.send(packPing, "localhost", 50000) != sf::Socket::Done) {
 				std::cout << "Error al enviar" << std::endl;
 			}
-			send = true;
+			//std::cout << "send";
 			c.restart();
 		}
 	}
@@ -151,7 +151,7 @@ void Gameplay()
 	while (window.isOpen())
 	{
 		sf::Event event;
-		Ping();
+		//Ping();
 		//Este primer WHILE es para controlar los eventos del mouse
 		while (window.pollEvent(event))
 		{
@@ -318,10 +318,9 @@ void Gameplay()
 int main()
 {
 	Connection();
-	//while (true) {
-		//Ping();
-	//}
+	std::thread tr(&Ping);
 	Gameplay();
+	tr.join();
 
 	return 0;
 }

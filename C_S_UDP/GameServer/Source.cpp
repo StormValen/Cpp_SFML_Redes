@@ -163,7 +163,8 @@ void Ping() {
 			}		
 		}
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			if (it->second.timePing.getElapsedTime().asMilliseconds() > 500) {
+			//std::cout << it->second.timePing.getElapsedTime().asSeconds() << std::endl;
+			if (it->second.timePing.getElapsedTime().asMilliseconds() >= 5000) {
 				std::cout << "Desconexion";
 			}
 		}
