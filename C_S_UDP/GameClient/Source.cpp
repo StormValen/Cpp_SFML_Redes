@@ -67,6 +67,7 @@ sf::UdpSocket socket;
 Player player;
 std::vector<Player>Players;
 int ID;
+sf::Clock c;
 void Listen() {
 	sf::Packet pack;
 	sf::IpAddress IP;
@@ -88,7 +89,6 @@ void Connection(){
 	std::cout << "Introduce tu nombre" << std::endl;
 	std::cin >> name;
 	packetLog << name;
-	sf::Clock c;
 	c.restart();
 	while (!send) {
 		if (c.getElapsedTime().asMilliseconds() >= 500) {
@@ -114,7 +114,31 @@ void Connection(){
 		std::cout << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
 	}
 }
-
+void Ping() {
+	//socket.setBlocking(false);
+	sf::IpAddress IP;
+	unsigned short port;
+	sf::Packet packPing;
+	if (socket.receive(packPing, IP, port) != sf::Socket::Done) {
+		std::cout << "Error el recivir ping" << std::endl;
+	}
+	bool send = false;
+	std::string ACK;
+	packPing >> ACK;
+	std::cout << ACK;
+	packPing.clear();
+	ACK = "ACK";
+	packPing << ACK;
+	while (!send) {
+		if (c.getElapsedTime().asMilliseconds() >= 200) {
+			if (socket.send(packPing, "localhost", 50000) != sf::Socket::Done) {
+				std::cout << "Error al enviar" << std::endl;
+			}
+			c.restart();
+			send = true;
+		}
+	}
+}
 /**
 * Contiene el código SFML que captura el evento del clic del mouse y el código que pinta por pantalla
 */
@@ -294,8 +318,9 @@ void Gameplay()
 int main()
 {
 	Connection();
-	//std::thread tr2(&Listen);
+	std::thread tr(&Ping);
 	Gameplay();
-	//tr2.join();
+	tr.join();
+
 	return 0;
 }
