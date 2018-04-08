@@ -123,8 +123,6 @@ void Connection() {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			std::string welcome = " Bienvenido, te has conectado con el servidor, tu ID es :";
 			packetLog << it->second.name << welcome << it->first << it->second.posX << it->second.posY;
-			//std::cout << (int)Players.size();
-			//std::cout << it->second.name << it->first << it->second.posX << it->second.posY;
 		}
 		//Recorrer();
 		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
@@ -134,6 +132,16 @@ void Connection() {
 	}
 	
 }
+void sendAllPlayers(std::string msg, int id) {
+	sf::Packet packSendAll;
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		packSendAll << msg <<id;
+		if (socket.send(packSendAll, it->second.IP, it->second.port) != sf::Socket::Done) {
+			std::cout << "Error al enviar la desconexion" << std::endl;
+		}
+	}
+}
+
 void Ping() {
 	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 		it->second.timePing.restart();
@@ -156,30 +164,26 @@ void Ping() {
 					std::cout << "Error al enviar el ping" << std::endl;
 				}
 				else {
-					//std::cout << "Send" << it->second.name;
 					clockP.restart();
 				}
 			}
 		}
-			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-				if (it->second.timePing.getElapsedTime().asSeconds() >= 5) {
-					Players.erase(it->first);
-					std::cout << "Desconexion";
-				}
+		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+			if (it->second.timePing.getElapsedTime().asSeconds() >= 5) {
+				sendAllPlayers("Desconectado con la ID: ", it->first);
+				Players.erase(it->first);
 			}
-			//}
-			if (socket.receive(packPingR, IP, port) != sf::Socket::Done) {
-				//std::cout << "Error al recivir pingafasfasfa" << std::endl;
-			}
-			else {
-				packPingR >> id >> ping;
-				std::cout << id << ping;
-				Players.find(id)->second.timePing.restart();
-			}
-	//	}
+		}
+		if (socket.receive(packPingR, IP, port) != sf::Socket::Done) {
+			//std::cout << "Error al recivir pingafasfasfa" << std::endl; //esto salta todo el rato hasta q no le llega el mensaje, pero no siginifa q no llegue sino q tarda
+		}
+		else {
+			packPingR >> id >> ping;
+			//std::cout << id << ping;
+			Players.find(id)->second.timePing.restart();
+		}
 		packPingR.clear();
 		packPingS.clear();
-		//std::cout << Players.find(id)->second.timePing.getElapsedTime().asSeconds();
 	}
 
 }
