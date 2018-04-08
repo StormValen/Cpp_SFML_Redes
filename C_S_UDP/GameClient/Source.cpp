@@ -67,7 +67,7 @@ sf::UdpSocket socket;
 Player player;
 std::vector<Player>Players;
 int ID;
-sf::Clock c;
+
 void Listen() {
 	sf::Packet pack;
 	sf::IpAddress IP;
@@ -89,6 +89,7 @@ void Connection(){
 	std::cout << "Introduce tu nombre" << std::endl;
 	std::cin >> name;
 	packetLog << name;
+	sf::Clock c;
 	c.restart();
 	while (!send) {
 		if (c.getElapsedTime().asMilliseconds() >= 500) {
@@ -102,41 +103,47 @@ void Connection(){
 	packetLog.clear();
 	sf::IpAddress IP;
 	unsigned short port;
-	if (socket.receive(packetLog,IP , port) != sf::Socket::Done) {
+	sf::Packet packR;
+	if (socket.receive(packR,IP , port) != sf::Socket::Done) {
 		std::cout << "Error al recivir";
 	}
 	std::string welcome = "";
 	int size =0;
-	packetLog >> size;
+	packR >> size;
 	for (int i = 0; i < size; i++) {
-		packetLog >> player.name >> welcome >> player.ID >> player.posX >> player.posY;
+		packR >> player.name >> welcome >> player.ID >> player.posX >> player.posY;
 		Players.push_back(player);
 		std::cout << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
 	}
+	packR.clear();
 }
 void Ping() {
-	socket.setBlocking(false);
+	//socket.setBlocking(false);
 	sf::IpAddress IP;
+	sf::Clock clock;
 	unsigned short port;
-	sf::Packet packPing;
+	sf::Packet packPingR, packPingS;
+	clock.restart();
 	while (true) {
-		if (socket.receive(packPing, IP, port) != sf::Socket::Done) {
+		if (socket.receive(packPingR, IP, port) != sf::Socket::Done) {
 			std::cout << "Error el recivir ping" << std::endl;
 		}
-		std::string ACK;
-		packPing >> ACK;
-		//std::cout << "recive";
-		packPing.clear();
-		ACK = "ACK";
-		packPing << player.ID << ACK;
+		else {
+			std::string ACK;
+			packPingR >> ACK;
+			ACK = "ACK";
+			packPingS << player.ID << ACK;
 
-		if (c.getElapsedTime().asMilliseconds() >= 200) {
-			if (socket.send(packPing, "localhost", 50000) != sf::Socket::Done) {
-				std::cout << "Error al enviar" << std::endl;
+			//if (clock.getElapsedTime().asMilliseconds() >= 100) {
+				if (socket.send(packPingS, "localhost", 50000) != sf::Socket::Done) {
+					std::cout << "Error al enviar" << std::endl;
+				}
+				//std::cout << "send";
+				clock.restart();
 			}
-			//std::cout << "send";
-			c.restart();
-		}
+		//}
+		packPingR.clear();
+		packPingS.clear();
 	}
 }
 /**
@@ -159,6 +166,7 @@ void Gameplay()
 			{
 			case sf::Event::Closed:
 				window.close();
+				socket.unbind();
 				break;
 			case sf::Event::MouseButtonPressed:
 				if (event.mouseButton.button == sf::Mouse::Left && tienesTurno)

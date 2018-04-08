@@ -124,7 +124,7 @@ void Connection() {
 			std::string welcome = " Bienvenido, te has conectado con el servidor, tu ID es :";
 			packetLog << it->second.name << welcome << it->first << it->second.posX << it->second.posY;
 			//std::cout << (int)Players.size();
-			std::cout << it->second.name << it->first << it->second.posX << it->second.posY;
+			//std::cout << it->second.name << it->first << it->second.posX << it->second.posY;
 		}
 		//Recorrer();
 		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
@@ -142,41 +142,46 @@ void Ping() {
 	sf::IpAddress IP;
 	unsigned short port;
 	bool send = false;
-	sf::Packet packPing;
+	sf::Packet packPingR, packPingS;
 	sf::Clock clockP;
+	clockP.restart();
 	std::string ping;
 	int id;
-	while (!send) {
-		if (clockP.getElapsedTime().asSeconds() > 1) {
+	while (true) {
+		if (clockP.getElapsedTime().asMilliseconds() > 1000) {
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-				sf::Clock clockP;
-				clockP.restart();
 				ping = "PING";
-				packPing << ping;
-				if (socket.send(packPing, it->second.IP, it->second.port) != sf::Socket::Done) {
+				packPingS << ping;
+				if (socket.send(packPingS, it->second.IP, it->second.port) != sf::Socket::Done) {
 					std::cout << "Error al enviar el ping" << std::endl;
 				}
-				std::cout << "Send" << it->second.name;
-				send = true;
-				packPing.clear();
-				clockP.restart();
-			}		
-		}
-		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			//std::cout << it->second.timePing.getElapsedTime().asSeconds() << std::endl;
-			if (it->second.timePing.getElapsedTime().asMilliseconds() >= 5000) {
-				std::cout << "Desconexion";
+				else {
+					//std::cout << "Send" << it->second.name;
+					clockP.restart();
+				}
 			}
 		}
+			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+				if (it->second.timePing.getElapsedTime().asSeconds() >= 5) {
+					Players.erase(it->first);
+					std::cout << "Desconexion";
+				}
+			}
+			//}
+			if (socket.receive(packPingR, IP, port) != sf::Socket::Done) {
+				//std::cout << "Error al recivir pingafasfasfa" << std::endl;
+			}
+			else {
+				packPingR >> id >> ping;
+				std::cout << id << ping;
+				Players.find(id)->second.timePing.restart();
+			}
+	//	}
+		packPingR.clear();
+		packPingS.clear();
+		//std::cout << Players.find(id)->second.timePing.getElapsedTime().asSeconds();
 	}
-	if (socket.receive(packPing, IP,port) != sf::Socket::Done) {
-		std::cout << "Error al recivir ping" << std::endl;
-	}
-	else {
-		packPing >> id >> ping;
-		std::cout << id;
-		Players.find(id)->second.timePing.restart();
-	}
+
 }
 
 int main()
