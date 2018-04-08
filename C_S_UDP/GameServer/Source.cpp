@@ -139,36 +139,43 @@ void Ping() {
 		it->second.timePing.restart();
 	}
 	socket.setBlocking(false);
+	sf::IpAddress IP;
+	unsigned short port;
 	bool send = false;
-	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-		sf::Clock clockP;
-		clockP.restart();
-		sf::Packet packPing;
-		std::string ping = "PING";
-		packPing << ping;
-		//while (!send) {
-			//if (clockP.getElapsedTime().asSeconds() > 1) {
-			if (socket.send(packPing, it->second.IP, it->second.port) != sf::Socket::Done) {
-				std::cout << "Error al enviar el ping" << std::endl;
-			}
-			std::cout << "Send" << it->second.name;
-			send = true;
-			packPing.clear();
-			clockP.restart();
-			//}
-		//}
+	sf::Packet packPing;
+	sf::Clock clockP;
+	std::string ping;
+	int id;
+	while (!send) {
+		if (clockP.getElapsedTime().asSeconds() > 1) {
+			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+				sf::Clock clockP;
+				clockP.restart();
+				ping = "PING";
+				packPing << ping;
+				if (socket.send(packPing, it->second.IP, it->second.port) != sf::Socket::Done) {
+					std::cout << "Error al enviar el ping" << std::endl;
+				}
+				std::cout << "Send" << it->second.name;
+				send = true;
+				packPing.clear();
+				clockP.restart();
+			}		
+		}
+		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (it->second.timePing.getElapsedTime().asMilliseconds() > 500) {
 				std::cout << "Desconexion";
 			}
-			if (socket.receive(packPing, it->second.IP, it->second.port) != sf::Socket::Done) {
-				std::cout << "Error al recivir ping" << std::endl;
-			}
-			packPing >> ping;
-			std::cout << ping;
-			it->second.timePing.restart();
-			//packPing >> ping;
 		}
-	//}
+	}
+	if (socket.receive(packPing, IP,port) != sf::Socket::Done) {
+		std::cout << "Error al recivir ping" << std::endl;
+	}
+	else {
+		packPing >> id >> ping;
+		std::cout << id;
+		Players.find(id)->second.timePing.restart();
+	}
 }
 
 int main()

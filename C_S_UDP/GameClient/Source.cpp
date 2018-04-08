@@ -128,7 +128,7 @@ void Ping() {
 	//std::cout << ACK;
 	packPing.clear();
 	ACK = "ACK";
-	packPing << ACK;
+	packPing <<player.ID <<ACK ;
 	while (!send) {
 		if (c.getElapsedTime().asMilliseconds() >= 200) {
 			if (socket.send(packPing, "localhost", 50000) != sf::Socket::Done) {
