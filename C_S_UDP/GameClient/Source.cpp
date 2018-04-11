@@ -11,15 +11,15 @@
 
 #define MAX 100
 #define SIZE_TABLERO 64
-#define SIZE_FILA_TABLERO 8
-#define LADO_CASILLA 64
-#define RADIO_AVATAR 25.f
-#define OFFSET_AVATAR 5
+#define SIZE_FILA_TABLERO 25
+#define LADO_CASILLA 20
+#define RADIO_AVATAR 10.f
+#define OFFSET_AVATAR 1
 
 #define SIZE_TABLERO 64
-#define LADO_CASILLA 64
-#define RADIO_AVATAR 25.f
-#define OFFSET_AVATAR 5
+#define LADO_CASILLA 20
+#define RADIO_AVATAR 10.f
+#define OFFSET_AVATAR 1
 
 enum TipoProceso { RATON, GATO, PADRE };
 char tablero[SIZE_TABLERO];
@@ -44,8 +44,8 @@ TipoProceso quienSoy = TipoProceso::RATON;
 
 
 /**
-* Cuando el jugador clica en la pantalla, se nos da una coordenada del 0 al 512.
-* Esta función la transforma a una posición entre el 0 y el 7
+* Cuando el jugador clica en la pantalla, se nos da una coordenada del 0 al 500.
+* Esta función la transforma a una posición entre el 0 y el 24
 */
 sf::Vector2f TransformaCoordenadaACasilla(int _x, int _y)
 {
@@ -61,7 +61,7 @@ sf::Vector2f TransformaCoordenadaACasilla(int _x, int _y)
 */
 sf::Vector2f BoardToWindows(sf::Vector2f _position)
 {
-	return sf::Vector2f(_position.x*LADO_CASILLA + OFFSET_AVATAR, _position.y*LADO_CASILLA + OFFSET_AVATAR);
+	return sf::Vector2f(_position.x*LADO_CASILLA, _position.y*LADO_CASILLA);
 }
 sf::UdpSocket socket;
 Player player;
@@ -154,7 +154,7 @@ void Gameplay()
 	sf::Vector2f casillaOrigen, casillaDestino;
 	bool casillaMarcada = false;
 
-	sf::RenderWindow window(sf::VideoMode(512, 512), "El Gato y el Raton");
+	sf::RenderWindow window(sf::VideoMode(500, 500), "El Gato y el Raton");
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -218,9 +218,9 @@ void Gameplay()
 
 		//A partir de aquí es para pintar por pantalla
 		//Este FOR es para el tablero
-		for (int i = 0; i<8; i++)
+		for (int i = 0; i<SIZE_FILA_TABLERO; i++)
 		{
-			for (int j = 0; j<8; j++)
+			for (int j = 0; j<SIZE_FILA_TABLERO; j++)
 			{
 				sf::RectangleShape rectBlanco(sf::Vector2f(LADO_CASILLA, LADO_CASILLA));
 				rectBlanco.setFillColor(sf::Color::White);
@@ -261,7 +261,7 @@ void Gameplay()
 			else {
 				shapeRaton.setFillColor(sf::Color::Red);
 			}
-			sf::Vector2f positionGato1(Players[i].posX, Players[i].posY);
+			sf::Vector2f positionGato1(TransformaCoordenadaACasilla(Players[i].posX, Players[i].posY));
 			positionGato1 = BoardToWindows(positionGato1);
 			shapeRaton.setPosition(positionGato1);
 

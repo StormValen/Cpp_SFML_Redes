@@ -105,8 +105,8 @@ void Connection() {
 		packetLog >> player.name;
 		player.IP = IP;
 		player.port = port;
-		player.posX = rand() % 8;
-		player.posY = rand() % 8;
+		player.posX = rand() % 499;
+		player.posY = rand() % 499;
 		// Bucle que informa a los anteriores del nuevo jugador
 		/*for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 		//std::cout << it->second.name << " --> New player connected:  " << player.name << " " << player.posX << player.posY << std::endl;

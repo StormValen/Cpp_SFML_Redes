@@ -3,8 +3,9 @@ Source.cpp(52): warning C4244: 'inicializando': conversión de 'int' a 'float'; 
 Source.cpp(53): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
 Source.cpp(232): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
 Source.cpp(241): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(264): warning C4244: 'argumento': conversión de 'float' a 'int'; posible pérdida de datos
   Generando código
-  5 of 252 functions ( 2.0%) were compiled, the rest were copied from previous compilation.
+  4 of 252 functions ( 1.6%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     1 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
