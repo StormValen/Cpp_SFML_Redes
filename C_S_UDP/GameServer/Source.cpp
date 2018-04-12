@@ -9,6 +9,12 @@
 #define MAX_PLAYERS 2
 sf::UdpSocket socket;
 
+
+struct Movment
+{
+	float movX, movY;
+	int IDMove;
+};
 struct Player
 {
 	sf::IpAddress IP;
@@ -16,6 +22,7 @@ struct Player
 	float posX, posY;
 	std::string name;
 	sf::Clock timePing;
+	Movment movment;
 };
 
 int ID;
@@ -71,6 +78,7 @@ void Connection() {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			std::string welcome = " Bienvenido, te has conectado con el servidor, tu ID es :";
 			packetLog << it->second.name << welcome << it->first << it->second.posX << it->second.posY;
+			std::cout << "Se ha conectado : " << it->second.name << welcome << it->first << it->second.posX << it->second.posY << std::endl;
 		}
 		//Recorrer();
 		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
@@ -119,7 +127,9 @@ void Ping() {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (it->second.timePing.getElapsedTime().asSeconds() >= 5) {
 				sendAllPlayers("Desconectado con la ID: ", it->first);
+				std::cout << "Desconexion con la ID: " << it->first << std::endl;
 				Players.erase(it->first);
+				
 			}
 		}
 		if (socket.receive(packPingR, IP, port) != sf::Socket::Done) {

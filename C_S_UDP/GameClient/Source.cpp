@@ -31,7 +31,8 @@ struct Player
 };
 struct Movment
 {
-	int movX, movY;
+	float movX, movY;
+	int IDMove;
 };
 /**
 * Si vale true --> nos permite marcar casilla con el mouse
@@ -71,11 +72,11 @@ sf::UdpSocket socket;
 Player player;
 std::vector<Player>Players;
 int ID;
-Movment movment;
-
-void resetMov() {
-	movment.movX = 0;
-	movment.movY = 0;
+Movment movActual;
+std::vector<Movment>listMovments;
+void resetMov(Movment mov) {
+	mov.movX = 0;
+	mov.movY = 0;
 
 }
 void Listen() {
@@ -168,6 +169,7 @@ void Gameplay()
 	while (window.isOpen())
 	{
 		sf::Event event;
+		sf::Packet packGSend, packGRecv;
 		//recive
 		//si todo ok desempaquetar
 		while (window.pollEvent(event))
@@ -179,25 +181,34 @@ void Gameplay()
 				socket.unbind();
 				break;
 			case sf::Event::KeyPressed:
-				//
 				if (event.key.code == sf::Keyboard::Right) {
-					movment.movX++;
+					movActual.movX++;
 					std::cout << "derecha";
 				}
 				if (event.key.code == sf::Keyboard::Left) {
-					movment.movX--;
+					movActual.movX--;
 					std::cout << "izquierda";
 				}
 				if (event.key.code == sf::Keyboard::Up) {
-					movment.movY++;
+					movActual.movY++;
 					std::cout << "arriba";
 				}
 				if (event.key.code == sf::Keyboard::Down) {
-					movment.movY--;
+					movActual.movY--;
 					std::cout << "abajo";
 				}
-				//creo paquete
+				//clock
+				movActual.IDMove++;
+				packGSend << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
+				listMovments.push_back(movActual);
+				resetMov(movActual);
 				//envio paquete
+				if (socket.send(packGSend, "localhost", 50000) != sf::Socket::Done) {
+					std::cout << "Error al enviar la posicion" << std::endl;
+				}
+				else {
+					std::cout << "IDM" << movActual.IDMove << "ID" << player.ID << "X" << movActual.movX << "Y" << movActual.movY << std::endl;
+				}
 				break;
 			case sf::Event::MouseButtonPressed:
 				if (event.mouseButton.button == sf::Mouse::Left && tienesTurno)
