@@ -29,7 +29,10 @@ struct Player
 	float posX, posY;
 	std::string name;
 };
-
+struct Movment
+{
+	int movX, movY;
+};
 /**
 * Si vale true --> nos permite marcar casilla con el mouse
 * Si vale false --> No podemos interactuar con el tablero y aparece un letrero de "esperando"
@@ -63,11 +66,18 @@ sf::Vector2f BoardToWindows(sf::Vector2f _position)
 {
 	return sf::Vector2f(_position.x*LADO_CASILLA, _position.y*LADO_CASILLA);
 }
+
 sf::UdpSocket socket;
 Player player;
 std::vector<Player>Players;
 int ID;
+Movment movment;
 
+void resetMov() {
+	movment.movX = 0;
+	movment.movY = 0;
+
+}
 void Listen() {
 	sf::Packet pack;
 	sf::IpAddress IP;
@@ -158,8 +168,8 @@ void Gameplay()
 	while (window.isOpen())
 	{
 		sf::Event event;
-		//Ping();
-		//Este primer WHILE es para controlar los eventos del mouse
+		//recive
+		//si todo ok desempaquetar
 		while (window.pollEvent(event))
 		{
 			switch (event.type)
@@ -167,6 +177,27 @@ void Gameplay()
 			case sf::Event::Closed:
 				window.close();
 				socket.unbind();
+				break;
+			case sf::Event::KeyPressed:
+				//
+				if (event.key.code == sf::Keyboard::Right) {
+					movment.movX++;
+					std::cout << "derecha";
+				}
+				if (event.key.code == sf::Keyboard::Left) {
+					movment.movX--;
+					std::cout << "izquierda";
+				}
+				if (event.key.code == sf::Keyboard::Up) {
+					movment.movY++;
+					std::cout << "arriba";
+				}
+				if (event.key.code == sf::Keyboard::Down) {
+					movment.movY--;
+					std::cout << "abajo";
+				}
+				//creo paquete
+				//envio paquete
 				break;
 			case sf::Event::MouseButtonPressed:
 				if (event.mouseButton.button == sf::Mouse::Left && tienesTurno)

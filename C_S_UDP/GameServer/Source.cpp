@@ -20,7 +20,10 @@ struct Player
 
 int ID;
 std::map<int, Player> Players;
-
+int maxY = 499;
+int minY = 1;
+int maxX = 499;
+int minX = 1;
 //StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
 
 void Recorrer() {
@@ -36,61 +39,6 @@ void Recorrer() {
 
 }
 
-
-
-/*std::list<sf::TcpSocket*> myClients; //Lista con todos los clientes conectados.
-std::string currentState = "chat_mode";
-int counterForChat = 0;
-
-class Player {
-public:
-	sf::TcpSocket* sock;
-	std::string nickname;
-	int money, bet, betMoney;
-	bool isReady;
-
-	Player() {
-
-	}
-
-	Player(sf::TcpSocket* _sock, std::string _nickname) {
-		sock = _sock;
-		nickname = "";
-		money = 100;
-		bet = betMoney = -1;
-		isReady = false;
-	}
-};
-
-std::list<Player*> aPlayers; // Contenedor de jugadores
-int clientsConnectedCounter = 0;
-bool gameIsReady = false;
-
-void Countdown() {
-	bool end = false;
-	while (!end) {
-		if (counterForChat == 10000) {
-			end = true;
-			std::cout << counterForChat << std::endl;
-			counterForChat = 0;
-		}
-		else {
-			std::cout << counterForChat << '\r';
-		}
-		
-		counterForChat++;
-	}
-}
-
-bool ArePlayersReady() {
-	for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-		Player& player = **it;
-		if (player.isReady == false) {
-			return false;
-		}
-	}
-	return true;
-}*/
 void Connection() {
 	srand(time(NULL));
 	sf::Packet packetLog;
