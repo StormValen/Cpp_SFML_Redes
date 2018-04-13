@@ -79,19 +79,6 @@ void resetMov(Movment mov) {
 	mov.movY = 0;
 
 }
-void Listen() {
-	sf::Packet pack;
-	sf::IpAddress IP;
-	unsigned short port;
-	if (socket.receive(pack, IP, port) != sf::Socket::Done) {
-		std::cout << "Error";
-	}
-	std::string welcome = "";
-	int size = 0;
-	pack >> player.ID >> player.posX >> player.posY;
-	Players.push_back(player);
-
-}
 
 void GetNewPlayerConnections() {
 	sf::Packet pack;
@@ -141,7 +128,7 @@ void Connection(){
 	int size = 0;
 	packR >> size;
 	for (int i = 0; i < size; i++) {
-		packR >> player.name >> welcome >> player.ID >> player.posX >> player.posY;
+		packR >> welcome >> player.name >> player.ID >> player.posX >> player.posY;
 		if (welcome == "CMD_WELCOME") {
 			Players.push_back(player);
 			std::cout << Players[i].name << " ID:" << Players[i].ID << " POS: " << Players[i].posX << " " << Players[i].posY << std::endl;
@@ -183,6 +170,8 @@ void Ping() {
 */
 void Gameplay()
 {
+	socket.setBlocking(false);
+	sf::Packet packS;
 	sf::Vector2f casillaOrigen, casillaDestino;
 	bool casillaMarcada = false;
 
@@ -192,6 +181,43 @@ void Gameplay()
 		sf::Event event;
 		sf::Packet packGSend, packGRecv;
 		//recive
+		sf::Packet pack;
+		Player newPlayer;
+		std::string cmd;
+
+		sf::IpAddress _IP;
+		unsigned short _port;
+
+		if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
+			//std::cout << "Error al recivir";
+		}
+		pack >> cmd; 
+		if (cmd == "CMD_NEW_PLAYER") {
+			pack >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
+			std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
+			Players.push_back(newPlayer);
+		}
+		else if (cmd == "CMD_PING") {
+			sf::Clock clock;
+			clock.restart();
+			packS << "CMD_ACK" << player.ID;
+			//if (clock.getElapsedTime().asMilliseconds() >= 100) {
+			if (socket.send(packS, "localhost", 50000) != sf::Socket::Done) {
+				std::cout << "Error al enviar" << std::endl;
+			}
+			//std::cout << "send";
+			clock.restart();
+		}
+		else if (cmd == "CMD_DESC") {
+			std::string a;
+			int idAux;
+			pack >> a >> idAux;
+			for (int i =0 ; i < Players.size(); i++) {
+				if (Players[i].ID == idAux) {
+					Players.pop_back();
+				}
+			}
+		}
 		//si todo ok desempaquetar
 		while (window.pollEvent(event))
 		{
@@ -224,7 +250,7 @@ void Gameplay()
 				listMovments.push_back(movActual);
 				resetMov(movActual);
 				//envio paquete
-				if (socket.send(packGSend, "localhost", 50000) != sf::Socket::Done) {
+				if (socket.send(packS, "localhost", 50000) != sf::Socket::Done) {
 					std::cout << "Error al enviar la posicion" << std::endl;
 				}
 				else {
@@ -390,11 +416,11 @@ int main()
 {
 	bool done = false;
 	Connection();
-	while (!done) {
-		GetNewPlayerConnections();
-	}
+	//while (!done) {
+		//GetNewPlayerConnections();
+	//}
 	//std::thread tr(&Ping);
-	//Gameplay();
+	Gameplay();
 	//tr.join();
 
 	return 0;

@@ -66,7 +66,7 @@ void Connection() {
 
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			std::string cmd = "CMD_NEW_PLAYER";
-			newPlayerPack << player.name << cmd << it->first << player.posX << player.posY;
+			newPlayerPack << cmd << player.name  << it->first << player.posX << player.posY;
 			if (socket.send(newPlayerPack, it->second.IP, it->second.port) != sf::Socket::Done) {
 				std::cout << "Error al enviar nueva conexion" << std::endl;
 			}
@@ -81,10 +81,9 @@ void Connection() {
 
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			std::string cmd = "CMD_WELCOME";
-			packetLog << it->second.name << cmd << it->first << it->second.posX << it->second.posY;
+			packetLog << cmd << it->second.name << it->first << it->second.posX << it->second.posY;
 			std::cout << "Se ha conectado : " << it->second.name << cmd << it->first << it->second.posX << it->second.posY << std::endl;
 		}
-		//Recorrer();
 		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
 			std::cout << "error";
 		}
@@ -93,16 +92,18 @@ void Connection() {
 	
 }
 void sendAllPlayers(std::string msg, int id) {
-	sf::Packet packSendAll;
+	sf::Packet packDes;
 	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-		packSendAll << msg <<id;
-		if (socket.send(packSendAll, it->second.IP, it->second.port) != sf::Socket::Done) {
-			std::cout << "Error al enviar la desconexion" << std::endl;
+		std::string cmd = "CMD_DESC";
+		packDes << cmd << msg << id;
+		if (socket.send(packDes, it->second.IP, it->second.port) != sf::Socket::Done) {
+			std::cout << "Error al enviar nueva conexion" << std::endl;
 		}
+		packDes.clear();
 	}
 }
 
-void Ping() {
+void Game() {
 	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 		it->second.timePing.restart();
 	}
@@ -110,15 +111,16 @@ void Ping() {
 	sf::IpAddress IP;
 	unsigned short port;
 	bool send = false;
-	sf::Packet packPingR, packPingS;
+	sf::Packet packR, packPingS;
 	sf::Clock clockP;
 	clockP.restart();
 	std::string ping;
 	int id;
+	std::string cmd;
 	while (true) {
 		if (clockP.getElapsedTime().asMilliseconds() > 1000) {
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-				ping = "PING";
+				ping = "CMD_PING";
 				packPingS << ping;
 				if (socket.send(packPingS, it->second.IP, it->second.port) != sf::Socket::Done) {
 					std::cout << "Error al enviar el ping" << std::endl;
@@ -133,18 +135,19 @@ void Ping() {
 				sendAllPlayers("Desconectado con la ID: ", it->first);
 				std::cout << "Desconexion con la ID: " << it->first << std::endl;
 				Players.erase(it->first);
-				
 			}
 		}
-		if (socket.receive(packPingR, IP, port) != sf::Socket::Done) {
-			//std::cout << "Error al recivir pingafasfasfa" << std::endl; //esto salta todo el rato hasta q no le llega el mensaje, pero no siginifa q no llegue sino q tarda
+		if (socket.receive(packR, IP, port) != sf::Socket::Done) {
 		}
 		else {
-			packPingR >> id >> ping;
-			//std::cout << id << ping;
-			Players.find(id)->second.timePing.restart();
+			packR >> cmd;
+			if (cmd == "CMD_ACK") {
+				packR >> id;
+				//std::cout << id << ping;
+				Players.find(id)->second.timePing.restart();
+			}
 		}
-		packPingR.clear();
+		packR.clear();
 		packPingS.clear();
 	}
 
@@ -154,7 +157,7 @@ int main()
 {
 	Connection();
 	do {
-		//Ping();
+		Game();
 	} while (Players.size() >= 0);
 	// TODO gestion de desconexion y PING
 	return 0;
