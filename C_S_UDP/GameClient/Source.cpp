@@ -74,12 +74,11 @@ std::vector<Player>Players;
 int ID;
 Movment movActual;
 std::vector<Movment>listMovments;
-void resetMov(Movment mov) {
-	mov.movX = 0;
-	mov.movY = 0;
 
+void resetMov(Movment* mov) {
+	mov->movX = 0;
+	mov->movY = 0;
 }
-
 void GetNewPlayerConnections() {
 	sf::Packet pack;
 	Player newPlayer;
@@ -136,35 +135,6 @@ void Connection(){
 	}
 	packR.clear();
 }
-void Ping() {
-	//socket.setBlocking(false);
-	sf::IpAddress IP;
-	sf::Clock clock;
-	unsigned short port;
-	sf::Packet packPingR, packPingS;
-	clock.restart();
-	while (true) {
-		if (socket.receive(packPingR, IP, port) != sf::Socket::Done) {
-			std::cout << "Error el recivir ping" << std::endl;
-		}
-		else {
-			std::string ACK;
-			packPingR >> ACK;
-			ACK = "ACK";
-			packPingS << player.ID << ACK;
-
-			//if (clock.getElapsedTime().asMilliseconds() >= 100) {
-				if (socket.send(packPingS, "localhost", 50000) != sf::Socket::Done) {
-					std::cout << "Error al enviar" << std::endl;
-				}
-				//std::cout << "send";
-				clock.restart();
-			}
-		//}
-		packPingR.clear();
-		packPingS.clear();
-	}
-}
 /**
 * Contiene el código SFML que captura el evento del clic del mouse y el código que pinta por pantalla
 */
@@ -174,17 +144,16 @@ void Gameplay()
 	sf::Packet packS;
 	sf::Vector2f casillaOrigen, casillaDestino;
 	bool casillaMarcada = false;
-
+	sf::Clock clockMov;
+	clockMov.restart();
 	sf::RenderWindow window(sf::VideoMode(500, 500), "El Gato y el Raton");
 	while (window.isOpen())
 	{
 		sf::Event event;
-		sf::Packet packGSend, packGRecv;
-		//recive
+		sf::Packet packMov;
 		sf::Packet pack;
 		Player newPlayer;
 		std::string cmd;
-
 		sf::IpAddress _IP;
 		unsigned short _port;
 
@@ -205,7 +174,6 @@ void Gameplay()
 			if (socket.send(packS, "localhost", 50000) != sf::Socket::Done) {
 				std::cout << "Error al enviar" << std::endl;
 			}
-			//std::cout << "send";
 			clock.restart();
 		}
 		else if (cmd == "CMD_DESC") {
@@ -218,7 +186,19 @@ void Gameplay()
 				}
 			}
 		}
-		//si todo ok desempaquetar
+		else if (cmd == "CMD_OK_MOVE") {
+			int idAux2;
+			int idMoveAux = 0;
+			pack >> idAux2 >> idMoveAux;
+			std::cout << idAux2 << std::endl;
+			for (int i = 0; i < Players.size(); i++) {
+			std::cout << " X " << player.posX << " Y " << player.posY << std::endl;
+				if (Players[i].ID == idAux2) {
+					pack >> Players[i].posX >> Players[i].posY;
+					std::cout << " X " << Players[i].posX << " Y " << Players[i].posY << std::endl;
+				}
+			}
+		}
 		while (window.pollEvent(event))
 		{
 			switch (event.type)
@@ -229,32 +209,31 @@ void Gameplay()
 				break;
 			case sf::Event::KeyPressed:
 				if (event.key.code == sf::Keyboard::Right) {
-					movActual.movX++;
-					std::cout << "derecha";
+					movActual.movX+= 3;
 				}
 				if (event.key.code == sf::Keyboard::Left) {
-					movActual.movX--;
-					std::cout << "izquierda";
+					movActual.movX-= 3;
 				}
 				if (event.key.code == sf::Keyboard::Up) {
-					movActual.movY++;
-					std::cout << "arriba";
+					movActual.movY-= 3;
 				}
 				if (event.key.code == sf::Keyboard::Down) {
-					movActual.movY--;
-					std::cout << "abajo";
+					movActual.movY+= 3;
 				}
-				//clock
-				movActual.IDMove++;
-				packGSend << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
-				listMovments.push_back(movActual);
-				resetMov(movActual);
-				//envio paquete
-				if (socket.send(packS, "localhost", 50000) != sf::Socket::Done) {
-					std::cout << "Error al enviar la posicion" << std::endl;
-				}
-				else {
-					std::cout << "IDM" << movActual.IDMove << "ID" << player.ID << "X" << movActual.movX << "Y" << movActual.movY << std::endl;
+
+				if (clockMov.getElapsedTime().asMilliseconds() > 200) {
+					movActual.IDMove++;
+					listMovments.push_back(movActual);
+					packMov << "CMD_MOV" << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
+
+					if (socket.send(packMov, "localhost", 50000) != sf::Socket::Done) {
+						std::cout << "Error al enviar la posicion" << std::endl;
+					}
+					else {
+					//	std::cout << "ID " << player.ID << " IDM " << movActual.IDMove << " X " << movActual.movX << " Y " << movActual.movY << std::endl;
+						resetMov(&movActual);
+						clockMov.restart();
+					}
 				}
 				break;
 			case sf::Event::MouseButtonPressed:
@@ -350,8 +329,8 @@ void Gameplay()
 			else {
 				shapeRaton.setFillColor(sf::Color::Red);
 			}
-			sf::Vector2f positionGato1(TransformaCoordenadaACasilla(Players[i].posX, Players[i].posY));
-			positionGato1 = BoardToWindows(positionGato1);
+			sf::Vector2f positionGato1(Players[i].posX, Players[i].posY);
+			//positionGato1 = BoardToWindows(positionGato1);
 			shapeRaton.setPosition(positionGato1);
 
 			window.draw(shapeRaton);
@@ -416,12 +395,6 @@ int main()
 {
 	bool done = false;
 	Connection();
-	//while (!done) {
-		//GetNewPlayerConnections();
-	//}
-	//std::thread tr(&Ping);
 	Gameplay();
-	//tr.join();
-
 	return 0;
 }

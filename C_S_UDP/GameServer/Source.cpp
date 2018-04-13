@@ -6,7 +6,7 @@
 #include <mutex>
 #include <cstring>
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 3
 sf::UdpSocket socket;
 
 struct Movment
@@ -66,7 +66,7 @@ void Connection() {
 
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			std::string cmd = "CMD_NEW_PLAYER";
-			newPlayerPack << cmd << player.name  << it->first << player.posX << player.posY;
+			newPlayerPack << cmd << player.name  << i << player.posX << player.posY;
 			if (socket.send(newPlayerPack, it->second.IP, it->second.port) != sf::Socket::Done) {
 				std::cout << "Error al enviar nueva conexion" << std::endl;
 			}
@@ -127,6 +127,7 @@ void Game() {
 				}
 				else {
 					clockP.restart();
+					packPingS.clear();
 				}
 			}
 		}
@@ -146,9 +147,32 @@ void Game() {
 				//std::cout << id << ping;
 				Players.find(id)->second.timePing.restart();
 			}
+			if (cmd == "CMD_MOV") {
+				int idMove, id;
+				float deltaX, deltaY;
+				packR >> idMove >> id >> deltaX >> deltaY;
+				std::string a = "CMD_OK_MOVE";
+				sf::Packet packM;
+				packM << a;
+				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+					if (it->first == id) {
+						it->second.movment.IDMove = idMove;
+						it->second.movment.movX = deltaX;
+						it->second.movment.movY = deltaY;
+						it->second.posX += it->second.movment.movX;
+						it->second.posY += it->second.movment.movY;
+						packM << it->first << it->second.movment.IDMove << it->second.posX << it->second.posY;
+						std::cout << " ID" << it->first << " IDM " << it->second.movment.IDMove << " X " << deltaX << " Y " << deltaY << " posX " << it->second.posX << " posY " << it->second.posY;
+
+					}	
+					socket.send(packM, it->second.IP, it->second.port);
+					packM.clear();
+				}
+				
+			}
 		}
 		packR.clear();
-		packPingS.clear();
+
 	}
 
 }
