@@ -84,13 +84,31 @@ void Listen() {
 	sf::IpAddress IP;
 	unsigned short port;
 	if (socket.receive(pack, IP, port) != sf::Socket::Done) {
-		std::cout << "Errorasgagas";
+		std::cout << "Error";
 	}
 	std::string welcome = "";
 	int size = 0;
 	pack >> player.ID >> player.posX >> player.posY;
 	Players.push_back(player);
-	//std::cout << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
+
+}
+
+void GetNewPlayerConnections() {
+	sf::Packet pack;
+	Player newPlayer;
+	std::string cmd;
+
+	sf::IpAddress _IP;
+	unsigned short _port;
+
+	if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
+		std::cout << "Error al recivir";
+	}
+	pack >> newPlayer.name >> cmd >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
+	if (cmd == "CMD_NEW_PLAYER") {
+		std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
+	}
+	Players.push_back(newPlayer);
 
 }
 void Connection(){
@@ -112,19 +130,22 @@ void Connection(){
 		}
 	}
 	packetLog.clear();
+
 	sf::IpAddress IP;
 	unsigned short port;
 	sf::Packet packR;
-	if (socket.receive(packR,IP , port) != sf::Socket::Done) {
+	if (socket.receive(packR, IP, port) != sf::Socket::Done) {
 		std::cout << "Error al recivir";
 	}
 	std::string welcome = "";
-	int size =0;
+	int size = 0;
 	packR >> size;
 	for (int i = 0; i < size; i++) {
 		packR >> player.name >> welcome >> player.ID >> player.posX >> player.posY;
-		Players.push_back(player);
-		std::cout << Players[i].name << welcome << Players[i].ID << " y posicion " << Players[i].posX << " " << Players[i].posY << std::endl;
+		if (welcome == "CMD_WELCOME") {
+			Players.push_back(player);
+			std::cout << Players[i].name << " ID:" << Players[i].ID << " POS: " << Players[i].posX << " " << Players[i].posY << std::endl;
+		}
 	}
 	packR.clear();
 }
@@ -367,10 +388,14 @@ void Gameplay()
 
 int main()
 {
+	bool done = false;
 	Connection();
-	std::thread tr(&Ping);
-	Gameplay();
-	tr.join();
+	while (!done) {
+		GetNewPlayerConnections();
+	}
+	//std::thread tr(&Ping);
+	//Gameplay();
+	//tr.join();
 
 	return 0;
 }

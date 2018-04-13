@@ -9,7 +9,6 @@
 #define MAX_PLAYERS 2
 sf::UdpSocket socket;
 
-
 struct Movment
 {
 	float movX, movY;
@@ -49,6 +48,8 @@ void Recorrer() {
 void Connection() {
 	srand(time(NULL));
 	sf::Packet packetLog;
+	sf::Packet newPlayerPack;
+
 	socket.bind(50000);
 	Player player;
 	for (int i = 0; i < MAX_PLAYERS; i++) {
@@ -62,23 +63,26 @@ void Connection() {
 		player.port = port;
 		player.posX = rand() % 499;
 		player.posY = rand() % 499;
-		// Bucle que informa a los anteriores del nuevo jugador
-		/*for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-		//std::cout << it->second.name << " --> New player connected:  " << player.name << " " << player.posX << player.posY << std::endl;
-		packetLog << player.name << player.posX << player.posY;
-		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
-		std::cout << "error";
+
+		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+			std::string cmd = "CMD_NEW_PLAYER";
+			newPlayerPack << player.name << cmd << it->first << player.posX << player.posY;
+			if (socket.send(newPlayerPack, it->second.IP, it->second.port) != sf::Socket::Done) {
+				std::cout << "Error al enviar nueva conexion" << std::endl;
+			}
+			newPlayerPack.clear();
 		}
-		}
-		packetLog.clear();*/
+
 		Players.insert(std::pair<int, Player>(i, player));
+
 		packetLog.clear();
 		ID = i;
 		packetLog << (int)Players.size();
+
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			std::string welcome = " Bienvenido, te has conectado con el servidor, tu ID es :";
-			packetLog << it->second.name << welcome << it->first << it->second.posX << it->second.posY;
-			std::cout << "Se ha conectado : " << it->second.name << welcome << it->first << it->second.posX << it->second.posY << std::endl;
+			std::string cmd = "CMD_WELCOME";
+			packetLog << it->second.name << cmd << it->first << it->second.posX << it->second.posY;
+			std::cout << "Se ha conectado : " << it->second.name << cmd << it->first << it->second.posX << it->second.posY << std::endl;
 		}
 		//Recorrer();
 		if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
@@ -148,10 +152,9 @@ void Ping() {
 
 int main()
 {
-	//SocketSelector();
 	Connection();
 	do {
-		Ping();
+		//Ping();
 	} while (Players.size() >= 0);
 	// TODO gestion de desconexion y PING
 	return 0;
