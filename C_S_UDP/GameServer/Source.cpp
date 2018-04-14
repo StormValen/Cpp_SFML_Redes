@@ -6,7 +6,7 @@
 #include <mutex>
 #include <cstring>
 
-#define MAX_PLAYERS 3
+#define MAX_PLAYERS 2
 sf::UdpSocket socket;
 
 struct Movment

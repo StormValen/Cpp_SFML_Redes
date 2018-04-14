@@ -70,7 +70,7 @@ sf::Vector2f BoardToWindows(sf::Vector2f _position)
 
 sf::UdpSocket socket;
 Player player;
-std::vector<Player>Players;
+std::map<int, Player>Players;
 int ID;
 Movment movActual;
 std::vector<Movment>listMovments;
@@ -78,24 +78,6 @@ std::vector<Movment>listMovments;
 void resetMov(Movment* mov) {
 	mov->movX = 0;
 	mov->movY = 0;
-}
-void GetNewPlayerConnections() {
-	sf::Packet pack;
-	Player newPlayer;
-	std::string cmd;
-
-	sf::IpAddress _IP;
-	unsigned short _port;
-
-	if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
-		std::cout << "Error al recivir";
-	}
-	pack >> newPlayer.name >> cmd >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
-	if (cmd == "CMD_NEW_PLAYER") {
-		std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
-	}
-	Players.push_back(newPlayer);
-
 }
 void Connection(){
 	bool send = false;
@@ -129,7 +111,8 @@ void Connection(){
 	for (int i = 0; i < size; i++) {
 		packR >> welcome >> player.name >> player.ID >> player.posX >> player.posY;
 		if (welcome == "CMD_WELCOME") {
-			Players.push_back(player);
+			//Players.(player);
+			Players.insert(std::pair<int, Player>(player.ID, player));
 			std::cout << Players[i].name << " ID:" << Players[i].ID << " POS: " << Players[i].posX << " " << Players[i].posY << std::endl;
 		}
 	}
@@ -164,7 +147,8 @@ void Gameplay()
 		if (cmd == "CMD_NEW_PLAYER") {
 			pack >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
 			std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
-			Players.push_back(newPlayer);
+			Players.insert(std::pair<int, Player>(newPlayer.ID, newPlayer));
+		//	Players.push_back(newPlayer);
 		}
 		else if (cmd == "CMD_PING") {
 			sf::Clock clock;
@@ -182,7 +166,7 @@ void Gameplay()
 			pack >> a >> idAux;
 			for (int i =0 ; i < Players.size(); i++) {
 				if (Players[i].ID == idAux) {
-					Players.pop_back();
+					Players.erase(Players[i].ID);
 				}
 			}
 		}
@@ -191,11 +175,11 @@ void Gameplay()
 			int idMoveAux = 0;
 			pack >> idAux2 >> idMoveAux;
 			std::cout << idAux2 << std::endl;
-			for (int i = 0; i < Players.size(); i++) {
-			std::cout << " X " << player.posX << " Y " << player.posY << std::endl;
-				if (Players[i].ID == idAux2) {
-					pack >> Players[i].posX >> Players[i].posY;
-					std::cout << " X " << Players[i].posX << " Y " << Players[i].posY << std::endl;
+			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+				std::cout << " X " << player.posX << " Y " << player.posY << std::endl;
+				if (it->first == idAux2) {
+					pack >> it->second.posX >> it->second.posY;
+					std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				}
 			}
 		}
@@ -321,20 +305,21 @@ void Gameplay()
 		shapeRaton.setPosition(posicionRaton);
 		window.draw(shapeRaton);*/
 
-		for (int i = 0; i < Players.size(); i++) {
+		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			sf::CircleShape shapeRaton(RADIO_AVATAR);
-			if (i == player.ID) {
+			if (it->first == player.ID) {
 				shapeRaton.setFillColor(sf::Color::Blue);
 			}
 			else {
 				shapeRaton.setFillColor(sf::Color::Red);
 			}
-			sf::Vector2f positionGato1(Players[i].posX, Players[i].posY);
+			sf::Vector2f positionGato1(it->second.posX, it->second.posY);
 			//positionGato1 = BoardToWindows(positionGato1);
 			shapeRaton.setPosition(positionGato1);
 
 			window.draw(shapeRaton);
 		}
+	
 	/*	//Pintamos los cuatro circulitos del gato
 		sf::CircleShape shapeGato(RADIO_AVATAR);
 		shapeGato.setFillColor(sf::Color::Red);
