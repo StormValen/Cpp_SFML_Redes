@@ -26,10 +26,10 @@ struct Player
 
 int ID;
 std::map<int, Player> Players;
-int maxY = 499;
-int minY = 1;
-int maxX = 499;
-int minX = 1;
+float maxY = 480;
+float minY = 1.f;
+float maxX = 480.f;
+float minX = 1.f;
 //StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
 
 void Recorrer() {
@@ -157,15 +157,21 @@ void Game() {
 				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 					if (it->first == id) {
 						it->second.movment.IDMove = idMove;
-						it->second.movment.movX = deltaX;
-						it->second.movment.movY = deltaY;
-						it->second.posX += it->second.movment.movX;
-						it->second.posY += it->second.movment.movY;
-						packM << it->first << it->second.movment.IDMove << it->second.posX << it->second.posY;
-						std::cout << " ID" << it->first << " IDM " << it->second.movment.IDMove << " X " << deltaX << " Y " << deltaY << " posX " << it->second.posX << " posY " << it->second.posY;
-
+						if ((it->second.posX += deltaX) > maxX || (it->second.posX += deltaX) < minX || (it->second.posY += deltaY) > maxY || (it->second.posY += deltaY) < minY) {
+							it->second.movment.movX = 0;
+							it->second.movment.movY = 0;
+						}
+						else {
+							it->second.movment.movX = deltaX;
+							it->second.movment.movY = deltaY;
+							it->second.posX += it->second.movment.movX;
+							it->second.posY += it->second.movment.movY;
+							packM << it->first << it->second.movment.IDMove << it->second.posX << it->second.posY;
+						}		
+					//	std::cout << " ID" << it->first << " IDM " << it->second.movment.IDMove << " X " << deltaX << " Y " << deltaY << " posX " << it->second.posX << " posY " << it->second.posY;
 					}	
 					socket.send(packM, it->second.IP, it->second.port);
+					//std::cout << it->second.name << std::endl;
 					packM.clear();
 				}
 				

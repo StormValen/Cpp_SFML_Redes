@@ -135,7 +135,7 @@ void Gameplay()
 		sf::Event event;
 		sf::Packet packMov;
 		sf::Packet pack;
-		Player newPlayer;
+
 		std::string cmd;
 		sf::IpAddress _IP;
 		unsigned short _port;
@@ -144,7 +144,9 @@ void Gameplay()
 			//std::cout << "Error al recivir";
 		}
 		pack >> cmd; 
+		//std::cout << cmd;
 		if (cmd == "CMD_NEW_PLAYER") {
+			Player newPlayer;
 			pack >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
 			std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
 			Players.insert(std::pair<int, Player>(newPlayer.ID, newPlayer));
@@ -171,15 +173,15 @@ void Gameplay()
 			}
 		}
 		else if (cmd == "CMD_OK_MOVE") {
-			int idAux2;
+			int idAux2 = 0;
 			int idMoveAux = 0;
 			pack >> idAux2 >> idMoveAux;
-			std::cout << idAux2 << std::endl;
+			//std::cout << idAux2 << std::endl;
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-				std::cout << " X " << player.posX << " Y " << player.posY << std::endl;
+			//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				if (it->first == idAux2) {
 					pack >> it->second.posX >> it->second.posY;
-					std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
+					//std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				}
 			}
 		}
