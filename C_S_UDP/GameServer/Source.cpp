@@ -74,7 +74,6 @@ void Connection() {
 		}
 
 		Players.insert(std::pair<int, Player>(i, player));
-
 		packetLog.clear();
 		ID = i;
 		packetLog << (int)Players.size();
@@ -155,32 +154,33 @@ void Game() {
 				sf::Packet packM;
 				packM << a;
 				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-					if (it->first == id) {
-						it->second.movment.IDMove = idMove;
-						if ((it->second.posX += deltaX) > maxX || (it->second.posX += deltaX) < minX || (it->second.posY += deltaY) > maxY || (it->second.posY += deltaY) < minY) {
-							it->second.movment.movX = 0;
-							it->second.movment.movY = 0;
+					for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
+						if (it2->first == id) {
+							it2->second.movment.IDMove = idMove;
+							if ((it2->second.posX += deltaX) > maxX || (it2->second.posX += deltaX) < minX || (it2->second.posY += deltaY) > maxY || (it2->second.posY += deltaY) < minY) {
+								it2->second.movment.movX = 0;
+								it2->second.movment.movY = 0;
+							}
+							else {
+								it2->second.movment.movX = deltaX;
+								it2->second.movment.movY = deltaY;
+								it2->second.posX += it2->second.movment.movX;
+								it2->second.posY += it2->second.movment.movY;
+								packM << it2->first << it2->second.movment.IDMove << it2->second.posX << it2->second.posY;
+								//std::cout << " ID" << it2->first << " IDM " << it2->second.movment.IDMove << " X " << deltaX << " Y " << deltaY << " posX " << it2->second.posX << " posY " << it2->second.posY;
+							}
 						}
-						else {
-							it->second.movment.movX = deltaX;
-							it->second.movment.movY = deltaY;
-							it->second.posX += it->second.movment.movX;
-							it->second.posY += it->second.movment.movY;
-							packM << it->first << it->second.movment.IDMove << it->second.posX << it->second.posY;
-						}		
-					//	std::cout << " ID" << it->first << " IDM " << it->second.movment.IDMove << " X " << deltaX << " Y " << deltaY << " posX " << it->second.posX << " posY " << it->second.posY;
-					}	
-					socket.send(packM, it->second.IP, it->second.port);
-					//std::cout << it->second.name << std::endl;
-					packM.clear();
+					}
+					if (socket.send(packM, it->second.IP, it->second.port) != sf::Socket::Done) {
+						std::cout << "Error al enviar mov" << std::endl;
+					}
+					//std::cout << it->second.name << it->second.IP << it->second.port << std::endl;
 				}
-				
+				packM.clear();
 			}
 		}
 		packR.clear();
-
 	}
-
 }
 
 int main()

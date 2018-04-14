@@ -125,6 +125,7 @@ void Gameplay()
 {
 	socket.setBlocking(false);
 	sf::Packet packS;
+	int idAux2 = 0;
 	sf::Vector2f casillaOrigen, casillaDestino;
 	bool casillaMarcada = false;
 	sf::Clock clockMov;
@@ -144,7 +145,7 @@ void Gameplay()
 			//std::cout << "Error al recivir";
 		}
 		pack >> cmd; 
-		//std::cout << cmd;
+
 		if (cmd == "CMD_NEW_PLAYER") {
 			Player newPlayer;
 			pack >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
@@ -172,11 +173,12 @@ void Gameplay()
 				}
 			}
 		}
+		//std::cout << cmd;
 		else if (cmd == "CMD_OK_MOVE") {
-			int idAux2 = 0;
+			//int idAux2 = 0;
 			int idMoveAux = 0;
 			pack >> idAux2 >> idMoveAux;
-			//std::cout << idAux2 << std::endl;
+			std::cout << idAux2 << player.ID <<  std::endl;
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				if (it->first == idAux2) {
@@ -184,6 +186,7 @@ void Gameplay()
 					//std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				}
 			}
+			pack.clear();
 		}
 		while (window.pollEvent(event))
 		{
@@ -195,16 +198,16 @@ void Gameplay()
 				break;
 			case sf::Event::KeyPressed:
 				if (event.key.code == sf::Keyboard::Right) {
-					movActual.movX+= 3;
+					movActual.movX++;
 				}
 				if (event.key.code == sf::Keyboard::Left) {
-					movActual.movX-= 3;
+					movActual.movX--;
 				}
 				if (event.key.code == sf::Keyboard::Up) {
-					movActual.movY-= 3;
+					movActual.movY--;
 				}
 				if (event.key.code == sf::Keyboard::Down) {
-					movActual.movY+= 3;
+					movActual.movY++;
 				}
 
 				if (clockMov.getElapsedTime().asMilliseconds() > 200) {
@@ -216,7 +219,7 @@ void Gameplay()
 						std::cout << "Error al enviar la posicion" << std::endl;
 					}
 					else {
-					//	std::cout << "ID " << player.ID << " IDM " << movActual.IDMove << " X " << movActual.movX << " Y " << movActual.movY << std::endl;
+						//std::cout << "ID " << player.ID << " IDM " << movActual.IDMove << " X " << movActual.movX << " Y " << movActual.movY << std::endl;
 						resetMov(&movActual);
 						clockMov.restart();
 					}

@@ -5,6 +5,6 @@ Source.cpp(65): warning C4244: '=': conversión de 'int' a 'float'; posible pér
   Generando código
   2 of 223 functions ( 0.9%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    7 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
   GameServer.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameServer.exe
