@@ -210,7 +210,7 @@ void Gameplay()
 					movActual.movY++;
 				}
 
-				if (clockMov.getElapsedTime().asMilliseconds() > 200) {
+				if (clockMov.getElapsedTime().asMilliseconds() > 100) {
 					movActual.IDMove++;
 					listMovments.push_back(movActual);
 					packMov << "CMD_MOV" << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
@@ -222,46 +222,6 @@ void Gameplay()
 						//std::cout << "ID " << player.ID << " IDM " << movActual.IDMove << " X " << movActual.movX << " Y " << movActual.movY << std::endl;
 						resetMov(&movActual);
 						clockMov.restart();
-					}
-				}
-				break;
-			case sf::Event::MouseButtonPressed:
-				if (event.mouseButton.button == sf::Mouse::Left && tienesTurno)
-				{
-					int x = event.mouseButton.x;
-					int y = event.mouseButton.y;
-					if (!casillaMarcada)
-					{
-						casillaOrigen = TransformaCoordenadaACasilla(x, y);
-						casillaMarcada = true;
-						//TODO: Comprobar que la casilla marcada coincide con las posición del raton (si le toca al ratón)
-						//o con la posicion de alguna de las piezas del gato (si le toca al gato)
-
-					}
-					else
-					{
-						casillaDestino = TransformaCoordenadaACasilla(x, y);
-						if (casillaOrigen.x == casillaDestino.x && casillaOrigen.y == casillaDestino.y)
-						{
-							casillaMarcada = false;
-							//Si me vuelven a picar sobre la misma casilla, la desmarco
-						}
-						else
-						{
-							if (quienSoy == TipoProceso::RATON)
-							{
-								//TODO: Validar que el destino del ratón es correcto
-
-								//TODO: Si es correcto, modificar la posición del ratón y enviar las posiciones al padre
-
-							}
-							else if (quienSoy == TipoProceso::GATO)
-							{
-								//TODO: Validar que el destino del gato es correcto
-
-								//TODO: Si es correcto, modificar la posición de la pieza correspondiente del gato y enviar las posiciones al padre
-							}
-						}
 					}
 				}
 				break;

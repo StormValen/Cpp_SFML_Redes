@@ -162,6 +162,7 @@ void Game() {
 								it2->second.movment.movY = 0;
 							}
 							else {
+								//acmular aqui
 								it2->second.movment.movX = deltaX;
 								it2->second.movment.movY = deltaY;
 								it2->second.posX += it2->second.movment.movX;
@@ -171,14 +172,17 @@ void Game() {
 							}
 						}
 					}
+					//200mss
 					if (socket.send(packM, it->second.IP, it->second.port) != sf::Socket::Done) {
 						std::cout << "Error al enviar mov" << std::endl;
 					}
 					//std::cout << it->second.name << it->second.IP << it->second.port << std::endl;
 				}
 				packM.clear();
+
 			}
 		}
+		//send mov
 		packR.clear();
 	}
 }
@@ -189,6 +193,5 @@ int main()
 	do {
 		Game();
 	} while (Players.size() >= 0);
-	// TODO gestion de desconexion y PING
 	return 0;
 }
