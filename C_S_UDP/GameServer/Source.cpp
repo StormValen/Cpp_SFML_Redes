@@ -114,6 +114,9 @@ void Game() {
 	sf::Clock clockP;
 	clockP.restart();
 	std::string ping;
+	sf::Packet packM;
+	sf::Clock clockMov;
+	clockMov.restart();
 	int id;
 	std::string cmd;
 	while (true) {
@@ -151,9 +154,8 @@ void Game() {
 				float deltaX, deltaY;
 				packR >> idMove >> id >> deltaX >> deltaY;
 				std::string a = "CMD_OK_MOVE";
-				sf::Packet packM;
 				packM << a;
-				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+			//	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 					for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
 						if (it2->first == id) {
 							it2->second.movment.IDMove = idMove;
@@ -163,8 +165,8 @@ void Game() {
 							}
 							else {
 								//acmular aqui
-								it2->second.movment.movX = deltaX;
-								it2->second.movment.movY = deltaY;
+								it2->second.movment.movX += deltaX;
+								it2->second.movment.movY += deltaY;
 								it2->second.posX += it2->second.movment.movX;
 								it2->second.posY += it2->second.movment.movY;
 								packM << it2->first << it2->second.movment.IDMove << it2->second.posX << it2->second.posY;
@@ -172,16 +174,24 @@ void Game() {
 							}
 						}
 					}
-					//200mss
-					if (socket.send(packM, it->second.IP, it->second.port) != sf::Socket::Done) {
-						std::cout << "Error al enviar mov" << std::endl;
-					}
-					//std::cout << it->second.name << it->second.IP << it->second.port << std::endl;
-				}
+				
+				//}
 				packM.clear();
 
 			}
 		}
+
+		if (clockMov.getElapsedTime().asMilliseconds() > 200) {
+			//std::cout << "Hola";
+			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+				if (socket.send(packM, it->second.IP, it->second.port) != sf::Socket::Done) {
+					std::cout << "Error al enviar mov" << std::endl;
+				}
+				//std::cout << cmd << it->second.name << it->second.posX << it->second.posY<< std::endl;
+			}
+			clockMov.restart();
+		}
+	
 		//send mov
 		packR.clear();
 	}

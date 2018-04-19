@@ -1,12 +1,12 @@
 ﻿  Source.cpp
-Source.cpp(56): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
 Source.cpp(57): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
-Source.cpp(289): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-Source.cpp(298): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+Source.cpp(58): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+Source.cpp(245): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+Source.cpp(254): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
   Generating code
-  332 of 337 functions (98.5%) were compiled, the rest were copied from previous compilation.
-    8 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+  1 of 336 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   GameClient.vcxproj -> D:\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameClient.exe
   GameClient.vcxproj -> D:\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameClient.pdb (Full PDB)

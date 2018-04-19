@@ -3,9 +3,9 @@ Source.cpp(49): warning C4244: 'argument': conversion from 'time_t' to 'unsigned
 Source.cpp(64): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
 Source.cpp(65): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
   Generating code
-  220 of 223 functions (98.7%) were compiled, the rest were copied from previous compilation.
-    4 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+  2 of 223 functions ( 0.9%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    9 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   GameServer.vcxproj -> D:\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameServer.exe
   GameServer.vcxproj -> D:\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameServer.pdb (Full PDB)

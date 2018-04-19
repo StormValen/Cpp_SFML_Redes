@@ -9,6 +9,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML\Network.hpp>
 
+#define MAX_PLAYERS 2
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -80,6 +81,7 @@ void resetMov(Movment* mov) {
 	mov->movY = 0;
 }
 void Connection(){
+	socket.setBlocking(true);
 	bool send = false;
 	sf::Packet packetLog;
 	std::string name;
@@ -98,7 +100,6 @@ void Connection(){
 		}
 	}
 	packetLog.clear();
-
 	sf::IpAddress IP;
 	unsigned short port;
 	sf::Packet packR;
@@ -108,7 +109,7 @@ void Connection(){
 	std::string welcome = "";
 	int size = 0;
 	packR >> size;
-	for (int i = 0; i < size; i++) {
+	for (int i = 0; i < MAX_PLAYERS; i++) {
 		packR >> welcome >> player.name >> player.ID >> player.posX >> player.posY;
 		if (welcome == "CMD_WELCOME") {
 			//Players.(player);
@@ -208,33 +209,28 @@ void Gameplay()
 				}
 				if (event.key.code == sf::Keyboard::Down) {
 					movActual.movY++;
-				}
-
-				if (clockMov.getElapsedTime().asMilliseconds() > 100) {
-					movActual.IDMove++;
-					listMovments.push_back(movActual);
-					packMov << "CMD_MOV" << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
-
-					if (socket.send(packMov, "localhost", 50000) != sf::Socket::Done) {
-						std::cout << "Error al enviar la posicion" << std::endl;
-					}
-					else {
-						//std::cout << "ID " << player.ID << " IDM " << movActual.IDMove << " X " << movActual.movX << " Y " << movActual.movY << std::endl;
-						resetMov(&movActual);
-						clockMov.restart();
-					}
-				}
+				}			
 				break;
 			default:
 				break;
 
 			}
 		}
+		if (clockMov.getElapsedTime().asMilliseconds() > 200 && movActual.movX != 0 || movActual.movY != 0) {
+			movActual.IDMove++;
+			listMovments.push_back(movActual);
+			packMov << "CMD_MOV" << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
 
-		window.clear();
-
-		//A partir de aquí es para pintar por pantalla
-		//Este FOR es para el tablero
+			if (socket.send(packMov, "localhost", 50000) != sf::Socket::Done) {
+				std::cout << "Error al enviar la posicion" << std::endl;
+			}
+			else {
+				std::cout << "ID " << player.ID << " IDM " << movActual.IDMove << " X " << movActual.movX << " Y " << movActual.movY << std::endl;
+				resetMov(&movActual);
+				clockMov.restart();
+			}
+		}
+		window.clear();	
 		for (int i = 0; i<SIZE_FILA_TABLERO; i++)
 		{
 			for (int j = 0; j<SIZE_FILA_TABLERO; j++)
