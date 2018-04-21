@@ -22,6 +22,7 @@ struct Player
 	std::string name;
 	sf::Clock timePing;
 	std::vector<Movment> movment;
+	std::vector<Movment>interpolation;
 };
 
 int ID;
@@ -153,7 +154,7 @@ void Game() {
 			if (cmd == "CMD_MOV") {
 				int idMove, id;
 				float deltaX, deltaY;
-				packR >> idMove >> id >> deltaX >> deltaY;
+				packR >> idMove >> id >>  deltaX >> deltaY;
 				std::string a = "CMD_OK_MOVE";
 				packM << a;
 				for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
@@ -163,37 +164,50 @@ void Game() {
 						movAux.movX = deltaX;
 						movAux.movY = deltaY;
 						it2->second.movment.push_back(movAux);
-						//	std::cout << it2->second.movment.size();
 						if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
 
-							if ((it2->second.posX += deltaX) > maxX) { it2->second.posX = maxX; packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+							if ((it2->second.posX += deltaX) > maxX) {
+								std::cout << "hola"; 
+								it2->second.posX = maxX; 
+								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 							}
-							if ((it2->second.posX += deltaX) < minX) { it2->second.posX = minX; packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+							else if ((it2->second.posX += deltaX) < minX) {
+								std::cout << "hola2"; 
+								it2->second.posX = minX; 
+								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 							}
-							if ((it2->second.posY += deltaY) > maxY) { it2->second.posY = maxY; packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+							else if ((it2->second.posY += deltaY) > maxY) { 
+								std::cout << "hola3"; 
+								it2->second.posY = maxY; 
+								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 							}
-							if ((it2->second.posY += deltaY) < minY) { it2->second.posY = minY; packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+							else if ((it2->second.posY += deltaY) < minY) {
+								std::cout << "hola4"; 
+								it2->second.posY = minY; 
+								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 							}
 							else {
 								//acmular aqui									
 								it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX;
 								it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY;
 								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
-								std::cout << " IDM " << it2->second.movment[it2->second.movment.size() - 1].IDMove
-									<< " X " << it2->second.movment[it2->second.movment.size() - 1].movX << " Y " << it2->second.movment[it2->second.movment.size() - 1].movY;//<< " posX " << it2->second.posX << " posY " << it2->second.posY;		
-							}
-							clockAcum.restart();
 
+								//std::cout << " IDM " << it2->second.movment[it2->second.movment.size() - 1].IDMove
+									//<< " X " << it2->second.movment[it2->second.movment.size() - 1].movX << " Y " << it2->second.movment[it2->second.movment.size() - 1].movY;//<< " posX " << it2->second.posX << " posY " << it2->second.posY;		
+							}
 							for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 								if (socket.send(packM, it->second.IP, it->second.port) != sf::Socket::Done) {
 									std::cout << "Error al enviar mov" << std::endl;
 								}
+								//std::cout << it->second.name << "  " << it2->second.posX << "  " << it2->second.posY <<  std::endl;
 							}
-							packM.clear();
+							it2->second.movment.erase(it2->second.movment.begin(), it2->second.movment.end());
+							clockAcum.restart();
 						}
-					
+
 					}
 				}
+				packM.clear();
 			}
 		}
 

@@ -75,6 +75,7 @@ std::map<int, Player>Players;
 int ID;
 Movment movActual;
 std::vector<Movment>listMovments;
+std::vector<Movment>interpol;
 
 void resetMov(Movment* mov) {
 	mov->movX = 0;
@@ -127,6 +128,8 @@ void Gameplay()
 	socket.setBlocking(false);
 	sf::Packet packS;
 	int idAux2 = 0;
+	int idMoveAux = 0;
+
 	sf::Vector2f casillaOrigen, casillaDestino;
 	bool casillaMarcada = false;
 	sf::Clock clockMov;
@@ -137,7 +140,6 @@ void Gameplay()
 		sf::Event event;
 		sf::Packet packMov;
 		sf::Packet pack;
-
 		std::string cmd;
 		sf::IpAddress _IP;
 		unsigned short _port;
@@ -177,19 +179,23 @@ void Gameplay()
 		//std::cout << cmd;
 		else if (cmd == "CMD_OK_MOVE") {
 			//int idAux2 = 0;
-			int idMoveAux = 0;
+
 			pack >> idAux2 >> idMoveAux;
 			//std::cout << idAux2;
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				if (it->first == idAux2) {
 					for (int i = 0; i < listMovments.size(); i++) {
-						if (listMovments[i].IDMove == idMoveAux) {
-							std::cout << listMovments[i].IDMove << "  " << it->second.posX << "  " << it->second.posY << std::endl;	
-							listMovments.erase(listMovments.begin(), listMovments.begin() + i);
-						}
-						else {
+					//	std::cout << listMovments[i].IDMove << "  " << idMoveAux << std::endl;
+						if (listMovments[i].IDMove != idMoveAux) {
+							//std::cout << listMovments[i].IDMove << "  " << it->second.posX << "  " << it->second.posY << std::endl;	
+							//listMovments.erase(listMovments.begin(), listMovments.begin() + i);
+							std::cout << "Rec";
 							pack >> it->second.posX >> it->second.posY;
+						}
+						else if(listMovments[i].IDMove == idMoveAux){
+							std::cout << "NO";
+							listMovments.erase(listMovments.begin(), listMovments.begin() + i);
 						}
 					}
 
@@ -222,7 +228,8 @@ void Gameplay()
 				if (event.key.code == sf::Keyboard::Down) {
 					movActual.movY++;
 					Players.find(player.ID)->second.posY++;
-				}			
+				}	
+				interpol.push_back(movActual);
 				break;
 			default:
 				break;
