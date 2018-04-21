@@ -185,17 +185,20 @@ void Gameplay()
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				if (it->first == idAux2) {
+				//	pack >> listMovments.
+					std::cout << "vezes" << std::endl;
 					for (int i = 0; i < listMovments.size(); i++) {
+						std::cout << listMovments.size() << std::endl;
 					//	std::cout << listMovments[i].IDMove << "  " << idMoveAux << std::endl;
+						std::cout <<" RECV " <<  listMovments[i].IDMove << std::endl;
 						if (listMovments[i].IDMove != idMoveAux) {
-							//std::cout << listMovments[i].IDMove << "  " << it->second.posX << "  " << it->second.posY << std::endl;	
 							//listMovments.erase(listMovments.begin(), listMovments.begin() + i);
-							std::cout << "Rec";
+							//std::cout << "Rec";
 							pack >> it->second.posX >> it->second.posY;
 						}
 						else if(listMovments[i].IDMove == idMoveAux){
-							std::cout << "NO";
-							listMovments.erase(listMovments.begin(), listMovments.begin() + i);
+							//std::cout << "NO";
+							//listMovments.erase(listMovments.begin(), listMovments.begin() + i);
 						}
 					}
 
@@ -245,7 +248,7 @@ void Gameplay()
 				std::cout << "Error al enviar la posicion" << std::endl;
 			}
 			else {
-				//std::cout << "ID " << player.ID << " IDM " << movActual.IDMove << " X " << movActual.movX << " Y " << movActual.movY << std::endl;
+				//std::cout <<  " IDM " << movActual.IDMove  << std::endl;
 				resetMov(&movActual);
 				clockMov.restart();
 			}
