@@ -179,17 +179,18 @@ void Gameplay()
 			//int idAux2 = 0;
 			int idMoveAux = 0;
 			pack >> idAux2 >> idMoveAux;
-			std::cout << idAux2;
+			//std::cout << idAux2;
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				if (it->first == idAux2) {
 					for (int i = 0; i < listMovments.size(); i++) {
 						if (listMovments[i].IDMove == idMoveAux) {
-							std::cout << listMovments[i].IDMove << "  " << it->second.posX << "  " << it->second.posY << std::endl;
-							pack >> it->second.posX >> it->second.posY;
-							listMovments.erase(listMovments.end() - i, listMovments.end());
+							std::cout << listMovments[i].IDMove << "  " << it->second.posX << "  " << it->second.posY << std::endl;	
+							listMovments.erase(listMovments.begin(), listMovments.begin() + i);
 						}
-
+						else {
+							pack >> it->second.posX >> it->second.posY;
+						}
 					}
 
 					//std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
@@ -208,15 +209,19 @@ void Gameplay()
 			case sf::Event::KeyPressed:
 				if (event.key.code == sf::Keyboard::Right) {
 					movActual.movX++;
+					Players.find(player.ID)->second.posX++;
 				}
 				if (event.key.code == sf::Keyboard::Left) {
 					movActual.movX--;
+					Players.find(player.ID)->second.posX--;
 				}
 				if (event.key.code == sf::Keyboard::Up) {
 					movActual.movY--;
+					Players.find(player.ID)->second.posY--;
 				}
 				if (event.key.code == sf::Keyboard::Down) {
 					movActual.movY++;
+					Players.find(player.ID)->second.posY++;
 				}			
 				break;
 			default:

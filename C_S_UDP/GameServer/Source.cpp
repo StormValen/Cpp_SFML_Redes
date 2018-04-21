@@ -164,11 +164,15 @@ void Game() {
 						movAux.movY = deltaY;
 						it2->second.movment.push_back(movAux);
 						//	std::cout << it2->second.movment.size();
-						if (clockAcum.getElapsedTime().asMilliseconds() > 200) {
+						if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
 
-							if ((it2->second.posX += deltaX) > maxX || (it2->second.posX += deltaX) < minX || (it2->second.posY += deltaY) > maxY || (it2->second.posY += deltaY) < minY) {
-								//it2->second.movment[i].movX = 0;
-								//it2->second.movment.movY = 0;
+							if ((it2->second.posX += deltaX) > maxX) { it2->second.posX = maxX; packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+							}
+							if ((it2->second.posX += deltaX) < minX) { it2->second.posX = minX; packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+							}
+							if ((it2->second.posY += deltaY) > maxY) { it2->second.posY = maxY; packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+							}
+							if ((it2->second.posY += deltaY) < minY) { it2->second.posY = minY; packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 							}
 							else {
 								//acmular aqui									
@@ -176,20 +180,18 @@ void Game() {
 								it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY;
 								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 								std::cout << " IDM " << it2->second.movment[it2->second.movment.size() - 1].IDMove
-									<< " X " << it2->second.movment[it2->second.movment.size() - 1].movX << " Y " << it2->second.movment[it2->second.movment.size() - 1].movY;//<< " posX " << it2->second.posX << " posY " << it2->second.posY;
-
-								for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-									if (socket.send(packM, it->second.IP, it->second.port) != sf::Socket::Done) {
-										std::cout << "Error al enviar mov" << std::endl;
-									}
-									//std::cout << it->second.movment.IDMove << it->second.posX << it->second.posY<< std::endl;
-								}
-								//clockMov.restart();
-
-								packM.clear();
+									<< " X " << it2->second.movment[it2->second.movment.size() - 1].movX << " Y " << it2->second.movment[it2->second.movment.size() - 1].movY;//<< " posX " << it2->second.posX << " posY " << it2->second.posY;		
 							}
 							clockAcum.restart();
+
+							for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+								if (socket.send(packM, it->second.IP, it->second.port) != sf::Socket::Done) {
+									std::cout << "Error al enviar mov" << std::endl;
+								}
+							}
+							packM.clear();
 						}
+					
 					}
 				}
 			}
