@@ -11,7 +11,7 @@ sf::UdpSocket socket;
 
 struct Movment
 {
-	float movX, movY;
+	float movX = 0, movY = 0;
 	int IDMove;
 };
 struct Player
@@ -21,7 +21,7 @@ struct Player
 	float posX, posY;
 	std::string name;
 	sf::Clock timePing;
-	std::vector<Movment> movment;
+	std::map<int, Movment> movment;
 	std::vector<Movment>interpolation;
 };
 
@@ -162,9 +162,9 @@ void Game() {
 						Movment movAux;
 						movAux.IDMove = idMove;
 						std::cout << movAux.IDMove << std::endl;
-						movAux.movX = deltaX;
-						movAux.movY = deltaY;
-						it2->second.movment.push_back(movAux);
+						movAux.movX += deltaX;
+						movAux.movY += deltaY;
+						it2->second.movment.insert((std::pair<int, Movment>(idMove, movAux)));
 						if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
 
 							if ((it2->second.posX += deltaX) > maxX) {
@@ -189,7 +189,6 @@ void Game() {
 							}
 							else {
 								//acmular aqui		
-
 								it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX;
 								it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY;
 								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
@@ -205,6 +204,7 @@ void Game() {
 							}
 							//std::cout << it->second.name << "  " << it2->second.movment[it2->second.movment.size() - 1].IDMove <<  std::endl;
 						}
+						it2->second.movment.erase(it2->second.movment[it2->second.movment.size() - 1].IDMove);
 						packM.clear();
 					}
 				}

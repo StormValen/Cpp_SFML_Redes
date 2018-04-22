@@ -137,6 +137,7 @@ void Gameplay()
 	sf::RenderWindow window(sf::VideoMode(500, 500), "El Gato y el Raton");
 	while (window.isOpen())
 	{
+		int ultimID;
 		sf::Event event;
 		sf::Packet packMov;
 		sf::Packet pack;
@@ -178,19 +179,15 @@ void Gameplay()
 		}
 		//std::cout << cmd;
 		else if (cmd == "CMD_OK_MOVE") {
-			//int idAux2 = 0;
-
 			pack >> idAux2 >> idMoveAux;
-			//std::cout << idAux2;
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				if (it->first == idAux2) {
-				//	pack >> listMovments.
-					std::cout << "vezes" << std::endl;
+					//std::cout << "vezes" << std::endl;
 					for (int i = 0; i < listMovments.size(); i++) {
-						std::cout << listMovments.size() << std::endl;
+					//	std::cout << listMovments.size() << std::endl;
 					//	std::cout << listMovments[i].IDMove << "  " << idMoveAux << std::endl;
-						std::cout <<" RECV " <<  listMovments[i].IDMove << std::endl;
+					//	std::cout <<" RECV " <<  listMovments[i].IDMove << std::endl;
 						if (listMovments[i].IDMove != idMoveAux) {
 							//listMovments.erase(listMovments.begin(), listMovments.begin() + i);
 							//std::cout << "Rec";
@@ -198,7 +195,7 @@ void Gameplay()
 						}
 						else if(listMovments[i].IDMove == idMoveAux){
 							//std::cout << "NO";
-							//listMovments.erase(listMovments.begin(), listMovments.begin() + i);
+							listMovments.erase(listMovments.begin(), listMovments.begin() + i);
 						}
 					}
 
@@ -239,7 +236,7 @@ void Gameplay()
 
 			}
 		}
-		if (clockMov.getElapsedTime().asMilliseconds() > 200 && movActual.movX != 0 || movActual.movY != 0) {
+		if (clockMov.getElapsedTime().asMilliseconds() > 100 && (movActual.movX != 0 || movActual.movY != 0)) {
 			movActual.IDMove++;
 			listMovments.push_back(movActual);
 			packMov << "CMD_MOV" << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
@@ -248,9 +245,11 @@ void Gameplay()
 				std::cout << "Error al enviar la posicion" << std::endl;
 			}
 			else {
-				//std::cout <<  " IDM " << movActual.IDMove  << std::endl;
-				resetMov(&movActual);
 				clockMov.restart();
+				std::cout <<  " IDM " << movActual.IDMove  << std::endl;
+				//ultimID = movActual.IDMove;
+				resetMov(&movActual);
+
 			}
 		}
 		window.clear();	
