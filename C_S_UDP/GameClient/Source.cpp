@@ -9,7 +9,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML\Network.hpp>
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -175,7 +175,7 @@ void Gameplay()
 			int idAux;
 			pack >> idAux;
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); it++) {
-				std::cout << Players.find(it->first)->first;
+				//std::cout << Players.find(it->first)->first;
 				if (it->first == idAux) {
 					Players.erase(it);
 				}

@@ -6,7 +6,7 @@
 #include <mutex>
 #include <cstring>
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 sf::UdpSocket socket;
 
 struct Movment
@@ -133,30 +133,35 @@ void Game() {
 					std::cout << "Error al enviar el ping" << std::endl;
 				}
 				else {
-					clockP.restart();
+
 					packPingS.clear();
+					clockP.restart();
+				}
+			}
+
+		}
+		//}
+		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); it++) {
+			if (it != Players.end()) {
+				std::cout << it->first;
+				if (it->second.timePing.getElapsedTime().asSeconds() >= 5) {
+					//std::cout << "Eliminando" << it->first;
+					sendAllPlayers(it->first);
+					//std::cout << "Desconexion con la ID: " << it->first << std::endl;
+					//std::cout << it->first;
+					//it->second.connected = false;
+					//Players.erase(it->first);
 				}
 			}
 		}
-		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); it++) {
-			std::cout << Players.find(it->first)->first;
-			if (it->second.timePing.getElapsedTime().asSeconds() >= 5) {
-				//std::cout << "Eliminando" << it->first;
-				sendAllPlayers(it->first);
-				//std::cout << "Desconexion con la ID: " << it->first << std::endl;
-				//std::cout << it->first;
-				it->second.connected = false;
-				//Players.erase(it);
 
-			}
-		}
-
-		for (int i = 1; i <= Players.size(); i++) {
+		/*for (int i = 1; i <= Players.size(); i++) {
 			if (Players.find(i) != Players.end() && !Players[i].connected) {
 				//std::cout << "Client " << std::to_string(Players[i].id) << " disconnected." << std::endl;
 				Players.erase(Players[i].ID);
 			}
-		}
+		}*/
+	//}
 		if (socket.receive(packR, IP, port) != sf::Socket::Done) {
 		}
 		else {
