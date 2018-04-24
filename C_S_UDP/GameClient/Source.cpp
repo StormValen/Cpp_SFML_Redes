@@ -9,7 +9,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML\Network.hpp>
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 4
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -110,7 +110,7 @@ void Connection(){
 	std::string welcome = "";
 	int size = 0;
 	packR >> size;
-	for (int i = 0; i < MAX_PLAYERS; i++) {
+	for (int i = 0; i < size; i++) {
 		packR >> welcome >> player.name >> player.ID >> player.posX >> player.posY;
 		if (welcome == "CMD_WELCOME") {
 			//Players.(player);
@@ -162,20 +162,30 @@ void Gameplay()
 			clock.restart();
 			packS << "CMD_ACK" << player.ID;
 			//if (clock.getElapsedTime().asMilliseconds() >= 100) {
-			if (socket.send(packS, "localhost", 50000) != sf::Socket::Done) {
-				std::cout << "Error al enviar" << std::endl;
-			}
-			clock.restart();
+				if (socket.send(packS, "localhost", 50000) != sf::Socket::Done) {
+					std::cout << "Error al enviar" << std::endl;
+				}
+				clock.restart();
+				packS.clear();
+			//}
+
 		}
 		else if (cmd == "CMD_DESC") {
 			std::string a;
 			int idAux;
-			pack >> a >> idAux;
-			for (int i =0 ; i < Players.size(); i++) {
+			pack >> idAux;
+			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); it++) {
+				std::cout << Players.find(it->first)->first;
+				if (it->first == idAux) {
+					Players.erase(it);
+				}
+			}
+		/*	for (int i =0 ; i < Players.size(); i++) {
 				if (Players[i].ID == idAux) {
 					Players.erase(Players[i].ID);
 				}
-			}
+				std::cout << Players[i].ID;
+			}*/
 		}
 		//std::cout << cmd;
 		else if (cmd == "CMD_OK_MOVE") {
