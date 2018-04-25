@@ -35,23 +35,6 @@ struct Movment
 	float movX, movY;
 	int IDMove;
 };
-/**
-* Si vale true --> nos permite marcar casilla con el mouse
-* Si vale false --> No podemos interactuar con el tablero y aparece un letrero de "esperando"
-*/
-bool tienesTurno = true;
-
-/**
-* Ahora mismo no tiene efecto, pero luego lo necesitarás para validar los movimientos
-* en función de si eres el gato o el ratón.
-*/
-TipoProceso quienSoy = TipoProceso::RATON;
-
-
-/**
-* Cuando el jugador clica en la pantalla, se nos da una coordenada del 0 al 500.
-* Esta función la transforma a una posición entre el 0 y el 24
-*/
 sf::Vector2f TransformaCoordenadaACasilla(int _x, int _y)
 {
 	float xCasilla = _x / LADO_CASILLA;
@@ -60,10 +43,6 @@ sf::Vector2f TransformaCoordenadaACasilla(int _x, int _y)
 	return casilla;
 }
 
-/**
-* Si guardamos las posiciones de las piezas con valores del 0 al 7,
-* esta función las transforma a posición de ventana (pixel), que va del 0 al 512
-*/
 sf::Vector2f BoardToWindows(sf::Vector2f _position)
 {
 	return sf::Vector2f(_position.x*LADO_CASILLA, _position.y*LADO_CASILLA);
@@ -88,7 +67,7 @@ void Connection(){
 	std::string name;
 	std::cout << "Introduce tu nombre" << std::endl;
 	std::cin >> name;
-	packetLog << name;
+	packetLog << "HELLO" << name;
 	sf::Clock c;
 	c.restart();
 	while (!send) {
@@ -104,6 +83,7 @@ void Connection(){
 	sf::IpAddress IP;
 	unsigned short port;
 	sf::Packet packR;
+
 	if (socket.receive(packR, IP, port) != sf::Socket::Done) {
 		std::cout << "Error al recivir";
 	}
@@ -113,16 +93,13 @@ void Connection(){
 	for (int i = 0; i < size; i++) {
 		packR >> welcome >> player.name >> player.ID >> player.posX >> player.posY;
 		if (welcome == "CMD_WELCOME") {
-			//Players.(player);
 			Players.insert(std::pair<int, Player>(player.ID, player));
 			std::cout << Players[i].name << " ID:" << Players[i].ID << " POS: " << Players[i].posX << " " << Players[i].posY << std::endl;
 		}
 	}
 	packR.clear();
 }
-/**
-* Contiene el código SFML que captura el evento del clic del mouse y el código que pinta por pantalla
-*/
+
 void Gameplay()
 {
 	socket.setBlocking(false);
@@ -151,11 +128,18 @@ void Gameplay()
 		pack >> cmd; 
 
 		if (cmd == "CMD_NEW_PLAYER") {
+			int packID = 0;
+			sf::Packet packACKNEW;
 			Player newPlayer;
-			pack >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
+			pack >> packID >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
 			std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
 			Players.insert(std::pair<int, Player>(newPlayer.ID, newPlayer));
-		//	Players.push_back(newPlayer);
+			packACKNEW << "CMD_ACK_NEW" << packID;
+
+			if (socket.send(packACKNEW, "localhost", 50000) != sf::Socket::Done) {
+				std::cout << "Error al enviar" << std::endl;
+			}
+			packACKNEW.clear();
 		}
 		else if (cmd == "CMD_PING") {
 			sf::Clock clock;
@@ -174,12 +158,15 @@ void Gameplay()
 			std::string a;
 			int idAux;
 			pack >> idAux;
-			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); it++) {
-				//std::cout << Players.find(it->first)->first;
-				if (it->first == idAux) {
-					Players.erase(it);
-				}
+			if (Players.find(idAux) != Players.end()) {
+				Players.erase(idAux);
 			}
+			//for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); it++) {
+				//std::cout << Players.find(it->first)->first;
+				//if (it->first == idAux) {
+					//Players.erase(it);
+				//}
+			//}
 		/*	for (int i =0 ; i < Players.size(); i++) {
 				if (Players[i].ID == idAux) {
 					Players.erase(Players[i].ID);
@@ -334,37 +321,7 @@ void Gameplay()
 		shapeGato.setPosition(positionGato3);
 
 		window.draw(shapeGato);*/
-		if (!tienesTurno)
-		{
-			//Si no tengo el turno, pinto un letrerito de "Esperando..."
-			sf::Font font;
-			std::string pathFont = "liberation_sans/LiberationSans-Regular.ttf";
-			if (!font.loadFromFile(pathFont))
-			{
-				std::cout << "No se pudo cargar la fuente" << std::endl;
-			}
 
-
-			sf::Text textEsperando("Esperando...", font);
-			textEsperando.setPosition(sf::Vector2f(180, 200));
-			textEsperando.setCharacterSize(30);
-			textEsperando.setStyle(sf::Text::Bold);
-			textEsperando.setFillColor(sf::Color::Green);
-			window.draw(textEsperando);
-		}
-		else
-		{
-			//Si tengo el turno y hay una casilla marcada, la marco con un recuadro amarillo.
-			if (casillaMarcada)
-			{
-				sf::RectangleShape rect(sf::Vector2f(LADO_CASILLA, LADO_CASILLA));
-				rect.setPosition(sf::Vector2f(casillaOrigen.x*LADO_CASILLA, casillaOrigen.y*LADO_CASILLA));
-				rect.setFillColor(sf::Color::Transparent);
-				rect.setOutlineThickness(5);
-				rect.setOutlineColor(sf::Color::Yellow);
-				window.draw(rect);
-			}
-		}
 		window.display();
 	}
 }
