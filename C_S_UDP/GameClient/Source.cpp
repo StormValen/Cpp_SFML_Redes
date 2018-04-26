@@ -134,12 +134,12 @@ void Gameplay()
 			pack >> packID >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
 			std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
 			Players.insert(std::pair<int, Player>(newPlayer.ID, newPlayer));
-			packACKNEW << "CMD_ACK_NEW" << packID;
+		/*	packACKNEW << "CMD_ACK_NEW" << packID;
 
 			if (socket.send(packACKNEW, "localhost", 50000) != sf::Socket::Done) {
 				std::cout << "Error al enviar" << std::endl;
 			}
-			packACKNEW.clear();
+			packACKNEW.clear();*/
 		}
 		else if (cmd == "CMD_PING") {
 			sf::Clock clock;
