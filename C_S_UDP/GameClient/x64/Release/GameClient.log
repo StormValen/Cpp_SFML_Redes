@@ -1,11 +1,11 @@
 ﻿  Source.cpp
-Source.cpp(57): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(58): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(287): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(296): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(140): warning C4101: 'ultimID': variable local sin referencia
+Source.cpp(40): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(41): warning C4244: 'inicializando': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(264): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(273): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(117): warning C4101: 'ultimID': variable local sin referencia
   Generando código
-  3 of 351 functions ( 0.9%) were compiled, the rest were copied from previous compilation.
+  4 of 351 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     1 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
