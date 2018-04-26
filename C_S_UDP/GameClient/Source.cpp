@@ -145,14 +145,11 @@ void Gameplay()
 			sf::Clock clock;
 			clock.restart();
 			packS << "CMD_ACK" << player.ID;
-			//if (clock.getElapsedTime().asMilliseconds() >= 100) {
 				if (socket.send(packS, "localhost", 50000) != sf::Socket::Done) {
 					std::cout << "Error al enviar" << std::endl;
 				}
 				clock.restart();
 				packS.clear();
-			//}
-
 		}
 		else if (cmd == "CMD_DESC") {
 			std::string a;
@@ -161,46 +158,56 @@ void Gameplay()
 			if (Players.find(idAux) != Players.end()) {
 				Players.erase(idAux);
 			}
-			//for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); it++) {
-				//std::cout << Players.find(it->first)->first;
-				//if (it->first == idAux) {
-					//Players.erase(it);
-				//}
-			//}
-		/*	for (int i =0 ; i < Players.size(); i++) {
-				if (Players[i].ID == idAux) {
-					Players.erase(Players[i].ID);
-				}
-				std::cout << Players[i].ID;
-			}*/
 		}
-		//std::cout << cmd;
 		else if (cmd == "CMD_OK_MOVE") {
 			pack >> idAux2 >> idMoveAux;
-			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
-				if (it->first == idAux2) {
-					//std::cout << "vezes" << std::endl;
-					for (int i = 0; i < listMovments.size(); i++) {
-					//	std::cout << listMovments.size() << std::endl;
-					//	std::cout << listMovments[i].IDMove << "  " << idMoveAux << std::endl;
-					//	std::cout <<" RECV " <<  listMovments[i].IDMove << std::endl;
-						if (listMovments[i].IDMove != idMoveAux) {
-							//listMovments.erase(listMovments.begin(), listMovments.begin() + i);
-							//std::cout << "Rec";
-							pack >> it->second.posX >> it->second.posY;
+			if (Players.find(player.ID)->first == idAux2) {
+				for (int i = 0; i < listMovments.size(); i++) {
+					if (listMovments[i].IDMove == idMoveAux) {
+						float auxX, auxY;
+						pack >> auxX >> auxY;
+						if ((auxX <= (Players.find(player.ID)->second.posX-5) || auxX >= (Players.find(player.ID)->second.posX + 5)) && (auxY <= (Players.find(player.ID)->second.posY - 5) || auxY >= (Players.find(player.ID)->second.posY + 5))) {
+							listMovments.erase(listMovments.begin(), listMovments.begin() + i); 
+							//std::cout << "no corrijo nada" <<  std::endl;
 						}
-						else if(listMovments[i].IDMove == idMoveAux){
-							//std::cout << "NO";
-							listMovments.erase(listMovments.begin(), listMovments.begin() + i);
+						else if (auxX != Players.find(player.ID)->second.posX || auxY != Players.find(player.ID)->second.posY) {
+							listMovments.erase(listMovments.begin(), listMovments.end());
+							Players.find(player.ID)->second.posX = auxX;
+							Players.find(player.ID)->second.posY = auxY;
+							//std::cout << "corrijo pos de " << Players.find(player.ID)->second.name << std::endl;
 						}
 					}
-
-					//std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 				}
 			}
-			pack.clear();
+			else {
+				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+					//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
+					if (it->first == idAux2 && player.ID != idAux2) {
+						float auxX, auxY;
+						pack >> auxX >> auxY;
+						it->second.posX = auxX;
+						it->second.posY = auxY;
+						/*for (int i = 0; i < listMovments.size(); i++) {
+							if (listMovments[i].IDMove == idMoveAux) {
+								float auxX, auxY;
+								pack >> auxX >> auxY;
+								std::cout << auxX << " " << auxY << " " << it->second.posX << " " << it->second.posY << std::endl;
+								if (auxX == it->second.posX && auxY == it->second.posY) {
+									//listMovments.erase(listMovments.begin(), listMovments.begin() + i);
+									std::cout << "no corrijo nada" << it->second.name << std::endl;
+								}
+								else if (auxX != it->second.posX || auxY != it->second.posY) {
+
+									std::cout << "corrijo pos de " << it->second.name << std::endl;
+								}
+							}
+						}*/
+					}
+
+				}
+			}
 		}
+		pack.clear();
 		while (window.pollEvent(event))
 		{
 			switch (event.type)
@@ -233,7 +240,7 @@ void Gameplay()
 
 			}
 		}
-		if (clockMov.getElapsedTime().asMilliseconds() > 100 && (movActual.movX != 0 || movActual.movY != 0)) {
+		if (clockMov.getElapsedTime().asMilliseconds() > 50 && (movActual.movX != 0 || movActual.movY != 0)) {
 			movActual.IDMove++;
 			listMovments.push_back(movActual);
 			packMov << "CMD_MOV" << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
@@ -243,7 +250,7 @@ void Gameplay()
 			}
 			else {
 				clockMov.restart();
-				std::cout <<  " IDM " << movActual.IDMove  << std::endl;
+				//std::cout <<  " IDM " << movActual.IDMove  << std::endl;
 				//ultimID = movActual.IDMove;
 				resetMov(&movActual);
 

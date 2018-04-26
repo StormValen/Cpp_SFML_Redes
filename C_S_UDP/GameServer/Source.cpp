@@ -180,6 +180,15 @@ void Game() {
 				Players.erase(Players[i].ID);
 			}
 		}
+		if (clockSend.getElapsedTime().asMilliseconds() > 50) {
+			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+				if (socket.send(packM, it->second.IP, it->second.port) != sf::Socket::Done) {
+					std::cout << "Error al enviar mov" << std::endl;
+				}
+			}
+			packM.clear();
+			clockSend.restart();
+		}
 		if (socket.receive(packR, IP, port) != sf::Socket::Done) {
 		}
 
@@ -202,7 +211,7 @@ void Game() {
 						movAux.movX += deltaX;
 						movAux.movY += deltaY;
 						it2->second.movment.insert((std::pair<int, Movment>(idMove, movAux)));
-						//if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
+						if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
 
 							if ((it2->second.posX += deltaX) > maxX) {
 								it2->second.posX = maxX;
@@ -225,36 +234,19 @@ void Game() {
 								it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX;
 								it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY;
 								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
-								//	std::cout << " X " << it2->second.movment[it2->second.movment.size() - 1].movX << " Y " << it2->second.movment[it2->second.movment.size() - 1].movY << std::endl;
-									//std::cout << " IDM " << it2->second.movment[it2->second.movment.size() - 1].IDMove
-										//<< " X " << it2->second.movment[it2->second.movment.size() - 1].movX << " Y " << it2->second.movment[it2->second.movment.size() - 1].movY;//<< " posX " << it2->second.posX << " posY " << it2->second.posY;		
 							}
-
-							
-					//	}
-						//clockAcum.restart();
+							clockAcum.restart();
+						}
 					}
 				}
-
 			}
 		}
 
-		if (clockSend.getElapsedTime().asMilliseconds() > 100) {
-			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-				if (socket.send(packM, it->second.IP, it->second.port) != sf::Socket::Done) {
-					std::cout << "Error al enviar mov" << std::endl;
-				}
-				//std::cout << it->second.name << "  " << it2->second.movment[it2->second.movment.size() - 1].IDMove <<  std::endl;
-		//	}
-			//it2->second.movment.erase(it2->second.movment[it2->second.movment.size() - 1].IDMove);
-
-				//std::cout << "Send";
-			}
-			packM.clear();
-			clockSend.restart();
-		}
 
 		packR.clear();
+		for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
+			it2->second.movment.erase(it2->first);
+		}
 	}
 }
 
