@@ -9,7 +9,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML\Network.hpp>
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 3
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -61,7 +61,7 @@ void resetMov(Movment* mov) {
 	mov->movY = 0;
 }
 void Connection(){
-	socket.setBlocking(true);
+	//socket.setBlocking(true);
 	bool send = false;
 	sf::Packet packetLog;
 	std::string name;
@@ -134,12 +134,13 @@ void Gameplay()
 			pack >> packID >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
 			std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
 			Players.insert(std::pair<int, Player>(newPlayer.ID, newPlayer));
-		/*	packACKNEW << "CMD_ACK_NEW" << packID;
+			packACKNEW << "CMD_ACK_NEW" << packID;
 
 			if (socket.send(packACKNEW, "localhost", 50000) != sf::Socket::Done) {
 				std::cout << "Error al enviar" << std::endl;
 			}
-			packACKNEW.clear();*/
+			std::cout << packID << std::endl;
+			packACKNEW.clear();
 		}
 		else if (cmd == "CMD_PING") {
 			sf::Clock clock;
