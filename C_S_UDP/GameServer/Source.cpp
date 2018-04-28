@@ -6,7 +6,7 @@
 #include <mutex>
 #include <cstring>
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 3
 sf::UdpSocket socket;
 
 struct Movment
@@ -33,10 +33,11 @@ struct Player
 	sf::Clock timePing;
 	std::map<int, Movment> movment;
 	std::vector<Movment>interpolation;
+	std::map<int, PacketCritic> mapPacketCritic;
 };
 
 int ID;
-std::map<int, PacketCritic> mapPacketCritic;
+
 std::map<int, Player> Players;
 float maxY = 480;
 float minY = 1.f;
@@ -59,9 +60,10 @@ void NewPlayer(Player player) {
 				if (socket.send(packCritic.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
 					std::cout << "Error al enviar nueva conexion" << std::endl;
 				}
+				it->second.mapPacketCritic.insert(std::pair <int, PacketCritic>(packID, packCritic));
 			}
 		}
-		mapPacketCritic.insert(std::pair <int, PacketCritic>(packID, packCritic));
+		
 		packID++;
 	}		
 
@@ -184,16 +186,16 @@ void Game() {
 				Players.find(id)->second.timePing.restart();
 			}
 			if (cmd == "CMD_ACK_NEW") {
-				int idAux;
+				int idPacket , id;
 				//std::cout << idAux << std::endl;
 				//for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-					for (int j = 1; j <= mapPacketCritic.size(); ++j) {
-						packR >> idAux;
-						if (idAux == mapPacketCritic.find(j)->first && mapPacketCritic.find(j) != mapPacketCritic.end()) {
-							std::cout << "OK" << mapPacketCritic.find(j)->first;
-							//mapPacketCritic.erase(mapPacketCritic.find(j));
+					//for (int j = 1; j <= it->second.mapPacketCritic.size(); ++j) {
+						packR >> idPacket >> id;
+						if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
+							std::cout << "OK" << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << Players.find(id)->first;
+							Players.find(id)->second.mapPacketCritic.erase(idPacket);
 						}
-					}
+					//}
 				//}
 				//std::cout << "numNEW" << newPlayer++ << std::endl;
 				//packR.clear();

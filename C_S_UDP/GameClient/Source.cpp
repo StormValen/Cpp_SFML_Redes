@@ -9,7 +9,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML\Network.hpp>
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 3
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -134,7 +134,7 @@ void Gameplay()
 			pack >> packID >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
 			std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
 			Players.insert(std::pair<int, Player>(newPlayer.ID, newPlayer));
-			packACKNEW << "CMD_ACK_NEW" << packID;
+			packACKNEW << "CMD_ACK_NEW" << packID << player.ID;
 
 			if (socket.send(packACKNEW, "localhost", 50000) != sf::Socket::Done) {
 				std::cout << "Error al enviar" << std::endl;
