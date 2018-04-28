@@ -5,8 +5,10 @@
 #include <thread>
 #include <mutex>
 #include <cstring>
+#include <random>
 
-#define MAX_PLAYERS 3
+#define MAX_PLAYERS 4
+#define PERCENT_LOSS 0.1
 sf::UdpSocket socket;
 
 struct Movment
@@ -45,7 +47,39 @@ float maxX = 480.f;
 float minX = 1.f;
 int packID = 1;
 //StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
+static float GerRandomFloat() {
+	static std::random_device rd;
+	static std::mt19937 gen(rd());
+	static std::uniform_real_distribution<float> dis(0.f, 1.f);
+	return dis(gen);
+}
 
+void A() {
+		sf::IpAddress IP;
+		unsigned short port;
+		sf::Packet packetLog;
+		std::string str_CON;
+		for (int i = 0; i < Players.size(); i++) {
+			while (Players.find(i)->second.mapPacketCritic.size() > 0) {
+				//std::cout << "hol222a";
+				if (socket.receive(packetLog, IP, port) != sf::Socket::Done) {
+					std::cout << "Error al recivir" << std::endl;
+				}
+				packetLog >> str_CON;
+				//std::cout << str_CON;
+				if (str_CON == "CMD_ACK_NEW") {
+					int idPacket, id;
+					packetLog >> idPacket >> id;
+					//std::cout << idPacket << " " << id << std::endl;
+					if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
+						std::cout << "OK" << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << Players.find(id)->first << std::endl;
+						Players.find(id)->second.mapPacketCritic.erase(idPacket);
+						//newPlayer++;
+					}
+				}
+			}
+		}
+}
 void NewPlayer(Player player) {
 
 	PacketCritic packCritic;
@@ -94,7 +128,6 @@ void sendAllPlayers(std::string cmd, int id) {
 		}
 	}
 }
-
 void Connection() {
 	srand(time(NULL));
 	sf::Packet packetLog;
@@ -104,9 +137,10 @@ void Connection() {
 	int i = 0;
 	sf::Clock clockResend;
 	clockResend.restart();
-	int newPlayer = 1;
+	int newPlayer = 0;
 	socket.bind(50000);
 	Player player;
+
 	while(Players.size() < MAX_PLAYERS) {
 		sf::IpAddress IP;
 		unsigned short port;
@@ -114,6 +148,15 @@ void Connection() {
 			std::cout << "Error al recivir" << std::endl;
 		}
 		packetLog >> str_CON;
+		/*if (str_CON == "CMD_ACK_NEW") {
+			int idPacket, id;
+			packetLog >> idPacket >> id;
+			if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
+				std::cout << "OK" << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << Players.find(id)->first;
+				Players.find(id)->second.mapPacketCritic.erase(idPacket);
+
+			}
+		}*/
 		if (str_CON == "HELLO")
 		{
 			packetLog >> player.name;
@@ -140,7 +183,7 @@ void Connection() {
 			packetLog.clear();
 			i++;
 		}
-
+		A();
 		/*if (clockResend.getElapsedTime().asMilliseconds() > 300) {
 			for (int j = 1; j <= mapPacketCritic.size(); j++) {
 				Resend(mapPacketCritic.find(j)->second.packet);
@@ -176,30 +219,21 @@ void Game() {
 	std::string cmd;
 	while (true) {
 
+		float rndPacketLoss = GerRandomFloat();
+
 		if (socket.receive(packR, IP, port) != sf::Socket::Done) {
 		}
-
+		/*if (rndPacketLoss < PERCENT_LOSS) {
+			packR.clear();
+			std::cout << rndPacketLoss << std::endl;
+		}*/
 		else {
 			packR >> cmd;
 			if (cmd == "CMD_ACK") {
 				packR >> id;
 				Players.find(id)->second.timePing.restart();
 			}
-			if (cmd == "CMD_ACK_NEW") {
-				int idPacket , id;
-				//std::cout << idAux << std::endl;
-				//for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-					//for (int j = 1; j <= it->second.mapPacketCritic.size(); ++j) {
-						packR >> idPacket >> id;
-						if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
-							std::cout << "OK" << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << Players.find(id)->first;
-							Players.find(id)->second.mapPacketCritic.erase(idPacket);
-						}
-					//}
-				//}
-				//std::cout << "numNEW" << newPlayer++ << std::endl;
-				//packR.clear();
-			}
+		
 			if (cmd == "CMD_MOV") {
 				int idMove, id;
 				float deltaX, deltaY;
@@ -297,10 +331,15 @@ void Game() {
 
 int main()
 {
-	Connection();
-	do {
 
+	Connection();
+
+//	A();
+	do {
+	//	A();
+		//
 		Game();
 	} while (Players.size() >= 0);
+	//tr.join();
 	return 0;
 }

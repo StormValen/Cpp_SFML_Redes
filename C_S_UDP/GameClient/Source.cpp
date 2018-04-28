@@ -9,7 +9,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML\Network.hpp>
 
-#define MAX_PLAYERS 3
+#define MAX_PLAYERS 4
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
