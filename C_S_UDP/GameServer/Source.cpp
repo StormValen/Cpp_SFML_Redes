@@ -8,7 +8,7 @@
 #include <random>
 
 #define MAX_PLAYERS 4
-#define PERCENT_LOSS 0.1
+#define PERCENT_LOSS 0.05
 sf::UdpSocket socket;
 
 struct Movment
@@ -21,14 +21,14 @@ struct PacketCritic
 	sf::Packet packet;
 	sf::IpAddress IP;
 	unsigned short port;
-	int ID;
+	int ID = 0;
 }; 
 struct Player
 {
 	sf::IpAddress IP;
 	unsigned short port;
 	bool connected = true;
-	int ID;
+	int ID = 0;
 	bool resend = false;
 	float posX, posY;
 	std::string name;
@@ -46,6 +46,8 @@ float minY = 1.f;
 float maxX = 480.f;
 float minX = 1.f;
 int packID = 1;
+
+
 //StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
 static float GerRandomFloat() {
 	static std::random_device rd;
@@ -53,8 +55,35 @@ static float GerRandomFloat() {
 	static std::uniform_real_distribution<float> dis(0.f, 1.f);
 	return dis(gen);
 }
+void Resend() {
+	sf::Clock clockResend;
+	clockResend.restart();
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		while (it->second.mapPacketCritic.size() > 0) {
+			if (clockResend.getElapsedTime().asMilliseconds() > 300) {
+				if (it != Players.end()) {
+					if (it->second.mapPacketCritic.size() > 0) {
+						//std::cout << "Este tiene " << Players.find(i)->second.name << std::endl;
+						for (int j = 1; j <= it->second.mapPacketCritic.size(); ++j) {
+							std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(j)->first << std::endl;
+							if (it->second.mapPacketCritic.find(j) != it->second.mapPacketCritic.end()) {
+								//std::cout << "Siguiente 2" << std::endl;
+								if (socket.send(it->second.mapPacketCritic.find(j)->second.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
+									std::cout << "Error al enviar nueva conexion" << std::endl;
+								}
+								std::cout << it->second.name << std::endl;
+							}
+						}
+					}
+					clockResend.restart();
+				}
+			}
+		}
+	}
+}
 
-void A() {
+void CheckNewPlayer() {
+	std::thread tr(&Resend);
 		sf::IpAddress IP;
 		unsigned short port;
 		sf::Packet packetLog;
@@ -73,15 +102,15 @@ void A() {
 					//std::cout << idPacket << " " << id << std::endl;
 					if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
 						std::cout << "OK" << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << Players.find(id)->first << std::endl;
+						std::cout << "Elimino el packet " << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << " de " << Players.find(id)->second.name << std::endl;
 						Players.find(id)->second.mapPacketCritic.erase(idPacket);
-						//newPlayer++;
 					}
 				}
 			}
 		}
+		tr.join();
 }
 void NewPlayer(Player player) {
-
 	PacketCritic packCritic;
 
 	if (Players.size() > 1) {
@@ -96,23 +125,12 @@ void NewPlayer(Player player) {
 				}
 				it->second.mapPacketCritic.insert(std::pair <int, PacketCritic>(packID, packCritic));
 			}
-		}
-		
+		}	
 		packID++;
 	}		
-
-	//packCritic.packet.clear();
 }
 
-void Resend(sf::Packet pack) {
-	std::cout << "NOOK";
-	for (int i = 0; i < Players.size(); i++) {
-		//if()
-		if (socket.send(pack, Players.find(i)->second.IP, Players.find(i)->second.port) != sf::Socket::Done) {
-			std::cout << "Error al enviar nueva conexion" << std::endl;
-		}
-	}
-}
+
 void sendAllPlayers(std::string cmd, int id) {
 	sf::Packet packDes;
 	if (cmd == "CMD_DESC") {
@@ -148,15 +166,6 @@ void Connection() {
 			std::cout << "Error al recivir" << std::endl;
 		}
 		packetLog >> str_CON;
-		/*if (str_CON == "CMD_ACK_NEW") {
-			int idPacket, id;
-			packetLog >> idPacket >> id;
-			if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
-				std::cout << "OK" << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << Players.find(id)->first;
-				Players.find(id)->second.mapPacketCritic.erase(idPacket);
-
-			}
-		}*/
 		if (str_CON == "HELLO")
 		{
 			packetLog >> player.name;
@@ -183,14 +192,8 @@ void Connection() {
 			packetLog.clear();
 			i++;
 		}
-		A();
-		/*if (clockResend.getElapsedTime().asMilliseconds() > 300) {
-			for (int j = 1; j <= mapPacketCritic.size(); j++) {
-				Resend(mapPacketCritic.find(j)->second.packet);
-			}
-			clockResend.restart();
-		}*/
-		
+		CheckNewPlayer();
+	
 	}
 
 }
@@ -223,10 +226,9 @@ void Game() {
 
 		if (socket.receive(packR, IP, port) != sf::Socket::Done) {
 		}
-		/*if (rndPacketLoss < PERCENT_LOSS) {
-			packR.clear();
-			std::cout << rndPacketLoss << std::endl;
-		}*/
+		//if (rndPacketLoss < PERCENT_LOSS) {
+			//packR.clear();
+		//}
 		else {
 			packR >> cmd;
 			if (cmd == "CMD_ACK") {
@@ -277,12 +279,6 @@ void Game() {
 				}
 			}
 		}
-	/*	if (mapPacketCritic.size() > 0) {
-			for (int j = 1; j <= mapPacketCritic.size(); j++) {
-				Resend(mapPacketCritic.find(j)->second.packet);
-			}
-
-		}*/
 		if (clockP.getElapsedTime().asMilliseconds() > 1000) {
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 				ping = "CMD_PING";
@@ -323,9 +319,9 @@ void Game() {
 
 
 		packR.clear();
-		for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
-			it2->second.movment.erase(it2->first);
-		}
+		//for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
+			//it2->second.movment.erase(it2->first);
+		//}
 	}
 }
 
@@ -333,7 +329,7 @@ int main()
 {
 
 	Connection();
-
+	//Resend();
 //	A();
 	do {
 	//	A();
