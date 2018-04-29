@@ -26,11 +26,11 @@
 #define RADIO_AVATAR 10.f
 #define OFFSET_AVATAR 1
 
-enum TipoProceso { RATON, GATO, PADRE };
 char tablero[SIZE_TABLERO];
 struct Player
 {
 	int ID;
+	int puntos = 0;
 	float posX, posY;
 	std::string name;
 	bool caco = false;
@@ -120,11 +120,9 @@ void CheckCollisionPlayers() {
 			if (Distance(Players.find(player.ID)->second.posX, Players.find(player.ID)->second.posY, it->second.posX, it->second.posY) <= RADIO_AVATAR*2) {
 				if (!Players.find(player.ID)->second.caco && it->second.caco)
 					packCaco << "CMD_CACO" << Players.find(player.ID)->first;
-					//std::cout << Players.find(player.ID)->first << std::endl;
 					if (socket.send(packCaco, "localhost", 50000) != sf::Socket::Done) {
 						std::cout << "Error al enviar" << std::endl;
 					}
-					//
 			}
 		}
 		packCaco.clear();
@@ -188,7 +186,7 @@ void Gameplay()
 					std::cout << "Error al enviar" << std::endl;
 				}
 				clock.restart();
-				packS.clear();
+				//packS.clear();
 			}
 			if (cmd == "CMD_DESC") {
 				std::string a;
@@ -257,11 +255,21 @@ void Gameplay()
 					}
 				}
 			}
-			if (cmd == "CMD_FINISH") {
-				std::cout << "finish";
+			if (cmd == "CMD_PUNTOS") {
+				int idAux, auxPuntos;
+				pack >> idAux >> auxPuntos;
+				std::cout << idAux << " " << auxPuntos << std::endl;
+				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+					if (it->first == idAux) {
+						it->second.puntos = auxPuntos;
+					}
+				}
+			}
+			if (cmd == "CMD_RESET") {
+				std::cout << "RESET";
 			}
 		}
-		//pack.clear();
+		pack.clear();
 		while (window.pollEvent(event))
 		{
 			switch (event.type)
