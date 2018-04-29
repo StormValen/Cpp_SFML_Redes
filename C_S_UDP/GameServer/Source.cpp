@@ -28,8 +28,8 @@ struct Player
 	sf::IpAddress IP;
 	unsigned short port;
 	bool connected = true;
-	int ID = 0;
-	int puntos = 0;
+	int ID;
+	int puntos;
 	bool caco = false;
 	float posX, posY;
 	std::string name;
@@ -47,6 +47,7 @@ float minY = 20.f;
 float maxX = 470.f;
 float minX = 20.f;
 int packID = 1;
+int coco = 0;
 int counter = 1;
 sf::Clock clockTime;
 
@@ -102,8 +103,8 @@ void CheckNewPlayer() {
 					packetLog >> idPacket >> id;
 					//std::cout << idPacket << " " << id << std::endl;
 					if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
-						std::cout << "OK" << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << Players.find(id)->first << std::endl;
-						std::cout << "Elimino el packet " << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << " de " << Players.find(id)->second.name << std::endl;
+						//std::cout << "OK" << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << Players.find(id)->first << std::endl;
+						//std::cout << "Elimino el packet " << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << " de " << Players.find(id)->second.name << std::endl;
 						Players.find(id)->second.mapPacketCritic.erase(idPacket);
 					}
 				}
@@ -146,44 +147,55 @@ void sendAllPlayers(std::string cmd, int id) {
 	}
 }
 void Reset() {
+	srand(time(NULL));
 	counter = 1;
 	clockTime.restart();
 	sf::Packet packetReset;
-	std::cout << "RESET";
+	//std::cout << "RESET";
 	packetReset << "CMD_RESET";
-	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-		if (socket.send(packetReset, it->second.IP, it->second.port) != sf::Socket::Done) {
+	int random = rand() % 3;
+	for (int i = 0; i < Players.size(); i++) {
+		packetReset << Players.find(i)->first << Players.find(i)->second.puntos;
+		Players.find(i)->second.caco = false;
+		if (Players.find(i)->first == random) {
+			Players.find(i)->second.caco = true;
+			std::cout << random  << " " << Players.find(i)->second.name << std::endl;
+		}
+		packetReset << Players.find(i)->second.caco;
+		if (socket.send(packetReset, Players.find(i)->second.IP, Players.find(i)->second.port) != sf::Socket::Done) {
 			std::cout << "Error al enviar mov" << std::endl;
 		}
+
 	}
+
 }
 void TimeGame() {
 	sf::Packet packPoints;
-	if (clockTime.getElapsedTime().asSeconds() > 40 && counter < MAX_PLAYERS) {
+	if (clockTime.getElapsedTime().asSeconds() > 5 && counter < MAX_PLAYERS) {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (!it->second.caco) {	
 				it->second.puntos++;
 			}
 		}
-		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		/*for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			packPoints << "CMD_PUNTOS" << it->first << it->second.puntos;
 			if (socket.send(packPoints, it->second.IP, it->second.port) != sf::Socket::Done) {
 				std::cout << "Error al enviar mov" << std::endl;
 			}
 			std::cout << it->second.name << it->second.puntos << std::endl;
-		}
+		}*/
 		Reset();
-		packPoints.clear();
+		//packPoints.clear();
 		clockTime.restart();
 	}
 	else if (counter == MAX_PLAYERS) {
-		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		/*for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			packPoints << "CMD_PUNTOS" << it->first << it->second.puntos;
 			if (socket.send(packPoints, it->second.IP, it->second.port) != sf::Socket::Done) {
 				std::cout << "Error al enviar mov" << std::endl;
 			}
 			std::cout << it->second.name << it->second.puntos << std::endl;
-		}
+		}*/
 		Reset();
 	}
 }
@@ -216,6 +228,7 @@ void Connection() {
 			player.posY = rand() % 470;
 			player.ID = i;
 			if (Players.size() == 0) {
+				//coco++;
 				player.caco = true;
 			}
 			else { player.caco = false; }
@@ -331,7 +344,7 @@ void Game() {
 						if (!it->second.caco) {
 							it->second.caco = true;
 							counter++;
-							std::cout << counter << std::endl;
+							//std::cout << counter << std::endl;
 							packACKC << "CMD_ACK_CACO" << it->first << it->second.caco;
 						}
 					}
@@ -341,7 +354,6 @@ void Game() {
 						std::cout << "Error al enviar mov" << std::endl;
 					}
 				}
-				//CheckCACOS();
 			}
 		}
 		//GameManager
