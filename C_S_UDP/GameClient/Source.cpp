@@ -9,10 +9,11 @@
 #include <SFML/Graphics.hpp>
 #include <SFML\Network.hpp>
 #include <random>
+#include <math.h>
 
 #define PERCENT_LOSS 0.05
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 3
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -32,6 +33,7 @@ struct Player
 	int ID;
 	float posX, posY;
 	std::string name;
+	bool caco = false;
 };
 struct Movment
 {
@@ -100,13 +102,34 @@ void Connection(){
 	int size = 0;
 	packR >> size;
 	for (int i = 0; i < size; i++) {
-		packR >> welcome >> player.name >> player.ID >> player.posX >> player.posY;
+		packR >> welcome >> player.name >> player.ID >> player.posX >> player.posY >> player.caco;
 		if (welcome == "CMD_WELCOME") {
 			Players.insert(std::pair<int, Player>(player.ID, player));
-			std::cout << Players[i].name << " ID:" << Players[i].ID << " POS: " << Players[i].posX << " " << Players[i].posY << std::endl;
-		}
+			std::cout << Players[i].name << " ID:" << Players[i].ID << " POS: " << Players[i].posX << " " << Players[i].posY << "C3" << Players[i].caco <<  std::endl;
+		} 
 	}
 	packR.clear();
+}
+float Distance(float x, float y, float a, float b) {
+	return sqrt(pow(x - a, 2) + pow(y - b, 2));
+}
+void CheckCollisionPlayers() {
+	sf::Packet packCaco;
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		if (Players.find(player.ID)->first != it->first) {
+			if (Distance(Players.find(player.ID)->second.posX, Players.find(player.ID)->second.posY, it->second.posX, it->second.posY) <= RADIO_AVATAR*2) {
+				if (!Players.find(player.ID)->second.caco && it->second.caco)
+					packCaco << "CMD_CACO" << Players.find(player.ID)->first;
+					//std::cout << Players.find(player.ID)->first << std::endl;
+					if (socket.send(packCaco, "localhost", 50000) != sf::Socket::Done) {
+						std::cout << "Error al enviar" << std::endl;
+					}
+					//
+			}
+		}
+		packCaco.clear();
+	}
+
 }
 
 void Gameplay()
@@ -135,10 +158,9 @@ void Gameplay()
 		if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
 			//std::cout << "Error al recivir";
 		}
-		if (rndPacketLoss < PERCENT_LOSS) {
-			pack.clear();
-		//	std::cout << rndPacketLoss << std::endl;
-		}
+		//if (rndPacketLoss < PERCENT_LOSS) {
+			//pack.clear();
+		//}
 		else {
 			pack >> cmd;
 
@@ -147,8 +169,8 @@ void Gameplay()
 				int packID = 0;
 				sf::Packet packACKNEW;
 				Player newPlayer;
-				pack >> packID >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY;
-				std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << std::endl;
+				pack >> packID >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY >> newPlayer.caco;
+				std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << "C3" << newPlayer.caco << std::endl;
 				Players.insert(std::pair<int, Player>(newPlayer.ID, newPlayer));
 				packACKNEW << "CMD_ACK_NEW" << packID << player.ID;
 
@@ -158,7 +180,7 @@ void Gameplay()
 				//std::cout << "Envio el new"  << std::endl;
 				//packACKNEW.clear();
 			}
-			else if (cmd == "CMD_PING") {
+			if (cmd == "CMD_PING") {
 				sf::Clock clock;
 				clock.restart();
 				packS << "CMD_ACK" << player.ID;
@@ -168,7 +190,7 @@ void Gameplay()
 				clock.restart();
 				packS.clear();
 			}
-			else if (cmd == "CMD_DESC") {
+			if (cmd == "CMD_DESC") {
 				std::string a;
 				int idAux;
 				pack >> idAux;
@@ -176,7 +198,7 @@ void Gameplay()
 					Players.erase(idAux);
 				}
 			}
-			else if (cmd == "CMD_OK_MOVE") {
+			if (cmd == "CMD_OK_MOVE") {
 				pack >> idAux2 >> idMoveAux;
 				if (Players.find(player.ID)->first == idAux2) {
 					for (int i = 0; i < listMovments.size(); i++) {
@@ -224,8 +246,22 @@ void Gameplay()
 					}
 				}
 			}
+			if (cmd == "CMD_ACK_CACO") {
+				int idAux;
+				bool aux;
+				pack >> idAux >> aux;
+				//std::cout << idAux << "  " << aux << std::endl;
+				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+					if (it->first == idAux) {
+						it->second.caco = aux;
+					}
+				}
+			}
+			if (cmd == "CMD_FINISH") {
+				std::cout << "finish";
+			}
 		}
-		pack.clear();
+		//pack.clear();
 		while (window.pollEvent(event))
 		{
 			switch (event.type)
@@ -258,6 +294,7 @@ void Gameplay()
 
 			}
 		}
+		//send mov
 		if (clockMov.getElapsedTime().asMilliseconds() > 50 && (movActual.movX != 0 || movActual.movY != 0)) {
 			movActual.IDMove++;
 			listMovments.push_back(movActual);
@@ -274,13 +311,38 @@ void Gameplay()
 
 			}
 		}
+
 		window.clear();	
 		for (int i = 0; i<SIZE_FILA_TABLERO; i++)
 		{
-			for (int j = 0; j<SIZE_FILA_TABLERO; j++)
+			for (int j = 0; j < SIZE_FILA_TABLERO; j++)
 			{
 				sf::RectangleShape rectBlanco(sf::Vector2f(LADO_CASILLA, LADO_CASILLA));
 				rectBlanco.setFillColor(sf::Color::White);
+				if (j == 0) {
+					sf::RectangleShape rectBlu(sf::Vector2f(LADO_CASILLA, LADO_CASILLA));
+					rectBlu.setFillColor(sf::Color::Magenta);
+					rectBlu.setPosition(sf::Vector2f(i*LADO_CASILLA, 0));
+					window.draw(rectBlu);
+				}
+				if (j == SIZE_FILA_TABLERO - 1) {
+					sf::RectangleShape rectBlu(sf::Vector2f(LADO_CASILLA, LADO_CASILLA));
+					rectBlu.setFillColor(sf::Color::Magenta);
+					rectBlu.setPosition(sf::Vector2f(i*LADO_CASILLA, (SIZE_FILA_TABLERO - 1)*LADO_CASILLA));
+					window.draw(rectBlu);
+				}
+				if (i == 0) {
+					sf::RectangleShape rectBlu(sf::Vector2f(LADO_CASILLA, LADO_CASILLA));
+					rectBlu.setFillColor(sf::Color::Magenta);
+					rectBlu.setPosition(sf::Vector2f(0, j *LADO_CASILLA));
+					window.draw(rectBlu);
+				}
+				if (i == SIZE_FILA_TABLERO - 1) {
+					sf::RectangleShape rectBlu(sf::Vector2f(LADO_CASILLA, LADO_CASILLA));
+					rectBlu.setFillColor(sf::Color::Magenta);
+					rectBlu.setPosition(sf::Vector2f((SIZE_FILA_TABLERO - 1)*LADO_CASILLA, j *LADO_CASILLA));
+					window.draw(rectBlu);
+				}
 				if (i % 2 == 0)
 				{
 					//Empieza por el blanco
@@ -303,20 +365,13 @@ void Gameplay()
 		}
 
 		//TODO: Para pintar el circulito del ratón
-		/*sf::CircleShape shapeRaton(RADIO_AVATAR);
-		shapeRaton.setFillColor(sf::Color::Blue);
-		sf::Vector2f posicionRaton(player.posX, player.posY);
-		posicionRaton = BoardToWindows(posicionRaton);
-		shapeRaton.setPosition(posicionRaton);
-		window.draw(shapeRaton);*/
-
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			sf::CircleShape shapeRaton(RADIO_AVATAR);
-			if (it->first == player.ID) {
-				shapeRaton.setFillColor(sf::Color::Blue);
+			if (it->second.caco) {
+				shapeRaton.setFillColor(sf::Color::Red);
 			}
 			else {
-				shapeRaton.setFillColor(sf::Color::Red);
+				shapeRaton.setFillColor(sf::Color::Blue);
 			}
 			sf::Vector2f positionGato1(it->second.posX, it->second.posY);
 			//positionGato1 = BoardToWindows(positionGato1);
@@ -324,29 +379,7 @@ void Gameplay()
 
 			window.draw(shapeRaton);
 		}
-	
-	/*	//Pintamos los cuatro circulitos del gato
-		sf::CircleShape shapeGato(RADIO_AVATAR);
-		shapeGato.setFillColor(sf::Color::Red);
-
-		sf::Vector2f positionGato1(1.f, 0.f);
-		positionGato1 = BoardToWindows(positionGato1);
-		shapeGato.setPosition(positionGato1);
-
-		window.draw(shapeGato);
-
-		sf::Vector2f positionGato2(3.f, 0.f);
-		positionGato2 = BoardToWindows(positionGato2);
-		shapeGato.setPosition(positionGato2);
-
-		window.draw(shapeGato);
-
-		sf::Vector2f positionGato3(5.f, 0.f);
-		positionGato3 = BoardToWindows(positionGato3);
-		shapeGato.setPosition(positionGato3);
-
-		window.draw(shapeGato);*/
-
+		CheckCollisionPlayers();
 		window.display();
 	}
 }
