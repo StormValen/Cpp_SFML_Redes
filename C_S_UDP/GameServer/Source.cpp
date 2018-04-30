@@ -162,16 +162,16 @@ void Reset() {
 			std::cout << random  << " " << Players.find(i)->second.name << std::endl;
 		}
 		packetReset << Players.find(i)->second.caco;
-		if (socket.send(packetReset, Players.find(i)->second.IP, Players.find(i)->second.port) != sf::Socket::Done) {
+	}
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		if (socket.send(packetReset, it->second.IP, it->second.port) != sf::Socket::Done) {
 			std::cout << "Error al enviar mov" << std::endl;
 		}
-
 	}
-
 }
 void TimeGame() {
 	sf::Packet packPoints;
-	if (clockTime.getElapsedTime().asSeconds() > 5 && counter < MAX_PLAYERS) {
+	if (clockTime.getElapsedTime().asSeconds() > 40 && counter < MAX_PLAYERS) {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (!it->second.caco) {	
 				it->second.puntos++;

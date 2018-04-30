@@ -258,12 +258,12 @@ void Gameplay()
 			if (cmd == "CMD_RESET") {
 				int idAux, auxPuntos;
 				bool cacoAux;
-				pack >> idAux >> auxPuntos >> cacoAux;
-				std::cout << idAux << " " << auxPuntos << " " << cacoAux << std::endl;
-				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-					if (it->first == idAux) {
-						it->second.puntos = auxPuntos;
-						it->second.caco = cacoAux;
+				for (int i = 0; i < Players.size(); i++) {
+					pack >> idAux >> auxPuntos >> cacoAux;
+					std::cout << idAux << " " << auxPuntos << " " << cacoAux << std::endl;
+					if (Players.find(i)->first == idAux) {
+						Players.find(i)->second.puntos = auxPuntos;
+						Players.find(i)->second.caco = cacoAux;
 					}
 				}
 			}
