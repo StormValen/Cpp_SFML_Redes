@@ -1,10 +1,10 @@
 ﻿  Source.cpp
-Source.cpp(342): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(348): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(354): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(360): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(368): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(377): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(347): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(353): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(359): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(365): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(373): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(382): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
 Source.cpp(135): warning C4101: 'ultimID': variable local sin referencia
   Generando código
   6 of 376 functions ( 1.6%) were compiled, the rest were copied from previous compilation.

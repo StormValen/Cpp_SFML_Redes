@@ -11,9 +11,9 @@
 #include <random>
 #include <math.h>
 
-#define PERCENT_LOSS 0.05
+#define PERCENT_LOSS 0.8
 
-#define MAX_PLAYERS 3
+#define MAX_PLAYERS 4
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -144,6 +144,7 @@ void Gameplay()
 		if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
 			//std::cout << "Error al recivir";
 		}
+		
 		//if (rndPacketLoss < PERCENT_LOSS) {
 			//pack.clear();
 		//}
@@ -151,14 +152,16 @@ void Gameplay()
 			pack >> cmd;
 
 			if (cmd == "CMD_NEW_PLAYER") {
-				//std::cout << "Recivo el new" << std::endl;
+				std::cout << "Recivo el new" << std::endl;
 				int packID = 0;
 				sf::Packet packACKNEW;
 				Player newPlayer;
+				
 				pack >> packID >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY >> newPlayer.caco;
 				std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << "C3" << newPlayer.caco << std::endl;
 				Players.insert(std::pair<int, Player>(newPlayer.ID, newPlayer));
 				packACKNEW << "CMD_ACK_NEW" << packID << player.ID;
+				std::cout << player.ID << " " << Players.find(player.ID)->first << std::endl;
 
 				if (socket.send(packACKNEW, "localhost", 50000) != sf::Socket::Done) {
 					std::cout << "Error al enviar" << std::endl;
@@ -276,6 +279,8 @@ void Gameplay()
 				for (int i = 0; i < Players.size(); i++) {
 					if (Players.find(i)->first == idAux) {
 						std::cout << "El ganador ha sido " << Players.find(i)->second.name << std::endl;
+						socket.unbind();
+						//system("exit");
 					}
 				}
 			}

@@ -7,8 +7,8 @@
 #include <cstring>
 #include <random>
 
-#define MAX_PLAYERS 3
-#define PERCENT_LOSS 0.05
+#define MAX_PLAYERS 4
+#define PERCENT_LOSS 0.5
 sf::UdpSocket socket;
 
 struct Movment
@@ -62,21 +62,21 @@ void Resend() {
 	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 		while (it->second.mapPacketCritic.size() > 0) {
 			if (clockResend.getElapsedTime().asMilliseconds() > 300) {
-				if (it != Players.end()) {
+				//if (it != Players.end()) {
 					if (it->second.mapPacketCritic.size() > 0) {
-						//std::cout << "Este tiene " << Players.find(i)->second.name << std::endl;
-						for (int j = 1; j <= it->second.mapPacketCritic.size(); ++j) {
-							std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(j)->first << std::endl;
+						//std::cout << "Este tiene algo que recivir" << it->second.name << " " << it->second.mapPacketCritic.size() <<std::endl;
+						for (int j = 1; j <= it->second.mapPacketCritic.size(); j++) {
+							//std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(j)->first << std::endl;
 							if (it->second.mapPacketCritic.find(j) != it->second.mapPacketCritic.end()) {
 								if (socket.send(it->second.mapPacketCritic.find(j)->second.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
 									std::cout << "Error al enviar nueva conexion" << std::endl;
 								}
-								std::cout << it->second.name << std::endl;
+								//std::cout << it->second.name << std::endl;
 							}
 						}
 					}
 					clockResend.restart();
-				}
+				//}
 			}
 		}
 	}
@@ -88,7 +88,7 @@ void CheckNewPlayer() {
 		sf::Packet packetLog;
 		std::string str_CON;
 		for (int i = 0; i < Players.size(); i++) {
-			while (Players.find(i)->second.mapPacketCritic.size() > 0) {
+			if (Players.find(i)->second.mapPacketCritic.size() > 0) { //WHILE
 				if (socket.receive(packetLog, IP, port) != sf::Socket::Done) {
 					std::cout << "Error al recivir" << std::endl;
 				}
@@ -98,6 +98,8 @@ void CheckNewPlayer() {
 					packetLog >> idPacket >> id;
 					if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
 						Players.find(id)->second.mapPacketCritic.erase(idPacket);
+						//std::cout << "Recivo ACK " << Players.find(id)->second.name << std::endl;
+						//std::cout << "Tamano " << Players.find(id)->second.mapPacketCritic.size() << " de" << Players.find(id)->second.name << std::endl;
 					}
 				}
 			}
@@ -116,9 +118,15 @@ void NewPlayer(Player player) {
 					std::cout << "Error al enviar nueva conexion" << std::endl;
 				}
 				it->second.mapPacketCritic.insert(std::pair <int, PacketCritic>(packID, packCritic));
+				for (int i = 0; i < it->second.mapPacketCritic.size();i++) {
+					//if(it2 != it->second.mapPacketCritic.end())
+					std::cout << it->second.name << it->second.mapPacketCritic.find(i)->first << std::endl;
+
+				}
 			}
 		}	
 		packID++;
+		packCritic.packet.clear();
 	}		
 }
 void sendAllPlayers(std::string cmd, int id) {
@@ -144,7 +152,7 @@ void Reset() {
 			counter = 1;
 			srand(time(NULL));
 			packetReset << "CMD_RESET";
-			int random = rand() % 3;
+			int random = rand() % MAX_PLAYERS;
 			std::cout << random;
 			for (int i = 0; i < Players.size(); i++) {
 				Players.find(i)->second.caco = false;
@@ -192,6 +200,8 @@ void CheckScore(int id) {
 			std::cout << "Error al enviar mov" << std::endl;
 		}
 	}
+	socket.unbind();
+	system("exit");
 }
 void TimeGame() {
 	sf::Packet packPoints;
@@ -211,7 +221,6 @@ void TimeGame() {
 		GameInfo();
 
 	}
-	//CheckScore();
 }
 
 
