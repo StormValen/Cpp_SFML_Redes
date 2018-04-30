@@ -39,19 +39,16 @@ struct Player
 	std::map<int, PacketCritic> mapPacketCritic;
 };
 
-int ID;
-
 std::map<int, Player> Players;
 float maxY = 470;
 float minY = 20.f;
 float maxX = 470.f;
 float minX = 20.f;
 int packID = 1;
-int coco = 0;
 int counter = 1;
 sf::Clock clockTime;
+sf::Clock clockReset;
 
-//StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
 static float GerRandomFloat() {
 	static std::random_device rd;
 	static std::mt19937 gen(rd());
@@ -70,7 +67,6 @@ void Resend() {
 						for (int j = 1; j <= it->second.mapPacketCritic.size(); ++j) {
 							std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(j)->first << std::endl;
 							if (it->second.mapPacketCritic.find(j) != it->second.mapPacketCritic.end()) {
-								//std::cout << "Siguiente 2" << std::endl;
 								if (socket.send(it->second.mapPacketCritic.find(j)->second.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
 									std::cout << "Error al enviar nueva conexion" << std::endl;
 								}
@@ -92,19 +88,14 @@ void CheckNewPlayer() {
 		std::string str_CON;
 		for (int i = 0; i < Players.size(); i++) {
 			while (Players.find(i)->second.mapPacketCritic.size() > 0) {
-				//std::cout << "hol222a";
 				if (socket.receive(packetLog, IP, port) != sf::Socket::Done) {
 					std::cout << "Error al recivir" << std::endl;
 				}
 				packetLog >> str_CON;
-				//std::cout << str_CON;
 				if (str_CON == "CMD_ACK_NEW") {
 					int idPacket, id;
 					packetLog >> idPacket >> id;
-					//std::cout << idPacket << " " << id << std::endl;
 					if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
-						//std::cout << "OK" << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << Players.find(id)->first << std::endl;
-						//std::cout << "Elimino el packet " << Players.find(id)->second.mapPacketCritic.find(idPacket)->first << " de " << Players.find(id)->second.name << std::endl;
 						Players.find(id)->second.mapPacketCritic.erase(idPacket);
 					}
 				}
@@ -114,10 +105,8 @@ void CheckNewPlayer() {
 }
 void NewPlayer(Player player) {
 	PacketCritic packCritic;
-
 	if (Players.size() > 1) {
 		packCritic.ID = player.ID;
-		//std::cout << "newPlayer  " << packID << " " << packCritic.ID << std::endl;
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			std::string cmd = "CMD_NEW_PLAYER";
 			if (it->first != player.ID) {
@@ -135,7 +124,6 @@ void sendAllPlayers(std::string cmd, int id) {
 	sf::Packet packDes;
 	if (cmd == "CMD_DESC") {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			//std::string cmd = "CMD_DESC";
 			packDes << cmd << id;
 			if (it->first != id) {
 				if (socket.send(packDes, it->second.IP, it->second.port) != sf::Socket::Done) {
@@ -147,58 +135,67 @@ void sendAllPlayers(std::string cmd, int id) {
 	}
 }
 void Reset() {
-	srand(time(NULL));
-	counter = 1;
-	clockTime.restart();
-	sf::Packet packetReset;
-	//std::cout << "RESET";
-	packetReset << "CMD_RESET";
-	int random = rand() % 3;
+	std::cout << "holña";
+	
+}
+void GameInfo() {
+	clockReset.restart();
+	bool reset = true;
+	sf::Packet packInfo;
+	packInfo << "CMD_INFO";
 	for (int i = 0; i < Players.size(); i++) {
-		packetReset << Players.find(i)->first << Players.find(i)->second.puntos;
-		Players.find(i)->second.caco = false;
-		if (Players.find(i)->first == random) {
-			Players.find(i)->second.caco = true;
-			std::cout << random  << " " << Players.find(i)->second.name << std::endl;
-		}
-		packetReset << Players.find(i)->second.caco;
+		packInfo << Players.find(i)->first << Players.find(i)->second.puntos;
 	}
 	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-		if (socket.send(packetReset, it->second.IP, it->second.port) != sf::Socket::Done) {
+		if (socket.send(packInfo, it->second.IP, it->second.port) != sf::Socket::Done) {
 			std::cout << "Error al enviar mov" << std::endl;
 		}
 	}
+	//clockReset.restart();
+	sf::Packet packetReset;
+	while (reset) {
+		if (clockReset.getElapsedTime().asSeconds() > 3) {
+			counter = 1;
+			srand(time(NULL));
+			packetReset << "CMD_RESET";
+			int random = rand() % 3;
+			for (int i = 0; i < Players.size(); i++) {
+				packetReset << Players.find(i)->first;
+				Players.find(i)->second.caco = false;
+				if (Players.find(i)->first == random) {
+					Players.find(i)->second.caco = true;
+					std::cout << Players.find(i)->first;
+				}
+				packetReset << Players.find(i)->second.caco;
+			}
+			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+				if (socket.send(packetReset, it->second.IP, it->second.port) != sf::Socket::Done) {
+					std::cout << "Error al enviar mov" << std::endl;
+				}
+			}
+			clockReset.restart();
+			reset = false;
+		}
+	}
 }
+
 void TimeGame() {
 	sf::Packet packPoints;
-	if (clockTime.getElapsedTime().asSeconds() > 40 && counter < MAX_PLAYERS) {
+	if (clockTime.getElapsedTime().asSeconds() > 8 && counter < MAX_PLAYERS) {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (!it->second.caco) {	
 				it->second.puntos++;
 			}
 		}
-		/*for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			packPoints << "CMD_PUNTOS" << it->first << it->second.puntos;
-			if (socket.send(packPoints, it->second.IP, it->second.port) != sf::Socket::Done) {
-				std::cout << "Error al enviar mov" << std::endl;
-			}
-			std::cout << it->second.name << it->second.puntos << std::endl;
-		}*/
-		Reset();
-		//packPoints.clear();
+		GameInfo();
 		clockTime.restart();
 	}
 	else if (counter == MAX_PLAYERS) {
-		/*for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			packPoints << "CMD_PUNTOS" << it->first << it->second.puntos;
-			if (socket.send(packPoints, it->second.IP, it->second.port) != sf::Socket::Done) {
-				std::cout << "Error al enviar mov" << std::endl;
-			}
-			std::cout << it->second.name << it->second.puntos << std::endl;
-		}*/
-		Reset();
+		GameInfo();
+
 	}
 }
+
 
 void Connection() {
 	srand(time(NULL));
@@ -344,7 +341,6 @@ void Game() {
 						if (!it->second.caco) {
 							it->second.caco = true;
 							counter++;
-							//std::cout << counter << std::endl;
 							packACKC << "CMD_ACK_CACO" << it->first << it->second.caco;
 						}
 					}
@@ -396,8 +392,6 @@ void Game() {
 			packM.clear();
 			clockSend.restart();
 		}
-
-
 
 		packR.clear();
 		//for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
