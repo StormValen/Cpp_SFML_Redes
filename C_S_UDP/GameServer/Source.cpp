@@ -48,6 +48,7 @@ int packID = 1;
 int counter = 1;
 sf::Clock clockTime;
 sf::Clock clockReset;
+bool reset = false;
 
 static float GerRandomFloat() {
 	static std::random_device rd;
@@ -135,23 +136,8 @@ void sendAllPlayers(std::string cmd, int id) {
 	}
 }
 void Reset() {
-	std::cout << "holña";
-	
-}
-void GameInfo() {
 	clockReset.restart();
-	bool reset = true;
-	sf::Packet packInfo;
-	packInfo << "CMD_INFO";
-	for (int i = 0; i < Players.size(); i++) {
-		packInfo << Players.find(i)->first << Players.find(i)->second.puntos;
-	}
-	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-		if (socket.send(packInfo, it->second.IP, it->second.port) != sf::Socket::Done) {
-			std::cout << "Error al enviar mov" << std::endl;
-		}
-	}
-	//clockReset.restart();
+
 	sf::Packet packetReset;
 	while (reset) {
 		if (clockReset.getElapsedTime().asSeconds() > 3) {
@@ -159,14 +145,17 @@ void GameInfo() {
 			srand(time(NULL));
 			packetReset << "CMD_RESET";
 			int random = rand() % 3;
+			std::cout << random;
 			for (int i = 0; i < Players.size(); i++) {
-				packetReset << Players.find(i)->first;
 				Players.find(i)->second.caco = false;
+				packetReset << Players.find(i)->first;
+
 				if (Players.find(i)->first == random) {
 					Players.find(i)->second.caco = true;
-					std::cout << Players.find(i)->first;
+//					std::cout << Players.find(i)->second.name;
 				}
 				packetReset << Players.find(i)->second.caco;
+				//std::cout << Players.find(i)->second.name << Players.find(i)->second.caco << std::endl;
 			}
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 				if (socket.send(packetReset, it->second.IP, it->second.port) != sf::Socket::Done) {
@@ -177,14 +166,42 @@ void GameInfo() {
 			reset = false;
 		}
 	}
+	
 }
+void GameInfo() {
 
+	sf::Packet packInfo;
+	packInfo << "CMD_INFO";
+	for (int i = 0; i < Players.size(); i++) {
+		packInfo << Players.find(i)->first << Players.find(i)->second.puntos;
+	}
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		if (socket.send(packInfo, it->second.IP, it->second.port) != sf::Socket::Done) {
+			std::cout << "Error al enviar mov" << std::endl;
+		}
+	}
+	reset = true;
+	Reset();
+	
+}
+void CheckScore(int id) {
+	sf::Packet packEnd;
+	packEnd << "CMD_END" << id;
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		if (socket.send(packEnd, it->second.IP, it->second.port) != sf::Socket::Done) {
+			std::cout << "Error al enviar mov" << std::endl;
+		}
+	}
+}
 void TimeGame() {
 	sf::Packet packPoints;
 	if (clockTime.getElapsedTime().asSeconds() > 8 && counter < MAX_PLAYERS) {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (!it->second.caco) {	
 				it->second.puntos++;
+			}
+			if (it->second.puntos == 5) {
+				CheckScore(it->first);
 			}
 		}
 		GameInfo();
@@ -194,6 +211,7 @@ void TimeGame() {
 		GameInfo();
 
 	}
+	//CheckScore();
 }
 
 
@@ -290,64 +308,66 @@ void Game() {
 				packR >> id;
 				Players.find(id)->second.timePing.restart();
 			}
-			if (cmd == "CMD_MOV") {
-				int idMove, id;
-				float deltaX, deltaY;
-				packR >> idMove >> id >> deltaX >> deltaY;
-				std::string a = "CMD_OK_MOVE";
-				packM << a;
-				for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
-					if (it2->first == id) {
-						Movment movAux;
-						movAux.IDMove = idMove;
-						movAux.movX += deltaX;
-						movAux.movY += deltaY;
-						it2->second.movment.insert((std::pair<int, Movment>(idMove, movAux)));
-						if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
+			if (!reset) {
+				if (cmd == "CMD_MOV") {
+					int idMove, id;
+					float deltaX, deltaY;
+					packR >> idMove >> id >> deltaX >> deltaY;
+					std::string a = "CMD_OK_MOVE";
+					packM << a;
+					for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
+						if (it2->first == id) {
+							Movment movAux;
+							movAux.IDMove = idMove;
+							movAux.movX += deltaX;
+							movAux.movY += deltaY;
+							it2->second.movment.insert((std::pair<int, Movment>(idMove, movAux)));
+							if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
 
-							if ((it2->second.posX += deltaX) > maxX) {
-								it2->second.posX = maxX;
-								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+								if ((it2->second.posX += deltaX) > maxX) {
+									it2->second.posX = maxX;
+									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+								}
+								else if ((it2->second.posX += deltaX) < minX) {
+									it2->second.posX = minX;
+									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+								}
+								else if ((it2->second.posY += deltaY) > maxY) {
+									it2->second.posY = maxY;
+									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+								}
+								else if ((it2->second.posY += deltaY) < minY) {
+									it2->second.posY = minY;
+									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+								}
+								else {
+									//acmular aqui		
+									it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX;
+									it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY;
+									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+								}
+								clockAcum.restart();
 							}
-							else if ((it2->second.posX += deltaX) < minX) {
-								it2->second.posX = minX;
-								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
-							}
-							else if ((it2->second.posY += deltaY) > maxY) {
-								it2->second.posY = maxY;
-								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
-							}
-							else if ((it2->second.posY += deltaY) < minY) {
-								it2->second.posY = minY;
-								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
-							}
-							else {
-								//acmular aqui		
-								it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX;
-								it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY;
-								packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
-							}
-							clockAcum.restart();
 						}
 					}
 				}
-			}
-			if (cmd == "CMD_CACO") {
-				sf::Packet packACKC;
-				int idP1;
-				packR >> idP1;
-				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-					if (it->first == idP1) {
-						if (!it->second.caco) {
-							it->second.caco = true;
-							counter++;
-							packACKC << "CMD_ACK_CACO" << it->first << it->second.caco;
+				if (cmd == "CMD_CACO") {
+					sf::Packet packACKC;
+					int idP1;
+					packR >> idP1;
+					for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+						if (it->first == idP1) {
+							if (!it->second.caco) {
+								it->second.caco = true;
+								counter++;
+								packACKC << "CMD_ACK_CACO" << it->first << it->second.caco;
+							}
 						}
 					}
-				}
-				for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-					if (socket.send(packACKC, it->second.IP, it->second.port) != sf::Socket::Done) {
-						std::cout << "Error al enviar mov" << std::endl;
+					for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+						if (socket.send(packACKC, it->second.IP, it->second.port) != sf::Socket::Done) {
+							std::cout << "Error al enviar mov" << std::endl;
+						}
 					}
 				}
 			}

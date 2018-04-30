@@ -247,10 +247,13 @@ void Gameplay()
 				bool cacoAux;
 				std::cout << "Se ha resetado la partida" << std::endl;
 				for (int i = 0; i < Players.size(); i++) {
-					pack >> idAux >> cacoAux;
-					std::cout << idAux;
+					pack >> idAux;
 					if (Players.find(i)->first == idAux) {
-						std::cout << "hola";
+						pack >> cacoAux;
+						Players.find(i)->second.caco = cacoAux;
+					}
+					else {
+						pack >> cacoAux;
 						Players.find(i)->second.caco = cacoAux;
 					}
 				}
@@ -263,6 +266,16 @@ void Gameplay()
 						std::cout << "Se ha acabado la partida, en 3 segundos comienza la siguiente " << std::endl;
 						Players.find(player.ID)->second.puntos = puntos;
 						std::cout << "Tienes :" << Players.find(player.ID)->second.puntos << " puntos" << std::endl;
+					}
+				}
+			}
+			if (cmd == "CMD_END") {
+				int idAux;
+				pack >> idAux;
+				std::cout << "Se ha acabado la partida" << std::endl;
+				for (int i = 0; i < Players.size(); i++) {
+					if (Players.find(i)->first == idAux) {
+						std::cout << "El ganador ha sido " << Players.find(i)->second.name << std::endl;
 					}
 				}
 			}
