@@ -11,9 +11,9 @@
 #include <random>
 #include <math.h>
 
-#define PERCENT_LOSS 0.8
+#define PERCENT_LOSS 0.1
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -246,22 +246,25 @@ void Gameplay()
 				}
 			}	
 			if (cmd == "CMD_RESET") {
-				int idAux;
-				bool cacoAux;
-				std::cout << "Se ha resetado la partida" << std::endl;
+				int idAux, puntos;
+				bool cacoAux;			
 				for (int i = 0; i < Players.size(); i++) {
-					pack >> idAux;
-					if (Players.find(i)->first == idAux) {
+					pack >> idAux >> puntos;
+					if (Players.find(player.ID)->first == idAux) {
+						std::cout << "Se ha acabado la partida, en 3 segundos comienza la siguiente " << std::endl;
+						Players.find(player.ID)->second.puntos = puntos;
+						std::cout << "Tienes :" << Players.find(player.ID)->second.puntos << " puntos" << std::endl;
 						pack >> cacoAux;
-						Players.find(i)->second.caco = cacoAux;
+						Players.find(player.ID)->second.caco = cacoAux;
 					}
 					else {
 						pack >> cacoAux;
 						Players.find(i)->second.caco = cacoAux;
 					}
 				}
+				std::cout << "Se ha resetado la partida" << std::endl;
 			}
-			if (cmd == "CMD_INFO") {
+		/*	if (cmd == "CMD_INFO") {
 				int idAux, puntos;
 				for (int i = 0; i < Players.size(); i++) {
 					pack >> idAux >> puntos;
@@ -271,7 +274,7 @@ void Gameplay()
 						std::cout << "Tienes :" << Players.find(player.ID)->second.puntos << " puntos" << std::endl;
 					}
 				}
-			}
+			}*/
 			if (cmd == "CMD_END") {
 				int idAux;
 				pack >> idAux;

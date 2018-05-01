@@ -7,8 +7,8 @@
 #include <cstring>
 #include <random>
 
-#define MAX_PLAYERS 4
-#define PERCENT_LOSS 0.5
+#define MAX_PLAYERS 2
+#define PERCENT_LOSS 0.1
 sf::UdpSocket socket;
 
 struct Movment
@@ -143,53 +143,42 @@ void sendAllPlayers(std::string cmd, int id) {
 		}
 	}
 }
-void Reset() {
+/*void Reset() {
 	clockReset.restart();
 
 	sf::Packet packetReset;
 	while (reset) {
 		if (clockReset.getElapsedTime().asSeconds() > 3) {
 			counter = 1;
-			srand(time(NULL));
-			packetReset << "CMD_RESET";
-			int random = rand() % MAX_PLAYERS;
-			std::cout << random;
-			for (int i = 0; i < Players.size(); i++) {
-				Players.find(i)->second.caco = false;
-				packetReset << Players.find(i)->first;
 
-				if (Players.find(i)->first == random) {
-					Players.find(i)->second.caco = true;
-//					std::cout << Players.find(i)->second.name;
-				}
-				packetReset << Players.find(i)->second.caco;
-				//std::cout << Players.find(i)->second.name << Players.find(i)->second.caco << std::endl;
-			}
-			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-				if (socket.send(packetReset, it->second.IP, it->second.port) != sf::Socket::Done) {
-					std::cout << "Error al enviar mov" << std::endl;
-				}
-			}
+			
 			clockReset.restart();
 			reset = false;
 		}
 	}
 	
-}
+}*/
 void GameInfo() {
-
+	//std::cout << random;
 	sf::Packet packInfo;
-	packInfo << "CMD_INFO";
+	packInfo << "CMD_RESET";
+	srand(time(NULL));
+	int random = rand() % Players.size();
 	for (int i = 0; i < Players.size(); i++) {
+		Players.find(i)->second.caco = false;
 		packInfo << Players.find(i)->first << Players.find(i)->second.puntos;
+		if (Players.find(i)->first == random) {
+			Players.find(i)->second.caco = true;
+			std::cout << Players.find(i)->second.name;
+		}
+		packInfo  << Players.find(i)->second.caco;
 	}
 	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 		if (socket.send(packInfo, it->second.IP, it->second.port) != sf::Socket::Done) {
 			std::cout << "Error al enviar mov" << std::endl;
 		}
 	}
-	reset = true;
-	Reset();
+	counter = 1;
 	
 }
 void CheckScore(int id) {
@@ -205,7 +194,7 @@ void CheckScore(int id) {
 }
 void TimeGame() {
 	sf::Packet packPoints;
-	if (clockTime.getElapsedTime().asSeconds() > 8 && counter < MAX_PLAYERS) {
+	if (clockTime.getElapsedTime().asSeconds() > 5 && counter < MAX_PLAYERS) {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (!it->second.caco) {	
 				it->second.puntos++;
@@ -317,7 +306,6 @@ void Game() {
 				packR >> id;
 				Players.find(id)->second.timePing.restart();
 			}
-			if (!reset) {
 				if (cmd == "CMD_MOV") {
 					int idMove, id;
 					float deltaX, deltaY;
@@ -333,19 +321,19 @@ void Game() {
 							it2->second.movment.insert((std::pair<int, Movment>(idMove, movAux)));
 							if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
 
-								if ((it2->second.posX += deltaX) > maxX) {
+								if ((it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX) > maxX) {
 									it2->second.posX = maxX;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 								}
-								else if ((it2->second.posX += deltaX) < minX) {
+								else if ((it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX) < minX) {
 									it2->second.posX = minX;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 								}
-								else if ((it2->second.posY += deltaY) > maxY) {
+								else if ((it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY) > maxY) {
 									it2->second.posY = maxY;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 								}
-								else if ((it2->second.posY += deltaY) < minY) {
+								else if ((it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY) < minY) {
 									it2->second.posY = minY;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 								}
@@ -379,12 +367,13 @@ void Game() {
 						}
 					}
 				}
-			}
+
+			
 		}
 		//GameManager
 		TimeGame();
 		//send PING
-		if (clockP.getElapsedTime().asMilliseconds() > 1000) {
+		if (clockP.getElapsedTime().asMilliseconds() > 150) {
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 				ping = "CMD_PING";
 				packPingS << ping;
