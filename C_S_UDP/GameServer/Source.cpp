@@ -7,7 +7,7 @@
 #include <cstring>
 #include <random>
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 4
 #define PERCENT_LOSS 0.1
 sf::UdpSocket socket;
 
@@ -163,7 +163,7 @@ void GameInfo() {
 	sf::Packet packInfo;
 	packInfo << "CMD_RESET";
 	srand(time(NULL));
-	int random = rand() % Players.size();
+	int random = rand() % MAX_PLAYERS;
 	for (int i = 0; i < Players.size(); i++) {
 		Players.find(i)->second.caco = false;
 		packInfo << Players.find(i)->first << Players.find(i)->second.puntos;
@@ -190,7 +190,7 @@ void CheckScore(int id) {
 		}
 	}
 	socket.unbind();
-	system("exit");
+	system(0);
 }
 void TimeGame() {
 	sf::Packet packPoints;
@@ -212,7 +212,6 @@ void TimeGame() {
 	}
 }
 
-
 void Connection() {
 	srand(time(NULL));
 	sf::Packet packetLog;
@@ -229,7 +228,7 @@ void Connection() {
 		sf::IpAddress IP;
 		unsigned short port;
 		if (socket.receive(packetLog, IP, port) != sf::Socket::Done) {
-			std::cout << "Error al recivir" << std::endl;
+			std::cout << "Error al recivir del cliente" << std::endl;
 		}
 		packetLog >> str_CON;
 		if (str_CON == "HELLO")
@@ -257,7 +256,7 @@ void Connection() {
 				std::cout << "Se ha conectado : " << it->second.name << cmd << it->first << it->second.posX << it->second.posY << " " << it->second.caco << std::endl;
 			}
 			if (socket.send(packetLog, IP, port) != sf::Socket::Done) {
-				std::cout << "error";
+				std::cout << "Error al enviar el WELCOME al cliente";
 			}
 			NewPlayer(player);
 			packetLog.clear();
@@ -292,7 +291,6 @@ void Game() {
 	int id;
 	std::string cmd;
 	while (true) {
-
 		float rndPacketLoss = GerRandomFloat();
 
 		if (socket.receive(packR, IP, port) != sf::Socket::Done) {
@@ -346,6 +344,7 @@ void Game() {
 								clockAcum.restart();
 							}
 						}
+
 					}
 				}
 				if (cmd == "CMD_CACO") {

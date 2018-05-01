@@ -13,7 +13,7 @@
 
 #define PERCENT_LOSS 0.1
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 4
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -27,6 +27,11 @@
 #define OFFSET_AVATAR 1
 
 char tablero[SIZE_TABLERO];
+struct Movment
+{
+	float movX, movY;
+	int IDMove;
+};
 struct Player
 {
 	int ID;
@@ -34,19 +39,16 @@ struct Player
 	float posX, posY;
 	std::string name;
 	bool caco = false;
+	std::vector<Movment>listMovments;
 };
-struct Movment
-{
-	float movX, movY;
-	int IDMove;
-};
+
 
 sf::UdpSocket socket;
 Player player;
 std::map<int, Player>Players;
 int ID;
 Movment movActual;
-std::vector<Movment>listMovments;
+
 std::vector<Movment>interpol;
 
 static float GerRandomFloat() {
@@ -91,7 +93,7 @@ void Connection() {
 	while (!send) {
 		if (c.getElapsedTime().asMilliseconds() >= 500) {
 			if (socket.send(packetLog, "localhost", 50000) != sf::Socket::Done) {
-				std::cout << "Error al enviar" << std::endl;
+				std::cout << "Error al contactar con el server" << std::endl;
 			}
 			c.restart();
 			send = true;
@@ -103,7 +105,7 @@ void Connection() {
 	sf::Packet packR;
 
 	if (socket.receive(packR, IP, port) != sf::Socket::Done) {
-		std::cout << "Error al recivir";
+		std::cout << "No recives del server, cierra y vuelve a abrir";
 	}
 	std::string welcome = "";
 	int size = 0;
@@ -142,7 +144,6 @@ void Gameplay()
 		float rndPacketLoss = GerRandomFloat();
 
 		if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
-			//std::cout << "Error al recivir";
 		}
 		
 		//if (rndPacketLoss < PERCENT_LOSS) {
@@ -190,16 +191,16 @@ void Gameplay()
 			if (cmd == "CMD_OK_MOVE") {
 				pack >> idAux2 >> idMoveAux;
 				if (Players.find(player.ID)->first == idAux2) {
-					for (int i = 0; i < listMovments.size(); i++) {
-						if (listMovments[i].IDMove == idMoveAux) {
+					for (int i = 0; i < Players.find(player.ID)->second.listMovments.size(); i++) {
+						if (Players.find(player.ID)->second.listMovments[i].IDMove == idMoveAux) {
 							float auxX, auxY;
 							pack >> auxX >> auxY;
 							if ((auxX <= (Players.find(player.ID)->second.posX - 5) || auxX >= (Players.find(player.ID)->second.posX + 5)) && (auxY <= (Players.find(player.ID)->second.posY - 5) || auxY >= (Players.find(player.ID)->second.posY + 5))) {
-								listMovments.erase(listMovments.begin(), listMovments.begin() + i);
+								Players.find(player.ID)->second.listMovments.erase(Players.find(player.ID)->second.listMovments.begin(), Players.find(player.ID)->second.listMovments.begin() + i);
 								//std::cout << "no corrijo nada" <<  std::endl;
 							}
 							else if (auxX != Players.find(player.ID)->second.posX || auxY != Players.find(player.ID)->second.posY) {
-								listMovments.erase(listMovments.begin(), listMovments.end());
+								Players.find(player.ID)->second.listMovments.erase(Players.find(player.ID)->second.listMovments.begin(), Players.find(player.ID)->second.listMovments.end());
 								Players.find(player.ID)->second.posX = auxX;
 								Players.find(player.ID)->second.posY = auxY;
 								//std::cout << "corrijo pos de " << Players.find(player.ID)->second.name << std::endl;
@@ -211,25 +212,15 @@ void Gameplay()
 					for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 						//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
 						if (it->first == idAux2 && player.ID != idAux2) {
-							float auxX, auxY;
-							pack >> auxX >> auxY;
-							it->second.posX = auxX;
-							it->second.posY = auxY;
-							/*for (int i = 0; i < listMovments.size(); i++) {
-								if (listMovments[i].IDMove == idMoveAux) {
-									float auxX, auxY;
-									pack >> auxX >> auxY;
-									std::cout << auxX << " " << auxY << " " << it->second.posX << " " << it->second.posY << std::endl;
-									if (auxX == it->second.posX && auxY == it->second.posY) {
-										//listMovments.erase(listMovments.begin(), listMovments.begin() + i);
-										std::cout << "no corrijo nada" << it->second.name << std::endl;
-									}
-									else if (auxX != it->second.posX || auxY != it->second.posY) {
-
-										std::cout << "corrijo pos de " << it->second.name << std::endl;
-									}
-								}
-							}*/
+							float posX, posY, interX, interY;
+							pack >> posY >> posY;
+							interX = (posY - it->second.posX) / 10;
+							interY = (posY - it->second.posY) / 10;
+							//std::cout << interX << " " << interY << std::endl;
+							for(int i = 0; i < 10; i++) {
+								it->second.posX += interX;
+								it->second.posY += interY;
+							}
 						}
 
 					}
@@ -324,7 +315,7 @@ void Gameplay()
 		//send mov
 		if (clockMov.getElapsedTime().asMilliseconds() > 50 && (movActual.movX != 0 || movActual.movY != 0)) {
 			movActual.IDMove++;
-			listMovments.push_back(movActual);
+			Players.find(player.ID)->second.listMovments.push_back(movActual);
 			packMov << "CMD_MOV" << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
 
 			if (socket.send(packMov, "localhost", 50000) != sf::Socket::Done) {
