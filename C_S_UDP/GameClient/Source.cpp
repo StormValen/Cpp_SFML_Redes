@@ -10,10 +10,11 @@
 #include <SFML\Network.hpp>
 #include <random>
 #include <math.h>
+#include <queue>
 
 #define PERCENT_LOSS 0.7
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -40,6 +41,8 @@ struct Player
 	std::string name;
 	bool caco = false;
 	std::vector<Movment>listMovments;
+	std::queue<float>interpolX;
+	std::queue<float>interpolY;
 };
 
 
@@ -49,8 +52,7 @@ std::map<int, Player>Players;
 int ID;
 Movment movActual;
 
-std::vector<float>interpolX;
-std::vector<float>interpolY;
+
 
 static float GerRandomFloat() {
 	static std::random_device rd;
@@ -147,9 +149,9 @@ void Gameplay()
 		if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
 		}
 		
-		if (rndPacketLoss < PERCENT_LOSS) {
-			pack.clear();
-		}
+		//if (rndPacketLoss < PERCENT_LOSS) {
+			//pack.clear();
+		//}
 		else {
 			pack >> cmd;
 
@@ -220,15 +222,12 @@ void Gameplay()
 							interY = (posY - it->second.posY) / 5;
 							//std::cout << interX << " " << interY << std::endl;
 							for (int i = 0; i < 5; i++) {
-								interpolX.push_back(interX);
-								interpolY.push_back(interY);
-								std::cout << interpolX.front() << " " << interpolY.front() << std::endl;
+								it->second.interpolX.push(interX);
+								it->second.interpolY.push(interY);
+								//std::cout << interpolX.front() << " " << interpolY.front() << std::endl;
 
 							}
-							it->second.posX += interpolX.front();
-							it->second.posY += interpolY.front();
-							interpolX.erase(interpolX.begin());
-							interpolY.erase(interpolY.begin());
+							
 						}
 
 					}
@@ -397,7 +396,13 @@ void Gameplay()
 			else {
 				shapeRaton.setFillColor(sf::Color::Blue);
 			}
-			sf::Vector2f positionGato1(it->second.posX, it->second.posY);
+			if (it->second.interpolX.size() > 1 && it->second.interpolY.size() > 1) {
+				it->second.posX += it->second.interpolX.front();
+				it->second.posY += it->second.interpolY.front();
+				it->second.interpolX.pop();
+				it->second.interpolY.pop();
+
+			}sf::Vector2f positionGato1(it->second.posX, it->second.posY);
 			shapeRaton.setPosition(positionGato1);
 
 			window.draw(shapeRaton);

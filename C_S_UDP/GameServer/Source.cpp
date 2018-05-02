@@ -7,7 +7,7 @@
 #include <cstring>
 #include <random>
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 #define PERCENT_LOSS 0.1
 sf::UdpSocket socket;
 
@@ -201,7 +201,7 @@ void CheckScore(int id) {
 }
 void TimeGame() {
 	sf::Packet packPoints;
-	if (clockTime.getElapsedTime().asSeconds() > 5 && counter < MAX_PLAYERS) {
+	if (clockTime.getElapsedTime().asSeconds() > 15 && counter < MAX_PLAYERS) {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (!it->second.caco) {	
 				it->second.puntos++;

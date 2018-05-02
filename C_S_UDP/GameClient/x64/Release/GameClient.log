@@ -1,14 +1,15 @@
 ﻿  Source.cpp
-Source.cpp(349): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(355): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(361): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(367): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(375): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(384): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(138): warning C4101: 'ultimID': variable local sin referencia
-  Generando código
-  4 of 451 functions ( 0.9%) were compiled, the rest were copied from previous compilation.
+Source.cpp(348): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+Source.cpp(354): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+Source.cpp(360): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+Source.cpp(366): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+Source.cpp(374): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+Source.cpp(383): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+Source.cpp(140): warning C4101: 'ultimID': unreferenced local variable
+  Generating code
+  6 of 502 functions ( 1.2%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    2 functions had inline decision re-evaluated but remain unchanged
-  Generación de código finalizada
-  GameClient.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameClient.exe
+    1 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  GameClient.vcxproj -> D:\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameClient.exe
+  GameClient.vcxproj -> D:\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameClient.pdb (Full PDB)
