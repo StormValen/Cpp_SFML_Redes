@@ -1,22 +1,26 @@
 ﻿  Source.cpp
-Source.cpp(165): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-Source.cpp(216): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-Source.cpp(239): warning C4244: '=': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(240): warning C4244: '=': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(322): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
-Source.cpp(324): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
-Source.cpp(326): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
+Source.cpp(69): warning C4267: 'argumento': conversión de 'size_t' a 'const int'; posible pérdida de datos
+Source.cpp(70): warning C4267: 'argumento': conversión de 'size_t' a 'const int'; posible pérdida de datos
+Source.cpp(71): warning C4267: 'argumento': conversión de 'size_t' a 'const int'; posible pérdida de datos
+Source.cpp(129): warning C4267: 'argumento': conversión de 'size_t' a 'const int'; posible pérdida de datos
+Source.cpp(172): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+Source.cpp(223): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+Source.cpp(246): warning C4244: '=': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(247): warning C4244: '=': conversión de 'int' a 'float'; posible pérdida de datos
 Source.cpp(328): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
 Source.cpp(330): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
 Source.cpp(332): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
 Source.cpp(334): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
 Source.cpp(336): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
+Source.cpp(338): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
 Source.cpp(340): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
-Source.cpp(341): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
 Source.cpp(342): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
+Source.cpp(346): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
+Source.cpp(347): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
+Source.cpp(348): warning C4267: 'argumento': conversión de 'size_t' a 'int'; posible pérdida de datos
   Generando código
-  11 of 697 functions ( 1.6%) were compiled, the rest were copied from previous compilation.
+  8 of 697 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    3 functions had inline decision re-evaluated but remain unchanged
+    7 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
   GameServer.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameServer.exe

@@ -11,7 +11,7 @@
 #include <random>
 #include <math.h>
 
-#define PERCENT_LOSS 0.1
+#define PERCENT_LOSS 0.7
 
 #define MAX_PLAYERS 4
 #define MAX 100
@@ -49,7 +49,8 @@ std::map<int, Player>Players;
 int ID;
 Movment movActual;
 
-std::vector<Movment>interpol;
+std::vector<float>interpolX;
+std::vector<float>interpolY;
 
 static float GerRandomFloat() {
 	static std::random_device rd;
@@ -146,9 +147,9 @@ void Gameplay()
 		if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
 		}
 		
-		//if (rndPacketLoss < PERCENT_LOSS) {
-			//pack.clear();
-		//}
+		if (rndPacketLoss < PERCENT_LOSS) {
+			pack.clear();
+		}
 		else {
 			pack >> cmd;
 
@@ -160,9 +161,9 @@ void Gameplay()
 				
 				pack >> packID >> newPlayer.name >> newPlayer.ID >> newPlayer.posX >> newPlayer.posY >> newPlayer.caco;
 				std::cout << " > " << cmd << " ID: " << newPlayer.ID << " POS: " << newPlayer.posX << newPlayer.posY << "C3" << newPlayer.caco << std::endl;
+				std::cout << packID;
 				Players.insert(std::pair<int, Player>(newPlayer.ID, newPlayer));
 				packACKNEW << "CMD_ACK_NEW" << packID << player.ID;
-				std::cout << player.ID << " " << Players.find(player.ID)->first << std::endl;
 
 				if (socket.send(packACKNEW, "localhost", 50000) != sf::Socket::Done) {
 					std::cout << "Error al enviar" << std::endl;
@@ -211,16 +212,23 @@ void Gameplay()
 				else {
 					for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 						//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
-						if (it->first == idAux2 && player.ID != idAux2) {
+						if (it->first == idAux2 && player.ID != it->first) {
 							float posX, posY, interX, interY;
-							pack >> posY >> posY;
-							interX = (posY - it->second.posX) / 10;
-							interY = (posY - it->second.posY) / 10;
+							pack >> posX >> posY;
+
+							interX = (posX - it->second.posX) / 5;
+							interY = (posY - it->second.posY) / 5;
 							//std::cout << interX << " " << interY << std::endl;
-							for(int i = 0; i < 10; i++) {
-								it->second.posX += interX;
-								it->second.posY += interY;
+							for (int i = 0; i < 5; i++) {
+								interpolX.push_back(interX);
+								interpolY.push_back(interY);
+								std::cout << interpolX.front() << " " << interpolY.front() << std::endl;
+
 							}
+							it->second.posX += interpolX.front();
+							it->second.posY += interpolY.front();
+							interpolX.erase(interpolX.begin());
+							interpolY.erase(interpolY.begin());
 						}
 
 					}
@@ -305,7 +313,7 @@ void Gameplay()
 					movActual.movY++;
 					Players.find(player.ID)->second.posY++;
 				}	
-				interpol.push_back(movActual);
+				//interpol.push_back(movActual);
 				break;
 			default:
 				break;

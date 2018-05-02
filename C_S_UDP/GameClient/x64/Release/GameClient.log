@@ -1,16 +1,14 @@
 ﻿  Source.cpp
-Source.cpp(359): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(365): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(371): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(377): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(385): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(394): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
-Source.cpp(137): warning C4101: 'ultimID': variable local sin referencia
-Source.cpp(215): warning C4101: 'interY': variable local sin referencia
-Source.cpp(215): warning C4101: 'interX': variable local sin referencia
+Source.cpp(349): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(355): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(361): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(367): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(375): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(384): warning C4244: 'argumento': conversión de 'int' a 'float'; posible pérdida de datos
+Source.cpp(138): warning C4101: 'ultimID': variable local sin referencia
   Generando código
-  4 of 390 functions ( 1.0%) were compiled, the rest were copied from previous compilation.
+  4 of 451 functions ( 0.9%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    3 functions had inline decision re-evaluated but remain unchanged
+    2 functions had inline decision re-evaluated but remain unchanged
   Generación de código finalizada
   GameClient.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\C_S_UDP\x64\Release\GameClient.exe

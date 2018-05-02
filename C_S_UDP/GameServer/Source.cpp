@@ -65,15 +65,15 @@ void Resend() {
 				//if (it != Players.end()) {
 					if (it->second.mapPacketCritic.size() > 0) {
 						//std::cout << "Este tiene algo que recivir" << it->second.name << " " << it->second.mapPacketCritic.size() <<std::endl;
-						for (int j = 1; j <= it->second.mapPacketCritic.size(); j++) {
-							//std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(j)->first << std::endl;
-							if (it->second.mapPacketCritic.find(j) != it->second.mapPacketCritic.end()) {
-								if (socket.send(it->second.mapPacketCritic.find(j)->second.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
+						//for (int j = 1; j <= it->second.mapPacketCritic.size(); j++) {
+							std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(Players.size() - 1)->first << " para " << it->second.name << std::endl;
+							if (it->second.mapPacketCritic.find(Players.size() - 1) != it->second.mapPacketCritic.end()) {
+								if (socket.send(it->second.mapPacketCritic.find(Players.size() - 1)->second.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
 									std::cout << "Error al enviar nueva conexion" << std::endl;
 								}
 								//std::cout << it->second.name << std::endl;
 							}
-						}
+						//}
 					}
 					clockResend.restart();
 				//}
@@ -88,7 +88,7 @@ void CheckNewPlayer() {
 		sf::Packet packetLog;
 		std::string str_CON;
 		for (int i = 0; i < Players.size(); i++) {
-			if (Players.find(i)->second.mapPacketCritic.size() > 0) { //WHILE
+			while (Players.find(i)->second.mapPacketCritic.size() > 0) { 
 				if (socket.receive(packetLog, IP, port) != sf::Socket::Done) {
 					std::cout << "Error al recivir" << std::endl;
 				}
@@ -96,14 +96,17 @@ void CheckNewPlayer() {
 				if (str_CON == "CMD_ACK_NEW") {
 					int idPacket, id;
 					packetLog >> idPacket >> id;
-					if (idPacket == Players.find(id)->second.mapPacketCritic.find(idPacket)->first && Players.find(id)->second.mapPacketCritic.find(idPacket) != Players.find(id)->second.mapPacketCritic.end()) {
-						Players.find(id)->second.mapPacketCritic.erase(idPacket);
-						//std::cout << "Recivo ACK " << Players.find(id)->second.name << std::endl;
-						//std::cout << "Tamano " << Players.find(id)->second.mapPacketCritic.size() << " de" << Players.find(id)->second.name << std::endl;
+					if (Players.find(i)->first == id) {
+						if (idPacket == Players.find(i)->second.mapPacketCritic.find(idPacket)->first && Players.find(i)->second.mapPacketCritic.find(idPacket) != Players.find(i)->second.mapPacketCritic.end()) {
+							std::cout << "Recivo ACK " << Players.find(i)->second.name << " " << Players.find(i)->second.mapPacketCritic.find(idPacket)->first << std::endl;
+							Players.find(i)->second.mapPacketCritic.erase(idPacket);
+							std::cout << "Tamano " << Players.find(id)->second.mapPacketCritic.size() << " de" << Players.find(id)->second.name << std::endl;
+						}
 					}
 				}
 			}
 		}
+
 		tr.join();
 }
 void NewPlayer(Player player) {
@@ -114,19 +117,23 @@ void NewPlayer(Player player) {
 			std::string cmd = "CMD_NEW_PLAYER";
 			if (it->first != player.ID) {
 				packCritic.packet << cmd << packID << player.name << player.ID << player.posX << player.posY << player.caco;
+				it->second.mapPacketCritic.insert(std::pair <int, PacketCritic>(packID, packCritic));
 				if (socket.send(packCritic.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
 					std::cout << "Error al enviar nueva conexion" << std::endl;
 				}
-				it->second.mapPacketCritic.insert(std::pair <int, PacketCritic>(packID, packCritic));
-				for (int i = 0; i < it->second.mapPacketCritic.size();i++) {
-					//if(it2 != it->second.mapPacketCritic.end())
-					std::cout << it->second.name << it->second.mapPacketCritic.find(i)->first << std::endl;
 
-				}
+				//for (std::map<int, PacketCritic>::iterator it2 = it->second.mapPacketCritic.begin(); it2 != it->second.mapPacketCritic.end(); it++) {
+					//if (it->second.mapPacketCritic.find(i) != it->second.mapPacketCritic.end()) {
+				//std::cout << "Tamano " << it->second.mapPacketCritic.size() << " de" << it->second.name << std::endl;
+
+						std::cout << it->second.name << it->second.mapPacketCritic.find(Players.size() - 1)->first << std::endl;
+						//}
+
+				//}
 			}
 		}	
 		packID++;
-		packCritic.packet.clear();
+		//packCritic.packet.clear();
 	}		
 }
 void sendAllPlayers(std::string cmd, int id) {
@@ -262,10 +269,9 @@ void Connection() {
 			packetLog.clear();
 			i++;
 		}
-		CheckNewPlayer();
-	
+			CheckNewPlayer();
 	}
-
+	
 }
 
 void Game() {
