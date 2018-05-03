@@ -7,7 +7,9 @@
 #include <cstring>
 #include <random>
 
+//numero de jugadores de la partida
 #define MAX_PLAYERS 3
+//ratio de perdida de paquetes
 #define PERCENT_LOSS 0.1
 sf::UdpSocket socket;
 
@@ -19,8 +21,6 @@ struct Movment
 struct PacketCritic
 {
 	sf::Packet packet;
-	sf::IpAddress IP;
-	unsigned short port;
 	int ID = 0;
 }; 
 struct Player
@@ -40,50 +40,51 @@ struct Player
 };
 
 std::map<int, Player> Players;
+//paredes
 float maxY = 470;
 float minY = 20.f;
 float maxX = 470.f;
 float minX = 20.f;
+
 int packID = 1;
 int counter = 1;
 sf::Clock clockTime;
 sf::Clock clockReset;
 bool reset = false;
 
+//funcion para calcular el random para la perdida de paquetes
 static float GerRandomFloat() {
 	static std::random_device rd;
 	static std::mt19937 gen(rd());
 	static std::uniform_real_distribution<float> dis(0.f, 1.f);
 	return dis(gen);
 }
+//funcion para reenviar los paquetes criticos del newPlayer
 void Resend() {
 	sf::Clock clockResend;
 	clockResend.restart();
-	std::cout << "hola";
-	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-		while (it->second.mapPacketCritic.size() > 0) {
-			if (clockResend.getElapsedTime().asMilliseconds() > 300) {
-				//if (it != Players.end()) {
-					//if (it->second.mapPacketCritic.size() > 0) {
-						//std::cout << "Este tiene algo que recivir" << it->second.name << " " << it->second.mapPacketCritic.size() <<std::endl;
-						//for (int j = 1; j <= it->second.mapPacketCritic.size(); j++) {
-							std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(Players.size() - 1)->first << " para " << it->second.name << std::endl;
-							if (it->second.mapPacketCritic.find(Players.size() - 1) != it->second.mapPacketCritic.end()) {
-								if (socket.send(it->second.mapPacketCritic.find(Players.size() - 1)->second.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
-									std::cout << "Error al enviar nueva conexion" << std::endl;
-								}
-								//std::cout << it->second.name << std::endl;
-							}
-						//}
-					//}
+	while (Players.size() < MAX_PLAYERS)
+	{
+		//std::cout << "hola";
+		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+			while (it->second.mapPacketCritic.size() > 0) {
+				if (clockResend.getElapsedTime().asMilliseconds() > 300) {
+					std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(Players.size() - 1)->first << " para " << it->second.name << std::endl;
+					if (it->second.mapPacketCritic.find(Players.size() - 1) != it->second.mapPacketCritic.end()) {
+						if (socket.send(it->second.mapPacketCritic.find(Players.size() - 1)->second.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
+							std::cout << "Error al enviar nueva conexion" << std::endl;
+						}
+					}
 					clockResend.restart();
-				//}
+				}
 			}
 		}
 	}
+	
 }
+//funcion para comprobar si algun cliente envia el ACK de newPlayer
 void CheckNewPlayer() {
-	std::thread tr(Resend);
+
 		sf::IpAddress IP;
 		unsigned short port;
 		sf::Packet packetLog;
@@ -108,8 +109,9 @@ void CheckNewPlayer() {
 			}
 		}
 
-			tr.join();
+			//tr.join();
 }
+//funcion que añade el paquete critico y lo envia la primera vez
 void NewPlayer(Player player) {
 	PacketCritic packCritic;
 	if (Players.size() > 1) {
@@ -129,6 +131,7 @@ void NewPlayer(Player player) {
 		packID++;
 	}		
 }
+//funcion para enviar la desconexion
 void sendAllPlayers(std::string cmd, int id) {
 	sf::Packet packDes;
 	if (cmd == "CMD_DESC") {
@@ -143,7 +146,7 @@ void sendAllPlayers(std::string cmd, int id) {
 		}
 	}
 }
-
+//funcion para resetear la ronda
 void GameInfo() {
 	//std::cout << random;
 	sf::Packet packInfo;
@@ -167,6 +170,7 @@ void GameInfo() {
 	counter = 1;
 	
 }
+//funcion para comprobar si se ha llegado al limite de puntos y acabar
 void CheckScore(int id) {
 	sf::Packet packEnd;
 	packEnd << "CMD_END" << id;
@@ -178,6 +182,7 @@ void CheckScore(int id) {
 	socket.unbind();
 	system(0);
 }
+//gestiona el final de cada ronda y los puntos
 void TimeGame() {
 	sf::Packet packPoints;
 	if (clockTime.getElapsedTime().asSeconds() > 15 && counter < MAX_PLAYERS) {
@@ -198,6 +203,7 @@ void TimeGame() {
 	}
 }
 
+//Para que se conecten todos los jugadores
 void Connection() {
 	srand(time(NULL));
 	sf::Packet packetLog;
@@ -209,7 +215,7 @@ void Connection() {
 	int newPlayer = 0;
 	socket.bind(50000);
 	Player player;
-
+	std::thread tr(&Resend);
 	while(Players.size() < MAX_PLAYERS) {
 		sf::IpAddress IP;
 		unsigned short port;
@@ -225,8 +231,7 @@ void Connection() {
 			player.posX = rand() % 470;
 			player.posY = rand() % 470;
 			player.ID = i;
-			if (Players.size() == 0) {
-				//coco++;
+			if (Players.size() == 0) {// si es el primer jugador sera caco
 				player.caco = true;
 			}
 			else { player.caco = false; }
@@ -249,32 +254,25 @@ void Connection() {
 			i++;
 		}
 			CheckNewPlayer();
-			//Resend();
-	}
-
-	
+	}	
 }
 
+//bucle principal
 void Game() {
-	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-		it->second.timePing.restart();
-	}
 	socket.setBlocking(false);
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		it->second.timePing.restart(); //ponemos todos los clocks internos a 0
+	}
 	sf::IpAddress IP;
 	unsigned short port;
-	bool send = false;
 	sf::Packet packR, packPingS;
-	sf::Clock clockP;
-	clockP.restart();
 	std::string ping;
 	int newPlayer = 0;
 	sf::Packet packM;
-	sf::Clock clockMov, clockAcum;
-	clockMov.restart();
-	clockAcum.restart();
-	clockTime.restart();
-	sf::Clock clockSend;
+	sf::Clock clockSend, clockP, clockAcum;
 	clockSend.restart();
+	clockAcum.restart();
+	clockP.restart();
 	int id;
 	std::string cmd;
 	while (true) {
@@ -282,6 +280,7 @@ void Game() {
 
 		if (socket.receive(packR, IP, port) != sf::Socket::Done) {
 		}
+		//perdida de paquetes
 		//if (rndPacketLoss < PERCENT_LOSS) {
 			//packR.clear();
 		//}
@@ -303,9 +302,10 @@ void Game() {
 							movAux.IDMove = idMove;
 							movAux.movX += deltaX;
 							movAux.movY += deltaY;
+							//voy añadiendo al map mientras no se compla el tiempo
 							it2->second.movment.insert((std::pair<int, Movment>(idMove, movAux)));
 							if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
-
+								//compruebo con las paredes
 								if ((it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX) > maxX) {
 									it2->second.posX = maxX;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
@@ -323,7 +323,7 @@ void Game() {
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
 								}
 								else {
-									//acmular aqui		
+									//siempre comprueba la ultima posicion del map para asi validar las anteriores	
 									it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX;
 									it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
@@ -352,9 +352,7 @@ void Game() {
 							std::cout << "Error al enviar mov" << std::endl;
 						}
 					}
-				}
-
-			
+				}	
 		}
 		//GameManager
 		TimeGame();
@@ -380,6 +378,7 @@ void Game() {
 				it->second.connected = false;
 			}
 		}
+		//comprobar si tengo que eliminar a alguien
 		for (int i = 0; i < Players.size(); i++) {
 			if (Players.find(i) != Players.end() && !Players[i].connected) {
 				std::cout << Players[i].ID << " disconnected." << std::endl;
@@ -398,15 +397,13 @@ void Game() {
 		}
 
 		packR.clear();
-		//for (std::map<int, Player>::iterator it2 = Players.begin(); it2 != Players.end(); ++it2) {
-			//it2->second.movment.erase(it2->first);
-		//}
 	}
 }
 
 int main()
 {
 	Connection();
+	
 	do {
 		Game();
 	} while (Players.size() >= 0);

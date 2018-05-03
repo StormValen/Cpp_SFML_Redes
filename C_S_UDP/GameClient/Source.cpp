@@ -12,9 +12,9 @@
 #include <math.h>
 #include <queue>
 
-#define PERCENT_LOSS 0.7
+//ratio de perdida de paquetes
+#define PERCENT_LOSS 0.5
 
-#define MAX_PLAYERS 2
 #define MAX 100
 #define SIZE_TABLERO 64
 #define SIZE_FILA_TABLERO 25
@@ -47,26 +47,27 @@ struct Player
 
 
 sf::UdpSocket socket;
-Player player;
+Player player; //el propio jugador
 std::map<int, Player>Players;
 int ID;
 Movment movActual;
-
-
-
+//Random para la perdida de paquetes
 static float GerRandomFloat() {
 	static std::random_device rd;
 	static std::mt19937 gen(rd());
 	static std::uniform_real_distribution<float> dis(0.f, 1.f);
 	return dis(gen);
 }
+//Para resetear el acomulado
 void resetMov(Movment* mov) {
 	mov->movX = 0;
 	mov->movY = 0;
 }
+//calcular la distancia entre dos jugadores
 float Distance(float x, float y, float a, float b) {
 	return sqrt(pow(x - a, 2) + pow(y - b, 2));
 }
+//comprueba si el propio jugador colisiona con alguien que sea caco y lo envia al server para que valide
 void CheckCollisionPlayers() {
 	sf::Packet packCaco;
 	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
@@ -84,6 +85,7 @@ void CheckCollisionPlayers() {
 
 }
 
+//Conexion del jugador
 void Connection() {
 	bool send = false;
 	sf::Packet packetLog;
@@ -123,6 +125,7 @@ void Connection() {
 	packR.clear();
 }
 
+//Bucle principal
 void Gameplay()
 {
 	socket.setBlocking(false);
@@ -134,7 +137,8 @@ void Gameplay()
 	bool casillaMarcada = false;
 	sf::Clock clockMov;
 	clockMov.restart();
-	sf::RenderWindow window(sf::VideoMode(500, 500), "El Gato y el Raton");
+	sf::RenderWindow window(sf::VideoMode(500, 500), "Polis y Cacos by Joan");
+	float rndPacketLoss = GerRandomFloat();
 	while (window.isOpen())
 	{
 		int ultimID;
@@ -144,11 +148,11 @@ void Gameplay()
 		std::string cmd;
 		sf::IpAddress _IP;
 		unsigned short _port;
-		float rndPacketLoss = GerRandomFloat();
+
 
 		if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
 		}
-		
+		//perdida de paquetes
 		if (rndPacketLoss < PERCENT_LOSS) {
 			pack.clear();
 		}
@@ -156,7 +160,7 @@ void Gameplay()
 			pack >> cmd;
 
 			if (cmd == "CMD_NEW_PLAYER") {
-				std::cout << "Recivo el new" << std::endl;
+				//si recivo un new lo gestiono y lo añado al map
 				int packID = 0;
 				sf::Packet packACKNEW;
 				Player newPlayer;
@@ -170,8 +174,7 @@ void Gameplay()
 				if (socket.send(packACKNEW, "localhost", 50000) != sf::Socket::Done) {
 					std::cout << "Error al enviar" << std::endl;
 				}
-				//std::cout << "Envio el new"  << std::endl;
-				//packACKNEW.clear();
+				packACKNEW.clear();
 			}
 			if (cmd == "CMD_PING") {
 				sf::Clock clock;
@@ -181,9 +184,8 @@ void Gameplay()
 					std::cout << "Error al enviar" << std::endl;
 				}
 				clock.restart();
-				//packS.clear();
 			}
-			if (cmd == "CMD_DESC") {
+			if (cmd == "CMD_DESC") { //Para eliminar los otros jugadores
 				std::string a;
 				int idAux;
 				pack >> idAux;
@@ -199,37 +201,34 @@ void Gameplay()
 							float auxX, auxY;
 							pack >> auxX >> auxY;
 							if ((auxX <= (Players.find(player.ID)->second.posX - 5) || auxX >= (Players.find(player.ID)->second.posX + 5)) && (auxY <= (Players.find(player.ID)->second.posY - 5) || auxY >= (Players.find(player.ID)->second.posY + 5))) {
+								//añado offset para que vaya mejor, si entra simplemente borr
 								Players.find(player.ID)->second.listMovments.erase(Players.find(player.ID)->second.listMovments.begin(), Players.find(player.ID)->second.listMovments.begin() + i);
-								//std::cout << "no corrijo nada" <<  std::endl;
 							}
 							else if (auxX != Players.find(player.ID)->second.posX || auxY != Players.find(player.ID)->second.posY) {
+								//borro y corrijo posicion
 								Players.find(player.ID)->second.listMovments.erase(Players.find(player.ID)->second.listMovments.begin(), Players.find(player.ID)->second.listMovments.end());
 								Players.find(player.ID)->second.posX = auxX;
 								Players.find(player.ID)->second.posY = auxY;
-								//std::cout << "corrijo pos de " << Players.find(player.ID)->second.name << std::endl;
 							}
 						}
 					}
 				}
 				else {
 					for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-						//	std::cout << " X " << it->second.posX << " Y " << it->second.posY << std::endl;
+						//compruebo que no sea el propio jugador
 						if (it->first == idAux2 && player.ID != it->first) {
 							float posX, posY, interX, interY;
 							pack >> posX >> posY;
 
 							interX = (posX - it->second.posX) / 5;
 							interY = (posY - it->second.posY) / 5;
-							//std::cout << interX << " " << interY << std::endl;
+							//calculo los "pasitos" del jugador
 							for (int i = 0; i < 5; i++) {
+								//los meto en al cola
 								it->second.interpolX.push(interX);
 								it->second.interpolY.push(interY);
-								//std::cout << interpolX.front() << " " << interpolY.front() << std::endl;
-
-							}
-							
+							}	
 						}
-
 					}
 				}
 			}
@@ -249,6 +248,7 @@ void Gameplay()
 				for (int i = 0; i < Players.size(); i++) {
 					pack >> idAux >> puntos;
 					if (Players.find(player.ID)->first == idAux) {
+						//si soy el jugador propio
 						std::cout << "Se ha acabado la partida, en 3 segundos comienza la siguiente " << std::endl;
 						Players.find(player.ID)->second.puntos = puntos;
 						std::cout << "Tienes :" << Players.find(player.ID)->second.puntos << " puntos" << std::endl;
@@ -256,32 +256,21 @@ void Gameplay()
 						Players.find(player.ID)->second.caco = cacoAux;
 					}
 					else {
+						//si no soy yo solo actualizo el caco
 						pack >> cacoAux;
 						Players.find(i)->second.caco = cacoAux;
 					}
 				}
-				std::cout << "Se ha resetado la partida" << std::endl;
 			}
-		/*	if (cmd == "CMD_INFO") {
-				int idAux, puntos;
-				for (int i = 0; i < Players.size(); i++) {
-					pack >> idAux >> puntos;
-					if (Players.find(player.ID)->first == idAux) {
-						std::cout << "Se ha acabado la partida, en 3 segundos comienza la siguiente " << std::endl;
-						Players.find(player.ID)->second.puntos = puntos;
-						std::cout << "Tienes :" << Players.find(player.ID)->second.puntos << " puntos" << std::endl;
-					}
-				}
-			}*/
 			if (cmd == "CMD_END") {
 				int idAux;
 				pack >> idAux;
 				std::cout << "Se ha acabado la partida" << std::endl;
 				for (int i = 0; i < Players.size(); i++) {
 					if (Players.find(i)->first == idAux) {
+						//muestro el ganador y desconecto del server
 						std::cout << "El ganador ha sido " << Players.find(i)->second.name << std::endl;
 						socket.unbind();
-						//system("exit");
 					}
 				}
 			}
@@ -296,35 +285,30 @@ void Gameplay()
 				socket.unbind();
 				break;
 			case sf::Event::KeyPressed:
+				//añado los acum y muevo al jugador
 				if (event.key.code == sf::Keyboard::Right) {
 					movActual.movX++;
 					Players.find(player.ID)->second.listMovments.push_back(movActual);
-
 					Players.find(player.ID)->second.posX++;
 				}
 				if (event.key.code == sf::Keyboard::Left) {
 					movActual.movX--;
 					Players.find(player.ID)->second.listMovments.push_back(movActual);
-
 					Players.find(player.ID)->second.posX--;
 				}
 				if (event.key.code == sf::Keyboard::Up) {
 					movActual.movY--;
 					Players.find(player.ID)->second.listMovments.push_back(movActual);
-
 					Players.find(player.ID)->second.posY--;
 				}
 				if (event.key.code == sf::Keyboard::Down) {
 					movActual.movY++;
 					Players.find(player.ID)->second.listMovments.push_back(movActual);
-
 					Players.find(player.ID)->second.posY++;
 				}	
-				//interpol.push_back(movActual);
 				break;
 			default:
 				break;
-
 			}
 		}
 		//send mov
@@ -406,12 +390,14 @@ void Gameplay()
 				shapeRaton.setFillColor(sf::Color::Blue);
 			}
 			if (it->second.interpolX.size() > 1 && it->second.interpolY.size() > 1) {
+				//sumo para la interpolacion
 				it->second.posX += it->second.interpolX.front();
 				it->second.posY += it->second.interpolY.front();
 				it->second.interpolX.pop();
 				it->second.interpolY.pop();
 
-			}sf::Vector2f positionGato1(it->second.posX, it->second.posY);
+			}
+			sf::Vector2f positionGato1(it->second.posX, it->second.posY);
 			shapeRaton.setPosition(positionGato1);
 
 			window.draw(shapeRaton);
@@ -423,7 +409,6 @@ void Gameplay()
 
 int main()
 {
-	bool done = false;
 	Connection();
 	Gameplay();
 	return 0;
