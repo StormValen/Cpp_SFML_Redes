@@ -149,9 +149,9 @@ void Gameplay()
 		if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
 		}
 		
-		//if (rndPacketLoss < PERCENT_LOSS) {
-			//pack.clear();
-		//}
+		if (rndPacketLoss < PERCENT_LOSS) {
+			pack.clear();
+		}
 		else {
 			pack >> cmd;
 
@@ -298,18 +298,26 @@ void Gameplay()
 			case sf::Event::KeyPressed:
 				if (event.key.code == sf::Keyboard::Right) {
 					movActual.movX++;
+					Players.find(player.ID)->second.listMovments.push_back(movActual);
+
 					Players.find(player.ID)->second.posX++;
 				}
 				if (event.key.code == sf::Keyboard::Left) {
 					movActual.movX--;
+					Players.find(player.ID)->second.listMovments.push_back(movActual);
+
 					Players.find(player.ID)->second.posX--;
 				}
 				if (event.key.code == sf::Keyboard::Up) {
 					movActual.movY--;
+					Players.find(player.ID)->second.listMovments.push_back(movActual);
+
 					Players.find(player.ID)->second.posY--;
 				}
 				if (event.key.code == sf::Keyboard::Down) {
 					movActual.movY++;
+					Players.find(player.ID)->second.listMovments.push_back(movActual);
+
 					Players.find(player.ID)->second.posY++;
 				}	
 				//interpol.push_back(movActual);
@@ -323,6 +331,7 @@ void Gameplay()
 		if (clockMov.getElapsedTime().asMilliseconds() > 50 && (movActual.movX != 0 || movActual.movY != 0)) {
 			movActual.IDMove++;
 			Players.find(player.ID)->second.listMovments.push_back(movActual);
+
 			packMov << "CMD_MOV" << movActual.IDMove << player.ID << movActual.movX << movActual.movY;
 
 			if (socket.send(packMov, "localhost", 50000) != sf::Socket::Done) {

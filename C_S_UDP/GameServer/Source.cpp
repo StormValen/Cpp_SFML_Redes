@@ -7,7 +7,7 @@
 #include <cstring>
 #include <random>
 
-#define MAX_PLAYERS 2
+#define MAX_PLAYERS 3
 #define PERCENT_LOSS 0.1
 sf::UdpSocket socket;
 
@@ -59,11 +59,12 @@ static float GerRandomFloat() {
 void Resend() {
 	sf::Clock clockResend;
 	clockResend.restart();
+	std::cout << "hola";
 	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 		while (it->second.mapPacketCritic.size() > 0) {
 			if (clockResend.getElapsedTime().asMilliseconds() > 300) {
 				//if (it != Players.end()) {
-					if (it->second.mapPacketCritic.size() > 0) {
+					//if (it->second.mapPacketCritic.size() > 0) {
 						//std::cout << "Este tiene algo que recivir" << it->second.name << " " << it->second.mapPacketCritic.size() <<std::endl;
 						//for (int j = 1; j <= it->second.mapPacketCritic.size(); j++) {
 							std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(Players.size() - 1)->first << " para " << it->second.name << std::endl;
@@ -74,7 +75,7 @@ void Resend() {
 								//std::cout << it->second.name << std::endl;
 							}
 						//}
-					}
+					//}
 					clockResend.restart();
 				//}
 			}
@@ -82,7 +83,7 @@ void Resend() {
 	}
 }
 void CheckNewPlayer() {
-	std::thread tr(&Resend);
+	std::thread tr(Resend);
 		sf::IpAddress IP;
 		unsigned short port;
 		sf::Packet packetLog;
@@ -107,7 +108,7 @@ void CheckNewPlayer() {
 			}
 		}
 
-		tr.join();
+			tr.join();
 }
 void NewPlayer(Player player) {
 	PacketCritic packCritic;
@@ -122,18 +123,10 @@ void NewPlayer(Player player) {
 					std::cout << "Error al enviar nueva conexion" << std::endl;
 				}
 
-				//for (std::map<int, PacketCritic>::iterator it2 = it->second.mapPacketCritic.begin(); it2 != it->second.mapPacketCritic.end(); it++) {
-					//if (it->second.mapPacketCritic.find(i) != it->second.mapPacketCritic.end()) {
-				//std::cout << "Tamano " << it->second.mapPacketCritic.size() << " de" << it->second.name << std::endl;
-
 						std::cout << it->second.name << it->second.mapPacketCritic.find(Players.size() - 1)->first << std::endl;
-						//}
-
-				//}
 			}
 		}	
 		packID++;
-		//packCritic.packet.clear();
 	}		
 }
 void sendAllPlayers(std::string cmd, int id) {
@@ -150,21 +143,7 @@ void sendAllPlayers(std::string cmd, int id) {
 		}
 	}
 }
-/*void Reset() {
-	clockReset.restart();
 
-	sf::Packet packetReset;
-	while (reset) {
-		if (clockReset.getElapsedTime().asSeconds() > 3) {
-			counter = 1;
-
-			
-			clockReset.restart();
-			reset = false;
-		}
-	}
-	
-}*/
 void GameInfo() {
 	//std::cout << random;
 	sf::Packet packInfo;
@@ -270,7 +249,9 @@ void Connection() {
 			i++;
 		}
 			CheckNewPlayer();
+			//Resend();
 	}
+
 	
 }
 
