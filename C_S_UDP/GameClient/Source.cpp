@@ -12,8 +12,8 @@
 #include <math.h>
 #include <queue>
 
-//ratio de perdida de paquetes
-#define PERCENT_LOSS 0.5
+//ratio de perdida de paquetes, recomendado no poner mas de 0.1
+#define PERCENT_LOSS 0.05
 
 #define MAX 100
 #define SIZE_TABLERO 64
@@ -153,9 +153,9 @@ void Gameplay()
 		if (socket.receive(pack, _IP, _port) != sf::Socket::Done) {
 		}
 		//perdida de paquetes
-		if (rndPacketLoss < PERCENT_LOSS) {
-			pack.clear();
-		}
+		//if (rndPacketLoss < PERCENT_LOSS) {
+			//pack.clear();
+		//}
 		else {
 			pack >> cmd;
 

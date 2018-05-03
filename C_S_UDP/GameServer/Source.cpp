@@ -10,7 +10,7 @@
 //numero de jugadores de la partida
 #define MAX_PLAYERS 3
 //ratio de perdida de paquetes
-#define PERCENT_LOSS 0.1
+#define PERCENT_LOSS 0.05 //recomendado no poner mas de 0.1
 sf::UdpSocket socket;
 
 struct Movment
@@ -63,53 +63,47 @@ static float GerRandomFloat() {
 void Resend() {
 	sf::Clock clockResend;
 	clockResend.restart();
-	while (Players.size() < MAX_PLAYERS)
-	{
-		//std::cout << "hola";
-		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
-			while (it->second.mapPacketCritic.size() > 0) {
-				if (clockResend.getElapsedTime().asMilliseconds() > 300) {
-					std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(Players.size() - 1)->first << " para " << it->second.name << std::endl;
-					if (it->second.mapPacketCritic.find(Players.size() - 1) != it->second.mapPacketCritic.end()) {
-						if (socket.send(it->second.mapPacketCritic.find(Players.size() - 1)->second.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
-							std::cout << "Error al enviar nueva conexion" << std::endl;
-						}
+	for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
+		while (it->second.mapPacketCritic.size() > 0) {
+			if (clockResend.getElapsedTime().asMilliseconds() > 300) {
+				std::cout << "IDPACKETE a enviar " << it->second.mapPacketCritic.find(Players.size() - 1)->first << " para " << it->second.name << std::endl;
+				if (it->second.mapPacketCritic.find(Players.size() - 1) != it->second.mapPacketCritic.end()) {
+					if (socket.send(it->second.mapPacketCritic.find(Players.size() - 1)->second.packet, it->second.IP, it->second.port) != sf::Socket::Done) {
+						std::cout << "Error al enviar nueva conexion" << std::endl;
 					}
-					clockResend.restart();
+				}
+				clockResend.restart();
+			}
+		}
+	}
+}
+//funcion para comprobar si algun cliente envia el ACK de newPlayer
+void CheckNewPlayer() {
+	std::thread tr(&Resend);
+	sf::IpAddress IP;
+	unsigned short port;
+	sf::Packet packetLog;
+	std::string str_CON;
+	for (int i = 0; i < Players.size(); i++) {
+		while (Players.find(i)->second.mapPacketCritic.size() > 0) {
+			if (socket.receive(packetLog, IP, port) != sf::Socket::Done) {
+				std::cout << "Error al recivir" << std::endl;
+			}
+			packetLog >> str_CON;
+			if (str_CON == "CMD_ACK_NEW") {
+				int idPacket, id;
+				packetLog >> idPacket >> id;
+				if (Players.find(i)->first == id) {
+					if (idPacket == Players.find(i)->second.mapPacketCritic.find(idPacket)->first && Players.find(i)->second.mapPacketCritic.find(idPacket) != Players.find(i)->second.mapPacketCritic.end()) {
+						std::cout << "Recivo ACK " << Players.find(i)->second.name << " " << Players.find(i)->second.mapPacketCritic.find(idPacket)->first << std::endl;
+						Players.find(i)->second.mapPacketCritic.erase(idPacket);
+						std::cout << "Tamano " << Players.find(id)->second.mapPacketCritic.size() << " de" << Players.find(id)->second.name << std::endl;
+					}
 				}
 			}
 		}
 	}
-	
-}
-//funcion para comprobar si algun cliente envia el ACK de newPlayer
-void CheckNewPlayer() {
-
-		sf::IpAddress IP;
-		unsigned short port;
-		sf::Packet packetLog;
-		std::string str_CON;
-		for (int i = 0; i < Players.size(); i++) {
-			while (Players.find(i)->second.mapPacketCritic.size() > 0) { 
-				if (socket.receive(packetLog, IP, port) != sf::Socket::Done) {
-					std::cout << "Error al recivir" << std::endl;
-				}
-				packetLog >> str_CON;
-				if (str_CON == "CMD_ACK_NEW") {
-					int idPacket, id;
-					packetLog >> idPacket >> id;
-					if (Players.find(i)->first == id) {
-						if (idPacket == Players.find(i)->second.mapPacketCritic.find(idPacket)->first && Players.find(i)->second.mapPacketCritic.find(idPacket) != Players.find(i)->second.mapPacketCritic.end()) {
-							std::cout << "Recivo ACK " << Players.find(i)->second.name << " " << Players.find(i)->second.mapPacketCritic.find(idPacket)->first << std::endl;
-							Players.find(i)->second.mapPacketCritic.erase(idPacket);
-							std::cout << "Tamano " << Players.find(id)->second.mapPacketCritic.size() << " de" << Players.find(id)->second.name << std::endl;
-						}
-					}
-				}
-			}
-		}
-
-			//tr.join();
+	tr.join();
 }
 //funcion que añade el paquete critico y lo envia la primera vez
 void NewPlayer(Player player) {
@@ -185,7 +179,8 @@ void CheckScore(int id) {
 //gestiona el final de cada ronda y los puntos
 void TimeGame() {
 	sf::Packet packPoints;
-	if (clockTime.getElapsedTime().asSeconds() > 15 && counter < MAX_PLAYERS) {
+	//clockTime.restart();
+	if (clockTime.getElapsedTime().asSeconds() > 20 && counter < MAX_PLAYERS) {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (!it->second.caco) {	
 				it->second.puntos++;
@@ -215,7 +210,7 @@ void Connection() {
 	int newPlayer = 0;
 	socket.bind(50000);
 	Player player;
-	std::thread tr(&Resend);
+
 	while(Players.size() < MAX_PLAYERS) {
 		sf::IpAddress IP;
 		unsigned short port;
@@ -357,7 +352,7 @@ void Game() {
 		//GameManager
 		TimeGame();
 		//send PING
-		if (clockP.getElapsedTime().asMilliseconds() > 150) {
+		if (clockP.getElapsedTime().asMilliseconds() > 500) {
 			for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 				ping = "CMD_PING";
 				packPingS << ping;
