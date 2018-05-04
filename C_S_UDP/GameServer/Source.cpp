@@ -34,8 +34,8 @@ struct Player
 	float posX, posY;
 	std::string name;
 	sf::Clock timePing;
-	std::map<int, Movment> movment;
-	std::vector<Movment>interpolation;
+//	std::map<int, Movment> movment;
+	std::vector<Movment>movment;
 	std::map<int, PacketCritic> mapPacketCritic;
 };
 
@@ -180,7 +180,7 @@ void CheckScore(int id) {
 void TimeGame() {
 	sf::Packet packPoints;
 	//clockTime.restart();
-	if (clockTime.getElapsedTime().asSeconds() > 20 && counter < MAX_PLAYERS) {
+	if (clockTime.getElapsedTime().asSeconds() > 30 && counter < MAX_PLAYERS) {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (!it->second.caco) {	
 				it->second.puntos++;
@@ -298,33 +298,40 @@ void Game() {
 							movAux.movX += deltaX;
 							movAux.movY += deltaY;
 							//voy añadiendo al map mientras no se compla el tiempo
-							it2->second.movment.insert((std::pair<int, Movment>(idMove, movAux)));
+							it2->second.movment.push_back(movAux);
 							if (clockAcum.getElapsedTime().asMilliseconds() > 100) {
 								//compruebo con las paredes
 								if ((it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX) > maxX) {
 									it2->second.posX = maxX;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+
 								}
 								else if ((it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX) < minX) {
 									it2->second.posX = minX;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+
 								}
 								else if ((it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY) > maxY) {
 									it2->second.posY = maxY;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+
 								}
 								else if ((it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY) < minY) {
 									it2->second.posY = minY;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+
 								}
 								else {
 									//siempre comprueba la ultima posicion del map para asi validar las anteriores	
 									it2->second.posX += it2->second.movment[it2->second.movment.size() - 1].movX;
 									it2->second.posY += it2->second.movment[it2->second.movment.size() - 1].movY;
 									packM << it2->first << it2->second.movment[it2->second.movment.size() - 1].IDMove << it2->second.posX << it2->second.posY;
+
 								}
 								clockAcum.restart();
+								it2->second.movment.erase(it2->second.movment.begin(), (it2->second.movment.begin() + it2->second.movment.size() - 1));
 							}
+							
 						}
 
 					}
