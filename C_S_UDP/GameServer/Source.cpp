@@ -11,6 +11,7 @@
 #define MAX_PLAYERS 3
 //ratio de perdida de paquetes
 #define PERCENT_LOSS 0.05 //recomendado no poner mas de 0.1
+#define TIME_ROUND 30 // segundos q dura una ronda
 sf::UdpSocket socket;
 
 struct Movment
@@ -34,7 +35,6 @@ struct Player
 	float posX, posY;
 	std::string name;
 	sf::Clock timePing;
-//	std::map<int, Movment> movment;
 	std::vector<Movment>movment;
 	std::map<int, PacketCritic> mapPacketCritic;
 };
@@ -179,8 +179,8 @@ void CheckScore(int id) {
 //gestiona el final de cada ronda y los puntos
 void TimeGame() {
 	sf::Packet packPoints;
-	//clockTime.restart();
-	if (clockTime.getElapsedTime().asSeconds() > 30 && counter < MAX_PLAYERS) {
+
+	if (clockTime.getElapsedTime().asSeconds() > TIME_ROUND && counter < MAX_PLAYERS) {
 		for (std::map<int, Player>::iterator it = Players.begin(); it != Players.end(); ++it) {
 			if (!it->second.caco) {	
 				it->second.puntos++;
@@ -268,6 +268,8 @@ void Game() {
 	clockSend.restart();
 	clockAcum.restart();
 	clockP.restart();
+	clockTime.restart();
+
 	int id;
 	std::string cmd;
 	while (true) {

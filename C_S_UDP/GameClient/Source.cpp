@@ -48,7 +48,7 @@ struct Player
 
 sf::UdpSocket socket;
 Player player; //el propio jugador
-std::map<int, Player>Players;
+std::map<int, Player>Players; 
 int ID;
 Movment movActual;
 //Random para la perdida de paquetes
@@ -249,7 +249,7 @@ void Gameplay()
 					pack >> idAux >> puntos;
 					if (Players.find(player.ID)->first == idAux) {
 						//si soy el jugador propio
-						std::cout << "Se ha acabado la partida, en 3 segundos comienza la siguiente " << std::endl;
+						std::cout << "Se ha acabado la ronda y se ha reseteado " << std::endl;
 						Players.find(player.ID)->second.puntos = puntos;
 						std::cout << "Tienes :" << Players.find(player.ID)->second.puntos << " puntos" << std::endl;
 						pack >> cacoAux;
