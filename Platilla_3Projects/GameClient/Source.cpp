@@ -13,7 +13,7 @@ sf::TcpListener listener;
 sf::Socket::Status status;
 std::mutex mu;
 bool done;
-
+sf::Packet packRecv;
 // ----- MUTEX ----- //
 void shared_msg(std::vector<std::string> *aMensajes, sf::String string) {
 	mu.lock();
@@ -31,11 +31,12 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 	while (tBucle) {
 		std::size_t received;
 		char buffer_Thread[2000];
-		status = socket.receive(buffer_Thread, sizeof(buffer_Thread), received);
+		status = socket.receive(packRecv);
 		int timer = 0;
 		//socket.receive(&timer, sizeof(timer), received);
 		//std::cout << timer << std::endl;
-		sf::String string = buffer_Thread;
+		std::string string;
+		packRecv >> string;
 		if (status == sf::Socket::Done) {
 			if (string == ">exit") {
 				aMensajes->push_back("La sesion ha finalizado");
@@ -49,6 +50,7 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 			aMensajes->push_back("Se ha producido una desconexion");
 			tBucle = false;
 		}
+		packRecv.clear();
 	}
 }
 
@@ -82,16 +84,19 @@ int main()
 	separator.setPosition(0, 550);
 
 	sf::IpAddress ip = sf::IpAddress::getLocalAddress();
-
+	sf::Packet packLogin, packSend;
 	std::string clientName = "";
+	int money;
 	std::cout << "Input your name: ";
 	std::cin >> clientName;
-	
+	std::cout << "Input your money: ";
+	std::cin >> money;
+	packLogin << clientName << money;
 
 	//  ----- SELECTION MODE ----- //
 	char connectionType, mode;
 	std::string executingMode;
-	char buffer[2000];
+	std::string hello;
 	std::size_t received;
 	std::string Stext = "";
 
@@ -102,75 +107,77 @@ int main()
 	}
 	Stext += "Conexion establecida con un cliente nuevo";
 	mode = 'r';
-	executingMode = "b";
 
 	// ----- CONFIRM CONNECTION ----- //
-	socket.send(clientName.c_str(), clientName.length() + 1);
-	socket.receive(buffer, sizeof(buffer), received);
-	std::cout << buffer << std::endl;
+	socket.send(packLogin);
+	packLogin.clear();
+	socket.receive(packLogin);
+	packLogin >> hello;
+	std::cout << hello << std::endl;
 
 	// ----- MODOS DE EJECUCION ----- // 
-	if (executingMode == "b") { //Blocking +  Thread
-		std::thread tr(&thread_recived, &aMensajes);
-		while (window.isOpen())
+	//Blocking +  Thread
+	std::thread tr(&thread_recived, &aMensajes);
+	while (window.isOpen())
+	{
+		sf::Event evento;
+		while (window.pollEvent(evento))
 		{
-			sf::Event evento;
-			while (window.pollEvent(evento))
+			switch (evento.type)
 			{
-				switch (evento.type)
-				{
-				case sf::Event::Closed:
+			case sf::Event::Closed:
+				window.close();
+				break;
+			case sf::Event::KeyPressed:
+				if (evento.key.code == sf::Keyboard::Escape)
 					window.close();
-					break;
-				case sf::Event::KeyPressed:
-					if (evento.key.code == sf::Keyboard::Escape)
-						window.close();
-					else if (evento.key.code == sf::Keyboard::Return)
-					{
+				else if (evento.key.code == sf::Keyboard::Return)
+				{
 
-						Stext = mensaje;
-						status = socket.send(Stext.c_str(), Stext.length() + 1);
-						Stext = "[ " + clientName + " ]> " + mensaje;
-						if (status == sf::Socket::Done) {
-							if (Stext == "exit") {
-								aMensajes.push_back("La sesion ha finalizado");
-								window.close();
-							}
-							else {
-								shared_msg(&aMensajes, Stext);
-							}
-						}
-						else if (status == sf::Socket::Disconnected) {
-							aMensajes.push_back("Se ha producido una desconexion");
+					Stext = mensaje;
+					packSend << Stext;
+					status = socket.send(packSend);
+					Stext = "[ " + clientName + " ]> " + mensaje;
+					if (status == sf::Socket::Done) {
+						if (Stext == "exit") {
+							aMensajes.push_back("La sesion ha finalizado");
 							window.close();
 						}
-						mensaje = "";
+						else {
+							shared_msg(&aMensajes, Stext);
+						}
 					}
-					break;
-				case sf::Event::TextEntered:
-					if (evento.text.unicode >= 32 && evento.text.unicode <= 126)
-						mensaje += (char)evento.text.unicode;
-					else if (evento.text.unicode == 8 && mensaje.getSize() > 0)
-						mensaje.erase(mensaje.getSize() - 1, mensaje.getSize());
-					break;
+					else if (status == sf::Socket::Disconnected) {
+						aMensajes.push_back("Se ha producido una desconexion");
+						window.close();
+					}
+					packSend.clear();
+					mensaje = "";
 				}
+				break;
+			case sf::Event::TextEntered:
+				if (evento.text.unicode >= 32 && evento.text.unicode <= 126)
+					mensaje += (char)evento.text.unicode;
+				else if (evento.text.unicode == 8 && mensaje.getSize() > 0)
+					mensaje.erase(mensaje.getSize() - 1, mensaje.getSize());
+				break;
 			}
-			window.draw(separator);
-			for (size_t i = 0; i < aMensajes.size(); i++)
-			{
-				std::string chatting = aMensajes[i];
-				chattingText.setPosition(sf::Vector2f(0, 20 * i));
-				chattingText.setString(chatting);
-				window.draw(chattingText);
-			}
-			std::string mensaje_ = mensaje + "_";
-			text.setString(mensaje_);
-			window.draw(text);
-			window.display();
-			window.clear();
 		}
-		socket.disconnect();
-		tr.join();
+		window.draw(separator);
+		for (size_t i = 0; i < aMensajes.size(); i++)
+		{
+			std::string chatting = aMensajes[i];
+			chattingText.setPosition(sf::Vector2f(0, 20 * i));
+			chattingText.setString(chatting);
+			window.draw(chattingText);
+		}
+		std::string mensaje_ = mensaje + "_";
+		text.setString(mensaje_);
+		window.draw(text);
+		window.display();
+		window.clear();
 	}
+	socket.disconnect();
+	tr.join();
 	return 0;
 }

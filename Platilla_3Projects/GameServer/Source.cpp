@@ -6,7 +6,7 @@
 #include <mutex>
 #include <cstring>
 
-#define MAX_PLAYERS 4
+#define MAX_PLAYERS 2
 
 //StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
 
@@ -66,9 +66,9 @@ bool ArePlayersReady() {
 
 void SocketSelector() {
 	bool end = false;
-	
+	sf::Packet packLogin, packSend, packRecv;
 	char name[200];
-
+	char money[200];
 	// -- Abrir listener
 	sf::TcpListener listener;
 	sf::Socket::Status status = listener.listen(50000);
@@ -95,22 +95,24 @@ void SocketSelector() {
 					//Bucle para todos los clientes -> Nuevo cliente conectado.
 					//Antes de añadir el nuevo cliente para no tener que comparalos.
 
-					newPlayer->sock->receive(name, sizeof(name), received);
+					newPlayer->sock->receive(packLogin);
+					packLogin >> newPlayer->nickname >> newPlayer->money;
 
-					std::cout << "Client with port: [" << newPlayer->sock->getRemotePort() << "] and name [" << name << "] CONNECTED" << std::endl;
+					std::cout << "Client with port: [" << newPlayer->sock->getRemotePort() << "] and name [" << newPlayer->nickname << "] and money [" << newPlayer->money << "]  CONNECTED" << std::endl;
 					mySocketSelector.add(*newPlayer->sock);
-					newPlayer->nickname = name;
-
+					//newPlayer->nickname = name;
 					aPlayers.push_back(newPlayer);
-
+					packLogin.clear();
 					std::string confirmText = "INFO: You have entered the game, please wait until all players are connected ...";
 					size_t bytesSent;
-					newPlayer->sock->send(confirmText.c_str(), confirmText.length());
-
+					packLogin << confirmText;
+					newPlayer->sock->send(packLogin);
+					packLogin.clear();
 					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 						Player& iPlayer = **it;
 						std::string connectedMesage = "GAME INFO: -- " + newPlayer->nickname + " has been connected";
-						iPlayer.sock->send(connectedMesage.c_str(), connectedMesage.length() + 1);
+						packLogin << connectedMesage;
+						iPlayer.sock->send(packLogin);
 					}
 
 					clientsConnectedCounter++;
@@ -118,11 +120,12 @@ void SocketSelector() {
 					if (clientsConnectedCounter == MAX_PLAYERS) {
 						gameIsReady = true;
 						std::cout << "All players are connected ... Starting Game ..." << std::endl;
-
+						packLogin.clear();
 						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 							Player& iPlayer = **it;
 							std::string connectedMesage = "GAME INFO: -- All players are connected ... Starting Game ...";
-							iPlayer.sock->send(connectedMesage.c_str(), connectedMesage.length() + 1);
+							packLogin << connectedMesage;
+							iPlayer.sock->send(packLogin);
 						}
 					}
 				}
@@ -133,6 +136,7 @@ void SocketSelector() {
 			}
 			else if (gameIsReady) {
 				if (currentState == "chat_mode") {
+					packRecv.clear();
 					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 						Player& iPlayer = **it;
 						if (mySocketSelector.isReady(*iPlayer.sock) && !iPlayer.isReady) {
@@ -140,11 +144,12 @@ void SocketSelector() {
 
 							//Server recibe mensajes
 							std::string mesage;
-							char buffer[2000];
-							std::size_t received;
-							status = iPlayer.sock->receive(buffer, sizeof(buffer), received);
+							//char buffer[2000];
+							//std::size_t received;
+							status = iPlayer.sock->receive(packRecv);
+							packRecv >> mesage;
 							if (status == sf::Socket::Done) {
-								mesage = buffer;
+								//mesage = buffer;
 								std::cout << "Client with port: [" << iPlayer.sock->getRemotePort() << "] SEND: " << mesage << std::endl;
 								if (mesage == "ready") {
 									iPlayer.isReady = true;
@@ -167,11 +172,13 @@ void SocketSelector() {
 									if (bPlayer.sock != iPlayer.sock) {
 										auxPlayers.push_back(&bPlayer);
 									}
-
-									std::string connectedMesage = "GAME INFO: -- " + iPlayer.nickname + " left the game ---";
-									bPlayer.sock->send(connectedMesage.c_str(), connectedMesage.length() + 1);
-									connectedMesage = "GAME INFO: -- Wait until anew player connects";
-									bPlayer.sock->send(connectedMesage.c_str(), connectedMesage.length() + 1);
+									packSend.clear();
+									std::string connectedMesage = "GAME INFO: -- " + iPlayer.nickname + " left the game -- Wait until a new player connects";
+									//packSend << connectedMesage;
+									//bPlayer.sock->send(connectedMesage.c_str(), connectedMesage.length() + 1);
+									//connectedMesage = "GAME INFO: -- Wait until a new player connects";
+									packSend << connectedMesage;
+									bPlayer.sock->send(packSend);
 									bPlayer.isReady = false;
 								}
 								gameIsReady = false;
@@ -179,20 +186,24 @@ void SocketSelector() {
 							}
 
 							//Server reenvia mensajes
+							packSend.clear();
 							for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 								Player& player = **it;
 								if (player.sock->getRemotePort() != iPlayer.sock->getRemotePort()) {
 									std::string auxNameMesage = "[ " + iPlayer.nickname + " ]> " + mesage;
-									player.sock->send(auxNameMesage.c_str(), auxNameMesage.length() + 1);
+									packSend << auxNameMesage;
+									player.sock->send(packSend);
 								}
 							}
 
 							if (ArePlayersReady()) {
 								currentState = "countdown_mode";
+								packSend.clear();
 								for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 									Player& player = **it;
 									std::string mesage = "GAME INFO: -- Chatting time has finished -- Press Enter to continue ...";
-									player.sock->send(mesage.c_str(), mesage.length() + 1);
+									packSend << mesage;
+									player.sock->send(packSend);
 								}
 							}
 						}
@@ -201,14 +212,15 @@ void SocketSelector() {
 				else if (currentState == "countdown_mode") {
 
 					//SAFE
+					packRecv.clear();
 					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 						Player& iPlayer = **it;
 						if (mySocketSelector.isReady(*iPlayer.sock) && iPlayer.isReady) {
-							
+
 							std::string mesage;
-							char buffer[2000];
-							std::size_t received;
-							status = iPlayer.sock->receive(buffer, sizeof(buffer), received);
+							//char buffer[2000];
+							//std::size_t received;
+							status = iPlayer.sock->receive(packRecv);
 							if (status == sf::Socket::Done) {
 								std::cout << "Client with port: [" << iPlayer.sock->getRemotePort() << "] OK " << std::endl;
 							}
@@ -225,15 +237,18 @@ void SocketSelector() {
 
 					Countdown();
 					currentState = "bet_money_mode";
+					packSend.clear();
 					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 						Player& player = **it;
 						std::string mesage = "GAME INFO: -- Enter your bet money";
-						player.sock->send(mesage.c_str(), mesage.length() + 1);
+						packSend << mesage;
+						player.sock->send(packSend);
 						player.isReady = false;
 					}
 					
 				}
 				else if (currentState == "bet_money_mode") {
+					packRecv.clear();
 					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 						Player& iPlayer = **it;
 						
@@ -241,11 +256,13 @@ void SocketSelector() {
 							
 							//Server recibe apuestas
 							std::string mesage;
-							char buffer[2000];
-							std::size_t received;
-							status = iPlayer.sock->receive(buffer, sizeof(buffer), received);
+
+							//char buffer[2000];
+							//std::size_t received;
+							status = iPlayer.sock->receive(packRecv);
+							packRecv >> mesage;
 							if (status == sf::Socket::Done) {
-								mesage = buffer;
+								//mesage = buffer;
 								int temp = atoi(mesage.c_str());
 								if (iPlayer.money - temp >= 0) {
 									iPlayer.betMoney = temp;
@@ -254,47 +271,61 @@ void SocketSelector() {
 									iPlayer.isReady = true;
 								}
 								else {
+									packSend.clear();
 									std::string mesage = "GAME INFO: -- You don't have all that money, please enter a valid amount";
-									iPlayer.sock->send(mesage.c_str(), mesage.length() + 1);
+									packSend << mesage;
+									iPlayer.sock->send(packSend);
 								}
 							}
 						}
 						if (ArePlayersReady()) {
 							currentState = "bet_number_mode";
+							packSend.clear();
 							for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 								Player& player = **it;
-								std::string mesage = "GAME INFO: -- Enter your bet number:";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
-								mesage = "           -- <0-36> Numbers";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
-								mesage = "           -- <37-38>Rojos / Negros";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
-								mesage = "           -- <39-40>Pares / Impares";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
-								mesage = "           -- <41-42-43>Filas";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
-								mesage = "           -- <44-45-46>Docenas";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
-								mesage = "           -- <47-48> 0-18 / 19-36";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
+								std::string mesage = "GAME INFO: -- Enter your bet number: <0-36> Numbers";
+								packSend << mesage;
+								mesage = "-- <37-38>Rojos / Negros";
+								packSend << mesage;
+								player.sock->send(packSend);
+								packSend.clear();
+								mesage = "-- <39-40>Pares / Impares";
+								packSend << mesage;
+								player.sock->send(packSend);
+								packSend.clear();
+								mesage = "-- <41-42-43>Filas";
+								packSend << mesage;
+								player.sock->send(packSend);
+								packSend.clear();
+								mesage = "-- <44-45-46>Docenas";
+								packSend << mesage;
+								player.sock->send(packSend);
+								packSend.clear();
+								mesage = "-- <47-48> 0-18 / 19-36";
+								packSend << mesage;
+								player.sock->send(packSend);
+								packSend.clear();
 								player.isReady = false;
 							}
 						}
 					}
 				}
 				else if (currentState == "bet_number_mode") {
+					packRecv.clear();
 					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 						Player& iPlayer = **it;
 						if (mySocketSelector.isReady(*iPlayer.sock) && !iPlayer.isReady) {
 
 							//Server recibe apuestas
+
 							std::string mesage;
-							char buffer[2000];
-							std::size_t received;
-							status = iPlayer.sock->receive(buffer, sizeof(buffer), received);
+						//	char buffer[2000];
+							//std::size_t received;
+							status = iPlayer.sock->receive(packRecv);
+							packRecv >> mesage;
 							if (status == sf::Socket::Done) {
-								mesage = buffer;
-								int temp = atoi(buffer);
+								//mesage = buffer;
+								int temp = stoi(mesage);//atoi
 
 								if (temp >= 0 && temp <= 48) {
 									iPlayer.bet = temp;
@@ -302,19 +333,24 @@ void SocketSelector() {
 									iPlayer.isReady = true;
 								}
 								else {
+									packSend.clear();
 									std::string mesage = "GAME INFO: -- This number doesn't exist, please enter a valid number";
-									iPlayer.sock->send(mesage.c_str(), mesage.length() + 1);
+									packSend << mesage;
+									iPlayer.sock->send(packSend);
 								}
 							}
 						}
 						if (ArePlayersReady()) {
 							currentState = "chat_mode";
+							packSend.clear();
 							for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 								Player& player = **it;
-								std::string mesage = "GAME INFO: -- You bet [" + std::to_string(player.betMoney) + "]$ on number [" + std::to_string(player.bet) +"]";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
-								mesage = "GAME INFO: -- You have a total credit of [" + std::to_string(player.money) + "]$";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
+								std::string mesage = "GAME INFO: -- You bet [" + std::to_string(player.betMoney) + "]$ on number [" + std::to_string(player.bet) +"]  -- You have a total credit of [" + std::to_string(player.money) + "]$";
+								//player.sock->send(mesage.c_str(), mesage.length() + 1);
+								//mesage = "GAME INFO: -- You have a total credit of [" + std::to_string(player.money) + "]$";
+								//packSend << mesage;
+								player.sock->send(packSend);
+								packSend.clear();
 								player.isReady = false;
 								srand(time(NULL));
 								int randomNumber = rand() % 37;
@@ -322,7 +358,9 @@ void SocketSelector() {
 
 
 								mesage = "GAME INFO: -- Winner number: " + std::to_string(randomNumber) + " !!!!!";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
+								packSend << mesage;
+								player.sock->send(packSend);
+								packSend.clear();
 
 								int rojos[] = {1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36 }; //18 -->37
 								int negros[] = { 2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35 }; //18 -->38
@@ -437,9 +475,13 @@ void SocketSelector() {
 
 								player.money += apuestaGanancia;
 								mesage = "GAME INFO: -- You win [" + std::to_string(apuestaGanancia) + "]$ your current creadit is [" + std::to_string(player.money) +"]$";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
+								packSend << mesage;
+								player.sock->send(packSend);
+								packSend.clear();
 								mesage = "GAME INFO: -- Chatting time has started -- Enter 'ready' to start a new game";
-								player.sock->send(mesage.c_str(), mesage.length() + 1);
+								packSend << mesage;
+								player.sock->send(packSend);
+								packSend.clear();
 							}
 						}
 					}
