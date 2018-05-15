@@ -24,7 +24,7 @@ public:
 	std::string nickname;
 	int money, bet, betMoney;
 	bool isReady;
-
+	int IDGame;
 	Player() {
 
 	}
@@ -67,7 +67,7 @@ bool ArePlayersReady() {
 	return true;
 }
 
-void GameLoop() {
+void GameLoop() { //parametro idGame
 	std::cout << "Crep un THREAD" << std::endl;
 	if (currentState == "chat_mode") {
 		packRecv.clear();
@@ -552,7 +552,6 @@ void SocketSelector() {
 							packSend.clear();
 							packSend << a;
 							newPlayer->sock->send(packSend);
-
 							std::string comand = "CMD_WELCOME";
 							packSend.clear();
 							packSend << comand << gameManager.find(mesage)->second->IDG;
