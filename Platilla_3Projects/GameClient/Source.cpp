@@ -12,7 +12,8 @@ sf::TcpSocket socket;
 sf::TcpListener listener;
 sf::Socket::Status status;
 std::mutex mu;
-bool done;
+bool done, createGame;
+int IDGame;
 sf::Packet packRecv;
 // ----- MUTEX ----- //
 void shared_msg(std::vector<std::string> *aMensajes, sf::String string) {
@@ -41,6 +42,11 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 			if (string == ">exit") {
 				aMensajes->push_back("La sesion ha finalizado");
 				tBucle = false;
+			}
+			if (string == "CMD_WELCOME") {
+				packRecv >> IDGame;
+				std::cout << IDGame << std::endl;
+				createGame = true;
 			}
 			else {
 				shared_msg(aMensajes, string);
@@ -135,7 +141,12 @@ int main()
 				{
 
 					Stext = mensaje;
-					packSend << Stext;
+					if (!createGame) {
+						packSend << Stext;
+					}
+					if (createGame) {
+						packSend << Stext << IDGame;
+					}
 					status = socket.send(packSend);
 					Stext = "[ " + clientName + " ]> " + mensaje;
 					if (status == sf::Socket::Done) {

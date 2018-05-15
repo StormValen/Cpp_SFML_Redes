@@ -40,7 +40,7 @@ public:
 std::list<Player*> aPlayers; // Contenedor de jugadores
 int clientsConnectedCounter = 0;
 bool gameIsReady = false;
-
+int IDGame = 0;
 void Countdown() {
 	bool end = false;
 	while (!end) {
@@ -426,15 +426,19 @@ class GamesManager
 public:
 	int maxPlayers;
 	int maxMoney;
-	void CreateGame(Player* player, std::string name,  int maxPlayers, int maxMoney) {
-		std::string welcome = "You have created a game, wait until all the players connects ";
-		packSend << welcome;
-		player->sock->send(packSend);
+	int sizeMax;
+	int IDG;
+	void CreateGame(Player* player, std::string name,  int _maxPlayers, int _maxMoney, int _ID) {
+		IDG = _ID;
+		maxMoney = _maxMoney;
+		maxPlayers = _maxPlayers;
 		std::thread tr(&GameLoop);
 		//if (gameIsReady) {
 		tr.join();
+		sizeMax++;
 		//}
 	}
+
 	void JoinGame() {
 
 	}
@@ -444,27 +448,17 @@ public:
 		//send games
 		//}
 	}
-//	GamesManager();
-	//~GamesManager();
-
-private:
-
 };
 
 std::map<std::string, GamesManager*> gameManager;
 
-bool CheckGame(std::string name) {
+bool CheckGame(std::string name, Player* player) {
 	for (std::map<std::string, GamesManager*>::iterator it = gameManager.begin(); it != gameManager.end(); ++it) {
-		if (name == it->first && it != gameManager.end()) {
-			std::string welcome = "Te has unido a la partida : " + name + " espera a que se conecten todos";
-			packSend.clear();
-			packSend << welcome;
+		std::cout << it->first;
+		if (name == it->first && it->second->sizeMax < it->second->maxPlayers && player->money <= it->second->maxMoney) {
 			return true;
 		}
-		else if (name != it->first) {
-			std::string welcome = "Esa partida no existe";
-			packSend.clear();
-			packSend << welcome;
+		else {
 			return false;
 		}
 	}
@@ -537,8 +531,12 @@ void SocketSelector() {
 						newPlayer->sock->receive(packCreate);
 						packCreate >> maxMoney;
 						packCreate.clear();
-						std::cout << name << stoi(maxPlayers) << " " << stoi(maxMoney)  << std::endl;
-						gameManagerAux->CreateGame(newPlayer, name, stoi(maxPlayers), stoi(maxMoney));
+						std::string comand = "CMD_WELCOME";
+						packSend.clear();
+						packSend << comand << IDGame;
+						newPlayer->sock->send(packSend);
+						gameManagerAux->CreateGame(newPlayer, name, stoi(maxPlayers), stoi(maxMoney), IDGame);
+						IDGame++;
 						gameManager.insert(std::pair<std::string, GamesManager*>(name, gameManagerAux));
 
 					}
@@ -549,12 +547,26 @@ void SocketSelector() {
 						newPlayer->sock->send(packSend);
 						newPlayer->sock->receive(packRecv);
 						packRecv >> mesage;
-						if (CheckGame(mesage)) {
-							mesage = "Te has conectado a la partida: " + mesage;
+						if (CheckGame(mesage, newPlayer)) {
+							std::string a = "Te has conectado a la partida: " + mesage;
 							packSend.clear();
-							packSend << mesage;
+							packSend << a;
 							newPlayer->sock->send(packSend);
-						}				
+
+							std::string comand = "CMD_WELCOME";
+							packSend.clear();
+							packSend << comand << gameManager.find(mesage)->second->IDG;
+							std::cout << gameManager.find(mesage)->second->IDG;
+							newPlayer->sock->send(packSend);
+							packSend.clear();
+
+						}
+						else {
+							std::string a = "Esa partida no existe o no puedes conectarte por los requisitos ";
+							packSend.clear();
+							packSend << a;
+							newPlayer->sock->send(packSend);
+						}
 					}
 					/*for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 						Player& iPlayer = **it;
