@@ -41,6 +41,7 @@ std::list<Player*> aPlayers; // Contenedor de jugadores
 int clientsConnectedCounter = 0;
 bool gameIsReady = false;
 int IDGame = 0;
+int sizeMax = 0;
 void Countdown() {
 	bool end = false;
 	while (!end) {
@@ -57,90 +58,101 @@ void Countdown() {
 	}
 }
 
-bool ArePlayersReady() {
+bool ArePlayersReady(int IDG) {
 	for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 		Player& player = **it;
-		if (player.isReady == false) {
+		if (player.IDGame == IDG &&  player.isReady == false) {//coimprobar los de la misma partida no todos los jugadores guardados
 			return false;
 		}
 	}
 	return true;
 }
-
-void GameLoop() { //parametro idGame
-	std::cout << "Crep un THREAD" << std::endl;
+void InfoNewPlayer(Player* player) {
+	for(std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+		Player& iPlayer = **it;
+		if (player->IDGame == iPlayer.IDGame && iPlayer.nickname != player->nickname) {
+			std::string connectedMesage = " GAME INFO: -- " + player->nickname + " se ha conectado";
+			packLogin << connectedMesage;
+			iPlayer.sock->send(packLogin);
+		}
+	}
+}
+void GameLoop(int IDG, int maxPlayers, int maxMoney) {
+	
 	if (currentState == "chat_mode") {
 		packRecv.clear();
 		for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 			Player& iPlayer = **it;
-			if (mySocketSelector.isReady(*iPlayer.sock) && !iPlayer.isReady) {
+			std::cout << iPlayer.isReady << std::endl;
+			//if (mySocketSelector.wait()) {
+				if (mySocketSelector.isReady(*iPlayer.sock) && !iPlayer.isReady) {
 
-
-				//Server recibe mensajes
-				std::string mesage;
-				//char buffer[2000];
-				//std::size_t received;
-				status = iPlayer.sock->receive(packRecv);
-				packRecv >> mesage;
-				if (status == sf::Socket::Done) {
-					//mesage = buffer;
-					std::cout << "Client with port: [" << iPlayer.sock->getRemotePort() << "] SEND: " << mesage << std::endl;
-					if (mesage == "ready") {
-						iPlayer.isReady = true;
-					}
-				}
-
-				//Cliente desconectado
-				else if (status == sf::Socket::Disconnected) {
-					mySocketSelector.remove(*iPlayer.sock);
-
-					//eliminar el socket de la lista
-					std::cout << "Client with port: [" << iPlayer.sock->getRemotePort() << "] DISCONECTED " << std::endl;
-					clientsConnectedCounter--;
-
-					std::list<Player*> auxPlayers;
-
-					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-						Player& bPlayer = **it;
-
-						if (bPlayer.sock != iPlayer.sock) {
-							auxPlayers.push_back(&bPlayer);
+					std::cout << "Crep un THREAD" << std::endl;
+					//Server recibe mensajes
+					std::string mesage;
+					status = iPlayer.sock->receive(packRecv);
+					packRecv >> mesage;
+					std::cout << mesage;
+					if (status == sf::Socket::Done) {
+						//mesage = buffer;
+						std::cout << "Client with port: [" << iPlayer.sock->getRemotePort() << "] SEND: " << mesage << std::endl;
+						if (mesage == "ready") {
+							iPlayer.isReady = true;
 						}
-						packSend.clear();
-						std::string connectedMesage = "GAME INFO: -- " + iPlayer.nickname + " left the game -- Wait until a new player connects";
-						//packSend << connectedMesage;
-						//bPlayer.sock->send(connectedMesage.c_str(), connectedMesage.length() + 1);
-						//connectedMesage = "GAME INFO: -- Wait until a new player connects";
-						packSend << connectedMesage;
-						bPlayer.sock->send(packSend);
-						bPlayer.isReady = false;
 					}
-					gameIsReady = false;
-					aPlayers = auxPlayers;
-				}
 
-				//Server reenvia mensajes
-				packSend.clear();
-				for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-					Player& player = **it;
-					if (player.sock->getRemotePort() != iPlayer.sock->getRemotePort()) {
-						std::string auxNameMesage = "[ " + iPlayer.nickname + " ]> " + mesage;
-						packSend << auxNameMesage;
-						player.sock->send(packSend);
+					//Cliente desconectado
+					else if (status == sf::Socket::Disconnected) {
+						mySocketSelector.remove(*iPlayer.sock);
+
+						//eliminar el socket de la lista
+						std::cout << "Client with port: [" << iPlayer.sock->getRemotePort() << "] DISCONECTED " << std::endl;
+						clientsConnectedCounter--;
+
+						std::list<Player*> auxPlayers;
+
+						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+							Player& bPlayer = **it;
+
+							if (bPlayer.sock != iPlayer.sock) {
+								auxPlayers.push_back(&bPlayer);
+							}
+							packSend.clear();
+							std::string connectedMesage = "GAME INFO: -- " + iPlayer.nickname + " left the game -- Wait until a new player connects";
+							//packSend << connectedMesage;
+							//bPlayer.sock->send(connectedMesage.c_str(), connectedMesage.length() + 1);
+							//connectedMesage = "GAME INFO: -- Wait until a new player connects";
+							packSend << connectedMesage;
+							bPlayer.sock->send(packSend);
+							bPlayer.isReady = false;
+						}
+						gameIsReady = false;
+						aPlayers = auxPlayers;
 					}
-				}
 
-				if (ArePlayersReady()) {
-					currentState = "countdown_mode";
+					//Server reenvia mensajes
 					packSend.clear();
 					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 						Player& player = **it;
-						std::string mesage = "GAME INFO: -- Chatting time has finished -- Press Enter to continue ...";
-						packSend << mesage;
-						player.sock->send(packSend);
+						if (player.sock->getRemotePort() != iPlayer.sock->getRemotePort()) {
+							std::string auxNameMesage = "[ " + iPlayer.nickname + " ]> " + mesage;
+							packSend << auxNameMesage;
+							player.sock->send(packSend);
+						}
+					}
+
+					if (ArePlayersReady(IDG)) {
+						currentState = "countdown_mode";
+						packSend.clear();
+						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+							Player& player = **it;
+							std::string mesage = "GAME INFO: -- Chatting time has finished -- Press Enter to continue ...";
+							packSend << mesage;
+							player.sock->send(packSend);
+						}
 					}
 				}
-			}
+			//}
 		}
 	}
 	else if (currentState == "countdown_mode") {
@@ -159,7 +171,7 @@ void GameLoop() { //parametro idGame
 					std::cout << "Client with port: [" << iPlayer.sock->getRemotePort() << "] OK " << std::endl;
 				}
 
-				if (ArePlayersReady()) {
+				if (ArePlayersReady(IDG)) {
 					currentState = "countdown_mode";
 					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 						Player& player = **it;
@@ -212,7 +224,7 @@ void GameLoop() { //parametro idGame
 					}
 				}
 			}
-			if (ArePlayersReady()) {
+			if (ArePlayersReady(IDG)) {
 				currentState = "bet_number_mode";
 				packSend.clear();
 				for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
@@ -274,7 +286,7 @@ void GameLoop() { //parametro idGame
 					}
 				}
 			}
-			if (ArePlayersReady()) {
+			if (ArePlayersReady(IDG)) {
 				currentState = "chat_mode";
 				packSend.clear();
 				for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
@@ -426,17 +438,13 @@ class GamesManager
 public:
 	int maxPlayers;
 	int maxMoney;
-	int sizeMax;
 	int IDG;
 	void CreateGame(Player* player, std::string name,  int _maxPlayers, int _maxMoney, int _ID) {
 		IDG = _ID;
 		maxMoney = _maxMoney;
 		maxPlayers = _maxPlayers;
-		std::thread tr(&GameLoop);
-		//if (gameIsReady) {
+		std::thread tr(&GameLoop, player->IDGame, maxPlayers, maxMoney);
 		tr.join();
-		sizeMax++;
-		//}
 	}
 
 	void JoinGame() {
@@ -444,24 +452,24 @@ public:
 	}
 	void DeleteGame(std::string name);
 	void ShowGames() {
-		//for (int i = 0; i < gameManager.size(); i++) {
-		//send games
-		//}
+
 	}
 };
 
 std::map<std::string, GamesManager*> gameManager;
 
-bool CheckGame(std::string name, Player* player) {
-	for (std::map<std::string, GamesManager*>::iterator it = gameManager.begin(); it != gameManager.end(); ++it) {
-		std::cout << it->first;
-		if (name == it->first && it->second->sizeMax < it->second->maxPlayers && player->money <= it->second->maxMoney) {
+bool CheckGame(std::string name, Player* player) { //comprueba que se peudan unir a esa partida
+	sizeMax++;
+	std::cout << name;
+	//for (std::map<std::string, GamesManager*>::iterator it = gameManager.begin(); it != gameManager.end(); it++) {
+		//std::cout << it->first;
+		if (name == gameManager.find(name)->first && sizeMax < gameManager.find(name)->second->maxPlayers && player->money <= gameManager.find(name)->second->maxMoney) {
 			return true;
 		}
 		else {
 			return false;
 		}
-	}
+	//}
 }
 
 void SocketSelector() {
@@ -496,10 +504,8 @@ void SocketSelector() {
 
 					newPlayer->sock->receive(packLogin);
 					packLogin >> newPlayer->nickname >> newPlayer->money;
-
 					std::cout << "Client with port: [" << newPlayer->sock->getRemotePort() << "] and name [" << newPlayer->nickname << "] and money [" << newPlayer->money << "]  CONNECTED" << std::endl;
 					mySocketSelector.add(*newPlayer->sock);
-					//newPlayer->nickname = name;
 					aPlayers.push_back(newPlayer);
 					packLogin.clear();
 					std::string confirmText = "INFO: You have entered the game";
@@ -517,7 +523,7 @@ void SocketSelector() {
 					if (stoi(modo) == 1) { // crear una partida
 						std::string maxPlayers, maxMoney, name;
 						GamesManager *gameManagerAux = new GamesManager();
-						std::string specs = "Introduce el nombre de la partida, el numero max de jugadores y dinero";
+						std::string specs = " Introduce el nombre de la partida, el numero max de jugadores y dinero";
 						packCreate.clear();
 						packCreate << specs;
 						newPlayer->sock->send(packCreate);
@@ -535,44 +541,47 @@ void SocketSelector() {
 						packSend.clear();
 						packSend << comand << IDGame;
 						newPlayer->sock->send(packSend);
+						newPlayer->IDGame = IDGame;
 						gameManagerAux->CreateGame(newPlayer, name, stoi(maxPlayers), stoi(maxMoney), IDGame);
 						IDGame++;
 						gameManager.insert(std::pair<std::string, GamesManager*>(name, gameManagerAux));
+						comand = " Has creado una partida, espera a que se conecten todos" ;
+						packSend.clear();
+						packSend << comand;
+						newPlayer->sock->send(packSend);
 
 					}
 					else if (stoi(modo) == 2) {
-						std::string mesage = "Introduce el nombre de la partida ";
+						std::string mesage = " Introduce el nombre de la partida ";
 						packSend.clear();
 						packSend << mesage;
 						newPlayer->sock->send(packSend);
 						newPlayer->sock->receive(packRecv);
 						packRecv >> mesage;
+						std::cout << " A" << gameManager.find(mesage)->first;
 						if (CheckGame(mesage, newPlayer)) {
-							std::string a = "Te has conectado a la partida: " + mesage;
+							std::string welcome = "Te has conectado a la partida: " + mesage;
+							newPlayer->IDGame = gameManager.find(mesage)->second->IDG;
+							std::cout << " D " << gameManager.find(mesage)->first;
 							packSend.clear();
-							packSend << a;
+							packSend << welcome;
 							newPlayer->sock->send(packSend);
 							std::string comand = "CMD_WELCOME";
 							packSend.clear();
 							packSend << comand << gameManager.find(mesage)->second->IDG;
-							std::cout << gameManager.find(mesage)->second->IDG;
+							
 							newPlayer->sock->send(packSend);
 							packSend.clear();
-
+							InfoNewPlayer(newPlayer);
 						}
 						else {
-							std::string a = "Esa partida no existe o no puedes conectarte por los requisitos ";
+							std::string a = " Esa partida no existe o no puedes conectarte por los requisitos ";
 							packSend.clear();
 							packSend << a;
 							newPlayer->sock->send(packSend);
 						}
 					}
-					/*for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-						Player& iPlayer = **it;
-						std::string connectedMesage = "GAME INFO: -- " + newPlayer->nickname + " has been connected";
-						packLogin << connectedMesage;
-						iPlayer.sock->send(packLogin);
-					}
+					/*
 
 					clientsConnectedCounter++;
 
