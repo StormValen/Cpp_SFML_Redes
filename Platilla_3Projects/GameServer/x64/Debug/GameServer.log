@@ -1,5 +1,6 @@
 ﻿  Source.cpp
-d:\repositorios\cpp_sfml_redes\platilla_3projects\gameserver\source.cpp(319): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-d:\repositorios\cpp_sfml_redes\platilla_3projects\gameserver\source.cpp(107): warning C4101: 'bytesSent': variable local sin referencia
-  GameServer.vcxproj -> D:\Repositorios\Cpp_SFML_Redes\Platilla_3Projects\x64\Debug\GameServer.exe
-  GameServer.vcxproj -> D:\Repositorios\Cpp_SFML_Redes\Platilla_3Projects\x64\Debug\GameServer.pdb (Partial PDB)
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\platilla_3projects\gameserver\source.cpp(301): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\platilla_3projects\gameserver\source.cpp(475): warning C4101: 'name': variable local sin referencia
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\platilla_3projects\gameserver\source.cpp(476): warning C4101: 'money': variable local sin referencia
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\platilla_3projects\gameserver\source.cpp(497): warning C4101: 'received': variable local sin referencia
+  GameServer.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\Platilla_3Projects\x64\Debug\GameServer.exe

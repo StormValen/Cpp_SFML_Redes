@@ -1,5 +1,1 @@
-﻿  Source.cpp
-d:\repositorios\cpp_sfml_redes\platilla_3projects\gameclient\source.cpp(162): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
-d:\repositorios\cpp_sfml_redes\platilla_3projects\gameclient\source.cpp(92): warning C4101: 'connectionType': variable local sin referencia
-  GameClient.vcxproj -> D:\Repositorios\Cpp_SFML_Redes\Platilla_3Projects\x64\Debug\GameClient.exe
-  GameClient.vcxproj -> D:\Repositorios\Cpp_SFML_Redes\Platilla_3Projects\x64\Debug\GameClient.pdb (Partial PDB)
+﻿  GameClient.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\Platilla_3Projects\x64\Debug\GameClient.exe
