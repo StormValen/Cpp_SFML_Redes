@@ -46,20 +46,28 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 				packRecv >> IDGame;
 				std::cout << IDGame << std::endl;
 				createGame = true;
+				string = "";
 			}
 			if (string == "CMD_LOGED") {
 				packRecv >> clientName;
 				logged = true;
+				string = "";
+			}
+			if (string == "CMD_WB") {
+				packRecv >> clientName;
+				logged = true;
+				string = "";
 			}
 			else {
 				shared_msg(aMensajes, string);
 			}
+			packRecv.clear();
 		}
 		else if (status == sf::Socket::Disconnected) {
 			aMensajes->push_back("Se ha producido una desconexion");
 			tBucle = false;
 		}
-		packRecv.clear();
+
 	}
 }
 
