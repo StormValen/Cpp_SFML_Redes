@@ -12,9 +12,10 @@ sf::TcpSocket socket;
 sf::TcpListener listener;
 sf::Socket::Status status;
 std::mutex mu;
-bool done, createGame;
+bool done, createGame, logged;
 int IDGame;
 sf::Packet packRecv;
+std::string clientName = "";
 // ----- MUTEX ----- //
 void shared_msg(std::vector<std::string> *aMensajes, sf::String string) {
 	mu.lock();
@@ -30,8 +31,6 @@ void shared_msg(std::vector<std::string> *aMensajes, sf::String string) {
 void thread_recived(std::vector<std::string> *aMensajes) {
 	bool tBucle = true;
 	while (tBucle) {
-		std::size_t received;
-		char buffer_Thread[2000];
 		status = socket.receive(packRecv);
 		int timer = 0;
 		//socket.receive(&timer, sizeof(timer), received);
@@ -47,6 +46,10 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 				packRecv >> IDGame;
 				std::cout << IDGame << std::endl;
 				createGame = true;
+			}
+			if (string == "CMD_LOGED") {
+				packRecv >> clientName;
+				logged = true;
 			}
 			else {
 				shared_msg(aMensajes, string);
@@ -91,13 +94,13 @@ int main()
 
 	sf::IpAddress ip = sf::IpAddress::getLocalAddress();
 	sf::Packet packLogin, packSend;
-	std::string clientName = "";
+
 	int money;
-	std::cout << "Input your name: ";
-	std::cin >> clientName;
-	std::cout << "Input your money: ";
-	std::cin >> money;
-	packLogin << clientName << money;
+	//std::cout << "Input your name: ";
+	//std::cin >> clientName;
+	/*std::cout << "Input your money: ";
+	std::cin >> money;*/
+	//packLogin << clientName;
 
 	//  ----- SELECTION MODE ----- //
 	char connectionType, mode;
@@ -115,11 +118,11 @@ int main()
 	mode = 'r';
 
 	// ----- CONFIRM CONNECTION ----- //
-	socket.send(packLogin);
+	/*socket.send(packLogin);
 	packLogin.clear();
 	socket.receive(packLogin);
 	packLogin >> hello;
-	std::cout << hello << std::endl;
+	std::cout << hello << std::endl;*/
 
 	// ----- MODOS DE EJECUCION ----- // 
 	//Blocking +  Thread
@@ -148,7 +151,13 @@ int main()
 						packSend << Stext << IDGame;
 					}
 					status = socket.send(packSend);
-					Stext = "[ " + clientName + " ]> " + mensaje;
+					if (logged) {
+						Stext = "[ " + clientName + " ]> " + mensaje;
+					}
+					if (!logged) {
+						Stext = mensaje;
+					}
+
 					if (status == sf::Socket::Done) {
 						if (Stext == "exit") {
 							aMensajes.push_back("La sesion ha finalizado");
