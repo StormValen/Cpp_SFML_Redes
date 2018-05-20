@@ -85,9 +85,18 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player) {
 					//Server recibe mensajes
 					std::string mesage;
 					status = player->sock->receive(packRecv);
-					packRecv >> mesage >> IDAux;
-					std::cout << mesage;
+
 					if (status == sf::Socket::Done) {
+						packRecv >> IDAux >> mesage;
+						//enviar la info a los otros jugadores
+						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+							Player& player = **it;
+							if (player.IDGame == IDAux) {//comprobar que no sea uno mismo!
+								packSend.clear();
+								packSend << mesage;
+								player.sock->send(packSend);
+							}
+						}
 						//mesage = buffer;
 						std::cout << "Client with port: [" << player->sock->getRemotePort() << "] SEND: " << mesage << std::endl;
 						if (mesage == "ready") {
@@ -114,8 +123,10 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player) {
 							packSend.clear();
 							std::string connectedMesage = "GAME INFO: -- " + player->nickname + " left the game -- Wait until a new player connects";
 							packSend << connectedMesage;
-							bPlayer.sock->send(packSend);
-							bPlayer.isReady = false;
+							if (bPlayer.IDGame == IDG && player->IDGame == IDG) { //informo a los de la misma partida
+								bPlayer.sock->send(packSend);
+								bPlayer.isReady = false;
+							}
 						}
 						gameIsReady = false;
 						aPlayers = auxPlayers;
@@ -140,7 +151,9 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player) {
 							Player& player = **it;
 							std::string mesage = "GAME INFO: -- Chatting time has finished -- Press Enter to continue ...";
 							packSend << mesage;
-							player.sock->send(packSend);
+							if (player.IDGame == IDG) { //comrpueba q sea la misma partidaa
+								player.sock->send(packSend);
+							}
 						}
 					}
 				}

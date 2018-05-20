@@ -156,7 +156,7 @@ int main()
 						packSend << Stext;
 					}
 					if (createGame) {
-						packSend << Stext << IDGame;
+						packSend << IDGame << Stext;
 					}
 					status = socket.send(packSend);
 					if (logged) {
