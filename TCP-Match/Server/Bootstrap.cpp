@@ -4,7 +4,7 @@
 #include <list>
 #include <thread>
 #include <mutex>
-#include <cstring>
+#include <string>
 
 #define MAX_PLAYERS 2
 
@@ -457,7 +457,7 @@ public:
 		IDG = _ID;
 		maxMoney = _maxMoney;
 		maxPlayers = _maxPlayers;
-		std::thread tr(&GameLoop, player->IDGame, maxPlayers, maxMoney, player, name);
+		std::thread tr(&GameLoop, player->IDGame, maxPlayers, maxMoney, player, name); //inicialiar un thread como puntero
 		tr.join();
 
 	}
@@ -543,6 +543,7 @@ void CrearUnir(Player* newPlayer, std::string name) {
 		packRecv >> mesage;
 		if (CheckGame(mesage, newPlayer)) {
 			socketSelectorGame.add(*newPlayer->sock);
+			//elimino otro
 			std::string welcome = "Te has conectado a la partida: " + mesage;
 			newPlayer->IDGame = gameManager.find(mesage)->second->IDG;
 			packSend.clear();
