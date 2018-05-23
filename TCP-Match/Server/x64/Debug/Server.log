@@ -1,50 +1,6 @@
 ﻿  Bootstrap.cpp
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(160): error C2059: syntax error: 'else'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(160): error C2143: syntax error: missing ';' before '{'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(160): error C2447: '{': missing function header (old-style formal list?)
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(201): error C2059: syntax error: 'else'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(201): error C2143: syntax error: missing ';' before '{'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(201): error C2447: '{': missing function header (old-style formal list?)
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(269): error C2059: syntax error: 'else'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(269): error C2143: syntax error: missing ';' before '{'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(269): error C2447: '{': missing function header (old-style formal list?)
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(448): error C2059: syntax error: '}'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(448): error C2143: syntax error: missing ';' before '}'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(450): error C2143: syntax error: missing ';' before '{'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(450): error C2447: '{': missing function header (old-style formal list?)
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(474): error C2065: 'GamesManager': undeclared identifier
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(474): error C2059: syntax error: '>'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(474): error C2976: 'std::map': too few template arguments
-  c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.11.25503\include\map(73): note: see declaration of 'std::map'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(474): error C2133: 'gameManager': unknown size
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(474): error C2512: 'std::map': no appropriate default constructor available
-  c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.11.25503\include\map(73): note: see declaration of 'std::map'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(487): error C2663: 'std::_Tree<_Traits>::find': 4 overloads have no legal conversion for 'this' pointer
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(487): error C2227: left of '->second' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(487): error C2227: left of '->sizeMax' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(488): error C2663: 'std::_Tree<_Traits>::find': 4 overloads have no legal conversion for 'this' pointer
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(488): error C2227: left of '->first' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(488): error C2227: left of '->second' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(488): error C2227: left of '->sizeMax' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(488): error C2227: left of '->maxPlayers' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(488): error C2227: left of '->maxMoney' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(510): error C2065: 'GamesManager': undeclared identifier
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(510): error C2065: 'gameManagerAux': undeclared identifier
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(510): error C2061: syntax error: identifier 'GamesManager'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(532): error C2065: 'gameManagerAux': undeclared identifier
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(532): error C2227: left of '->CreateGame' must point to class/struct/union/generic type
-  d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(532): note: type is 'unknown-type'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(534): error C2065: 'GamesManager': undeclared identifier
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(534): error C2059: syntax error: '>'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(534): error C2976: 'std::pair': too few template arguments
-  c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.11.25503\include\utility(93): note: see declaration of 'std::pair'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(534): error C2955: 'std::pair': use of class template requires template argument list
-  c:\program files (x86)\microsoft visual studio\2017\community\vc\tools\msvc\14.11.25503\include\utility(93): note: see declaration of 'std::pair'
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(534): error C2065: 'gameManagerAux': undeclared identifier
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(534): error C2663: 'std::_Tree<_Traits>::insert': 3 overloads have no legal conversion for 'this' pointer
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(547): error C2663: 'std::_Tree<_Traits>::find': 4 overloads have no legal conversion for 'this' pointer
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(547): error C2227: left of '->second' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(547): error C2227: left of '->IDG' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(553): error C2663: 'std::_Tree<_Traits>::find': 4 overloads have no legal conversion for 'this' pointer
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(553): error C2227: left of '->second' must point to class/struct/union/generic type
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(553): error C2227: left of '->IDG' must point to class/struct/union/generic type
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(322): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(588): warning C4101: 'received': variable local sin referencia
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(673): warning C4101: 'name': variable local sin referencia
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(674): warning C4101: 'money': variable local sin referencia
+  Server.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\TCP-Match\x64\Debug\Server.exe
