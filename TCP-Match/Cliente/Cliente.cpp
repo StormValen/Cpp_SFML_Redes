@@ -37,10 +37,12 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 		//std::cout << timer << std::endl;
 		std::string string;
 		packRecv >> string;
+
+		std::cout << string << std::endl;
 		if (status == sf::Socket::Done) {
 			if (string == ">exit") {
 				aMensajes->push_back("La sesion ha finalizado");
-				tBucle = false;
+				//tBucle = false;
 			}
 			if (string == "CMD_WELCOME") {
 				packRecv >> IDGame;
@@ -65,7 +67,7 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 		}
 		else if (status == sf::Socket::Disconnected) {
 			aMensajes->push_back("Se ha producido una desconexion");
-			tBucle = false;
+			//tBucle = false;
 		}
 
 	}
@@ -73,6 +75,7 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 
 int main()
 {
+	
 	// ----- WINDOW UI ----- //
 	std::vector<std::string> aMensajes;
 	sf::Vector2i screenDimensions(800, 600);
@@ -135,6 +138,7 @@ int main()
 	// ----- MODOS DE EJECUCION ----- // 
 	//Blocking +  Thread
 	std::thread tr(&thread_recived, &aMensajes);
+
 	while (window.isOpen())
 	{
 		sf::Event evento;
@@ -206,6 +210,7 @@ int main()
 		window.clear();
 	}
 	socket.disconnect();
+	
 	tr.join();
 	return 0;
 }

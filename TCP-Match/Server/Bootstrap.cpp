@@ -500,7 +500,47 @@ bool CheckGame(std::string name, Player* player) { //comprueba que se peudan uni
 	}
 }
 
+
+void ListAvailableGames(Player* actualPlayer) {
+
+	sf::TcpSocket* newClient = new sf::TcpSocket;
+
+	Player* newPlayer_1 = new Player(newClient, "");
+	Player* newPlayer_2 = new Player(newClient, "");
+	Player* newPlayer_3 = new Player(newClient, "");;
+
+
+
+	GamesManager *gameManagerAux = new GamesManager();
+	gameManagerAux->CreateGame(newPlayer_1, "Test_Game_Non_Functional_1", 2, 100, IDGame);
+	IDGame++;
+	gameManager.insert(std::pair<std::string, GamesManager*>("Test_Game_Non_Functional_1", gameManagerAux));
+
+	gameManagerAux->CreateGame(newPlayer_2, "Test_Game_Non_Functional_2", 2, 100, IDGame);
+	IDGame++;
+	gameManager.insert(std::pair<std::string, GamesManager*>("Test_Game_Non_Functional_2", gameManagerAux));
+
+	gameManagerAux->CreateGame(newPlayer_3, "Test_Game_Non_Functional_3", 2, 100, IDGame);
+	IDGame++;
+	gameManager.insert(std::pair<std::string, GamesManager*>("Test_Game_Non_Functional_3", gameManagerAux));
+
+	packCreate << "LISTA DE PARTIDAS DISPONIBLES: \n";
+	actualPlayer->sock->send(packCreate);
+	packCreate.clear();
+
+
+	for (std::map<std::string, GamesManager*>::iterator it = gameManager.begin(); it != gameManager.end(); it++) {
+		std::cout << "Nombre partida: " << it->first << std::endl;
+
+		std::string text = "NOMBRE: " + it->first;
+		packCreate << text;
+	}
+}
+
 void CrearUnir(Player* newPlayer, std::string name) {
+
+	
+
 	std::string modo;
 	/*packSend.clear();
 	packSend << newPlayer->money;
@@ -573,7 +613,12 @@ void CrearUnir(Player* newPlayer, std::string name) {
 			newPlayer->sock->send(packSend);
 		}
 	}
+	else if (stoi(modo) == 3) {
+		ListAvailableGames(newPlayer);
+	}
 }
+
+
 void NewConnection() {
 	std::string modo;
 	if (mySocketSelector.wait()) {
@@ -588,7 +633,7 @@ void NewConnection() {
 
 				mySocketSelector.add(*newPlayer->sock);
 				packLogin.clear();
-				std::string login = "Si tienes una cuenta aprieta a, si tienes que registrarte aprieta b ";
+				std::string login = "Si tienes una cuenta aprieta 1, si tienes que registrarte aprieta 2 ";
 				packCreate << login;
 				newPlayer->sock->send(packCreate);
 				packCreate.clear();

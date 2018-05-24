@@ -1,7 +1,7 @@
 ﻿  Bootstrap.cpp
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(316): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(584): warning C4101: 'received': unreferenced local variable
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(671): warning C4101: 'name': unreferenced local variable
-d:\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(672): warning C4101: 'money': unreferenced local variable
-  Server.vcxproj -> D:\Cpp_SFML_Redes\TCP-Match\x64\Debug\Server.exe
-  Server.vcxproj -> D:\Cpp_SFML_Redes\TCP-Match\x64\Debug\Server.pdb (Partial PDB)
+d:\repositorios\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(316): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+d:\repositorios\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(629): warning C4101: 'received': variable local sin referencia
+d:\repositorios\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(716): warning C4101: 'name': variable local sin referencia
+d:\repositorios\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(717): warning C4101: 'money': variable local sin referencia
+  Server.vcxproj -> D:\Repositorios\Cpp_SFML_Redes\TCP-Match\x64\Debug\Server.exe
+  Server.vcxproj -> D:\Repositorios\Cpp_SFML_Redes\TCP-Match\x64\Debug\Server.pdb (Partial PDB)
