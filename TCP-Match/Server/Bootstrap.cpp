@@ -83,15 +83,17 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 	while (true) {
 		if (currentState == "chat_mode" && !gameIsReady) {
 			packRecv.clear();
-			if (socketSelectorGame.wait()) {
-				//std::cout << "hola";
+			if (mySocketSelector.wait()) {
+				std::cout << "estoy esperando" << std::endl;
 				for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 					Player& iplayer = **it;
-					if (socketSelectorGame.isReady(*iplayer.sock)) {
+					if (mySocketSelector.isReady(*iplayer.sock) && iplayer.IDGame == IDG) {
 						//std::cout << "Crep un THREAD" << std::endl;
 						//Server recibe mensajes
 						std::string mesage;
+						std::cout << "Antes recv GAME" << std::endl;
 						status = iplayer.sock->receive(packRecv);
+						std::cout << "Despues recv GAME" << std::endl;
 
 						if (status == sf::Socket::Done) {
 							packRecv >> IDAux >> mesage;
@@ -101,7 +103,9 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 								if (player.IDGame == IDAux && player.nickname != iplayer.nickname) {//comprobar que no sea uno mismo!
 									packSend.clear();
 									packSend << mesage;
+
 									player.sock->send(packSend);
+
 								}
 							}
 							//mesage = buffer;
@@ -113,7 +117,7 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 
 						//Cliente desconectado
 						else if (status == sf::Socket::Disconnected) {
-							socketSelectorGame.remove(*iplayer.sock);
+							mySocketSelector.remove(*iplayer.sock);
 
 							//eliminar el socket de la lista
 							std::cout << "Client with port: [" << iplayer.sock->getRemotePort() << "] DISCONECTED " << std::endl;
@@ -505,7 +509,9 @@ void CrearUnir(Player* newPlayer, std::string name) {
 	packCreate << confirmText;
 	newPlayer->sock->send(packCreate);
 	packCreate.clear();
+	std::cout << "antes rcv unirse" << std::endl;
 	newPlayer->sock->receive(packCreate);
+	std::cout << "despues rcv unirse" << std::endl;
 	packCreate >> modo;
 	packCreate.clear();
 	if (stoi(modo) == 1) { // crear una partida
@@ -530,8 +536,8 @@ void CrearUnir(Player* newPlayer, std::string name) {
 		packSend << comand << IDGame;
 		newPlayer->sock->send(packSend);
 		newPlayer->IDGame = IDGame;
-		mySocketSelector.remove(*newPlayer->sock);
-		socketSelectorGame.add(*newPlayer->sock);
+		//mySocketSelector.remove(*newPlayer->sock);
+		//socketSelectorGame.add(*newPlayer->sock);
 		gameManagerAux->CreateGame(newPlayer, name, stoi(maxPlayers), stoi(maxMoney), IDGame);
 		IDGame++;
 		gameManager.insert(std::pair<std::string, GamesManager*>(name, gameManagerAux));
@@ -545,8 +551,8 @@ void CrearUnir(Player* newPlayer, std::string name) {
 		newPlayer->sock->receive(packRecv);
 		packRecv >> mesage;
 		if (CheckGame(mesage, newPlayer)) {
-			mySocketSelector.remove(*newPlayer->sock);
-			socketSelectorGame.add(*newPlayer->sock);
+			//mySocketSelector.remove(*newPlayer->sock);
+			//socketSelectorGame.add(*newPlayer->sock);
 			//elimino otro
 			std::string welcome = "Te has conectado a la partida: " + mesage;
 			newPlayer->IDGame = gameManager.find(mesage)->second->IDG;
@@ -570,8 +576,6 @@ void CrearUnir(Player* newPlayer, std::string name) {
 }
 void NewConnection() {
 	std::string modo;
-	//while(true)
-		//std::cout << "thread1" << std::endl;
 	if (mySocketSelector.wait()) {
 		if (mySocketSelector.isReady(listener)) { //gamerady
 			sf::TcpSocket* newClient = new sf::TcpSocket;
@@ -584,11 +588,13 @@ void NewConnection() {
 
 				mySocketSelector.add(*newPlayer->sock);
 				packLogin.clear();
-				std::string login = "Si tienes una cuenta aprieta 1, si tienes que registrarte aprieta 2 ";
+				std::string login = "Si tienes una cuenta aprieta a, si tienes que registrarte aprieta b ";
 				packCreate << login;
 				newPlayer->sock->send(packCreate);
 				packCreate.clear();
+				std::cout << "antes rcv hello" << std::endl;
 				newPlayer->sock->receive(packCreate);
+				std::cout << "despues rcv hello" << std::endl;
 				packCreate >> modo;
 				packCreate.clear();
 				if (stoi(modo) == 1) {
