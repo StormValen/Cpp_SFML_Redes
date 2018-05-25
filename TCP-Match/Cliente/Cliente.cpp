@@ -38,11 +38,11 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 		std::string string;
 		packRecv >> string;
 
-		std::cout << string << std::endl;
+		//std::cout << string << std::endl;
 		if (status == sf::Socket::Done) {
 			if (string == ">exit") {
 				aMensajes->push_back("La sesion ha finalizado");
-				//tBucle = false;
+				tBucle = false;
 			}
 			if (string == "CMD_WELCOME") {
 				packRecv >> IDGame;
@@ -66,8 +66,8 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 			packRecv.clear();
 		}
 		else if (status == sf::Socket::Disconnected) {
-			aMensajes->push_back("Se ha producido una desconexion");
-			//tBucle = false;
+			aMensajes->push_back("El servidor se ha desconectado");
+			tBucle = false;
 		}
 
 	}

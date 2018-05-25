@@ -5,10 +5,71 @@
 #include <thread>
 #include <mutex>
 #include <string>
+/*#include <cppconn\driver.h>
+#include <cppconn\resultset.h>
+#include <cppconn\statement.h>
+#include <cppconn\exception.h>
 
 #define MAX_PLAYERS 2
+#define HOST "tcp://192.168.1.4"
+#define user "root"
+#define PASWORD 123456
+#define schema "Partidas"
 
-//StateModes --> chat_mode - countdown_mode - bet_money_mode - bet_number_mode - simulate_game_mode - bet_processor_mode
+class DBManager
+{
+private:
+	sql::Driver* driver;
+	sql::Connection* con;
+	sql::Statement* stmt;
+public:
+	int IDSesion, IDAc;
+	DBManager() {
+		driver = get_driver_instance();
+		con = driver->connect("tcp://localhost:3306", "root", "");
+		stmt = con->createStatement();
+	}
+	bool Registrar(std::string name, std::string pasword, int money) {
+		sql::ResultSet rs = stmt->executeQuery("select count() from Players where PlayerName='name' and Pasword='pasword' and Money=money"); //ns si el int va con comillas
+		rs->next();//retorna un bool
+				   //delete(rs);
+		int num = rs->getInt(1);// poner el numero de la columna que queramos saber
+		if (num == 0) {//se puede hacer el insert
+			stmt->execute("INSERT INTO Players(PlayerName, Pasword, Money) VALUES('name', 'pasword', money)");//creo q tmb habra q meter el id
+			return true;
+		}
+		else {
+			return false;
+		}
+
+	}
+	bool Login(std::string name, std::string pasword) {
+		sql::ResultSet *rs = stmt->executeQuery("select IDAc from Players where PlayerName='name' and Pasword='pasword'");
+		if (rs->next()) {
+			int adAc = rs->getInt(1); //numero columna
+			stmt->execute("INSERT INTO Partidas(IDSesion) VALUES(IDAc)");
+			delete rs;
+			return true;
+		}
+		else {
+			delete rs;
+			return false;
+		}
+	}
+	void AddMatch(int idSesion) {
+		stmt->execute("UPDATE Partidas SET NumPartidas = (NumPartidas + 1) WHERE IDSesion = 'idSesion'"); //numpartidas ns si es asi
+	}
+	void Exit(int idSesion) {
+
+	}
+	~DBManager() {
+		delete &driver;
+		delete &stmt;
+		delete &con;
+	}
+
+
+};*/
 
 std::list<sf::TcpSocket*> myClients; //Lista con todos los clientes conectados.
 std::string currentState = "chat_mode";
@@ -33,8 +94,8 @@ class Player {
 public:
 	sf::TcpSocket* sock;
 	std::string nickname, correo, pasword;
-	int money, bet, betMoney;
-	bool isReady;
+	int money, bet, betMoney, IDAc;
+	bool isReady, game;
 	int IDGame;
 	Player() {
 
@@ -83,10 +144,12 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 	while (true) {
 		if (currentState == "chat_mode" && !gameIsReady) {
 			packRecv.clear();
-			if (mySocketSelector.wait()) {
-				std::cout << "estoy esperando" << std::endl;
-				for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-					Player& iplayer = **it;
+			for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+				Player& iplayer = **it;
+				if (mySocketSelector.wait() && iplayer.game) {
+
+					std::cout << "estoy esperando" << std::endl;
+
 					if (mySocketSelector.isReady(*iplayer.sock) && iplayer.IDGame == IDG) {
 						//std::cout << "Crep un THREAD" << std::endl;
 						//Server recibe mensajes
@@ -105,7 +168,6 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 									packSend << mesage;
 
 									player.sock->send(packSend);
-
 								}
 							}
 							//mesage = buffer;
@@ -128,19 +190,20 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 							for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 								Player& bPlayer = **it;
 
-								if (bPlayer.sock != iplayer.sock) {
+								/*if (bPlayer.sock != iplayer.sock) {
 									auxPlayers.push_back(&bPlayer);
-								}
+								}*/
 								packSend.clear();
-								std::string connectedMesage = "GAME INFO: -- " + player->nickname + " left the game -- Wait until a new player connects";
+								std::string connectedMesage = "GAME INFO: -- " + iplayer.nickname + " left the game -- Wait until a new player connects";
 								packSend << connectedMesage;
-								if (bPlayer.IDGame == IDG && iplayer.IDGame == IDG) { //informo a los de la misma partida
+								if (bPlayer.IDGame == IDG && bPlayer.nickname != iplayer.nickname) { //informo a los de la misma partida
 									bPlayer.sock->send(packSend);
 									bPlayer.isReady = false;
 								}
 							}
+							aPlayers.remove(&iplayer);
 							gameIsReady = false;
-							aPlayers = auxPlayers;
+							//aPlayers = auxPlayers;
 							//do_join(threads[0]);
 						}
 
@@ -159,56 +222,56 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 						}
 					}
 					//}
-				//}
 				}
 			}
-			else if (currentState == "countdown_mode") {
+		}
+		else if (currentState == "countdown_mode") {
 
-				//SAFE
-				packRecv.clear();
-				for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-					Player& iPlayer2 = **it;
-					if (socketSelectorGame.isReady(*iPlayer2.sock) && iPlayer2.isReady) {
+			//SAFE
+			packRecv.clear();
+			for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+				Player& iPlayer2 = **it;
+				if (socketSelectorGame.isReady(*iPlayer2.sock) && iPlayer2.isReady) {
 
-						std::string mesage;
-						//char buffer[2000];
-						//std::size_t received;
-						status = iPlayer2.sock->receive(packRecv);
-						if (status == sf::Socket::Done) {
-							//desempaquetar ID
-							std::cout << "Client with port: [" << iPlayer2.sock->getRemotePort() << "] OK " << std::endl;
-						}
+					std::string mesage;
+					//char buffer[2000];
+					//std::size_t received;
+					status = iPlayer2.sock->receive(packRecv);
+					if (status == sf::Socket::Done) {
+						//desempaquetar ID
+						std::cout << "Client with port: [" << iPlayer2.sock->getRemotePort() << "] OK " << std::endl;
+					}
 
-						if (ArePlayersReady(IDG)) {
-							currentState = "countdown_mode";
-							for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-								Player& player = **it;
-							}
+					if (ArePlayersReady(IDG)) {
+						currentState = "countdown_mode";
+						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+							Player& player = **it;
 						}
 					}
 				}
-				//ENDSAFE
-
-				Countdown();
-				currentState = "bet_money_mode";
-				packSend.clear();
-				for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-					Player& player = **it;
-					std::string mesage = "GAME INFO: -- Enter your bet money";
-					packSend << mesage;
-					if (player.IDGame == IDG) { //envio a los de la misma partida
-						player.sock->send(packSend);
-						player.isReady = false;
-					}
-				}
-
 			}
-			else if (currentState == "bet_money_mode") {
-				packRecv.clear();
-				for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-					Player& iPlayer = **it;
+			//ENDSAFE
 
-				if (socketSelectorGame.isReady(*iPlayer.sock) && ! iPlayer.isReady) {
+			Countdown();
+			currentState = "bet_money_mode";
+			packSend.clear();
+			for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+				Player& player = **it;
+				std::string mesage = "GAME INFO: -- Enter your bet money";
+				packSend << mesage;
+				if (player.IDGame == IDG) { //envio a los de la misma partida
+					player.sock->send(packSend);
+					player.isReady = false;
+				}
+			}
+
+		}
+		else if (currentState == "bet_money_mode") {
+			packRecv.clear();
+			for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+				Player& iPlayer = **it;
+
+				if (socketSelectorGame.isReady(*iPlayer.sock) && !iPlayer.isReady) {
 
 					//Server recibe apuestas
 					std::string mesage;
@@ -269,187 +332,185 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 						}
 					}
 				}
-				}
 			}
-			else if (currentState == "bet_number_mode") {
-				packRecv.clear();
-				for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-					Player& iPlayer = **it;
-					if (socketSelectorGame.isReady(*iPlayer.sock) && !iPlayer.isReady) {
+		}
+		else if (currentState == "bet_number_mode") {
+			packRecv.clear();
+			for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+				Player& iPlayer = **it;
+				if (socketSelectorGame.isReady(*iPlayer.sock) && !iPlayer.isReady) {
 
-						//Server recibe apuestas
-						std::string mesage;
-						status = iPlayer.sock->receive(packRecv);
-						packRecv >> IDAux >> mesage;
-						if (status == sf::Socket::Done) {
-							//mesage = buffer;
-							int temp = stoi(mesage);//atoi
+					//Server recibe apuestas
+					std::string mesage;
+					status = iPlayer.sock->receive(packRecv);
+					packRecv >> IDAux >> mesage;
+					if (status == sf::Socket::Done) {
+						//mesage = buffer;
+						int temp = stoi(mesage);//atoi
 
-							if (temp >= 0 && temp <= 48) {
-								iPlayer.bet = temp;
-								std::cout << "Client with port: [" << iPlayer.sock->getRemotePort() << "] BET: " << iPlayer.bet << std::endl;
-								iPlayer.isReady = true;
-							}
-							else {
-								packSend.clear();
-								std::string mesage = "GAME INFO: -- This number doesn't exist, please enter a valid number";
-								packSend << mesage;
-								if (iPlayer.IDGame == IDG) {
-									iPlayer.sock->send(packSend);
-								}
-							}
+						if (temp >= 0 && temp <= 48) {
+							iPlayer.bet = temp;
+							std::cout << "Client with port: [" << iPlayer.sock->getRemotePort() << "] BET: " << iPlayer.bet << std::endl;
+							iPlayer.isReady = true;
 						}
-					}
-					if (ArePlayersReady(IDG)) {
-						currentState = "chat_mode";
-						packSend.clear();
-						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-							Player& player = **it;
-							std::string mesage = "GAME INFO: -- You bet [" + std::to_string(player.betMoney) + "]$ on number [" + std::to_string(player.bet) + "]  -- You have a total credit of [" + std::to_string(player.money) + "]$";
-							//player.sock->send(mesage.c_str(), mesage.length() + 1);
-							//mesage = "GAME INFO: -- You have a total credit of [" + std::to_string(player.money) + "]$";
-							//packSend << mesage;
-							if (player.IDGame == IDG) {//hago todo el proceso si es de l partida
-								player.sock->send(packSend);
-								packSend.clear();
-								player.isReady = false;
-								srand(time(NULL));
-								int randomNumber = rand() % 37;
-								std::cout << randomNumber << std::endl;
-
-
-								mesage = "GAME INFO: -- Winner number: " + std::to_string(randomNumber) + " !!!!!";
-								packSend << mesage;
-								player.sock->send(packSend);
-								packSend.clear();
-
-								int rojos[] = { 1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36 }; //18 -->37
-								int negros[] = { 2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35 }; //18 -->38
-								int par[] = { 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34 }; //19 -->39
-								int impar[] = { 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33 }; //18 -->40
-								int filaA[] = { 3,6,9,12,15,18,21,24,27,30,33,36 }; //12 -->41
-								int filaB[] = { 2,5,8,11,14,17,20,23,26,29,32,35 }; //12 -->42
-								int filaC[] = { 1,4,7,10,13,16,19,22,25,28,31,34 }; //12 -->43
-								int docenaA[] = { 1,2,3,4,5,6,7,8,9,10,11,12 }; //12 -->44
-								int docenaB[] = { 13,14,15,16,17,18,19,20,21,22,23,24 }; //12 -->45
-								int docenaC[] = { 25,26,27,28,29,30,31,32,33,34,35,36 }; //12 -->46
-								int mA[] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18 }; //18 -->47
-								int mB[] = { 19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36 }; //18 -->48
-
-
-								int apuestaGanancia = 0;
-								if (player.bet == 37) { //apuesta a rojos
-									for (int i = 0; i < 18; i++) {
-										if (randomNumber == rojos[i]) {
-											apuestaGanancia = player.betMoney * 2;
-										}
-									}
-								}
-
-								if (player.bet == 38) { //apuesta a negros
-									for (int i = 0; i < 18; i++) {
-										if (randomNumber == negros[i]) {
-											apuestaGanancia = player.betMoney * 2;
-										}
-									}
-								}
-
-								if (player.bet == 39) { //apuesta a pares
-									for (int i = 0; i < 19; i++) {
-										if (randomNumber == par[i]) {
-											apuestaGanancia = player.betMoney * 2;
-										}
-									}
-								}
-
-								if (player.bet == 40) { //apuesta a impares
-									for (int i = 0; i < 19; i++) {
-										if (randomNumber == impar[i]) {
-											apuestaGanancia = player.betMoney * 2;
-										}
-									}
-								}
-
-								if (player.bet == 41) { //apuesta a fila 1
-									for (int i = 0; i < 12; i++) {
-										if (randomNumber == filaA[i]) {
-											apuestaGanancia = player.betMoney * 3;
-										}
-									}
-								}
-								if (player.bet == 42) { //apuesta a fila 2
-									for (int i = 0; i < 12; i++) {
-										if (randomNumber == filaB[i]) {
-											apuestaGanancia = player.betMoney * 3;
-										}
-									}
-								}
-								if (player.bet == 43) { //apuesta a fila 3
-									for (int i = 0; i < 12; i++) {
-										if (randomNumber == filaC[i]) {
-											apuestaGanancia = player.betMoney * 3;
-										}
-									}
-								}
-
-								if (player.bet == 44) { //apuesta a docena 1
-									for (int i = 0; i < 12; i++) {
-										if (randomNumber == docenaA[i]) {
-											apuestaGanancia = player.betMoney * 3;
-										}
-									}
-								}
-
-								if (player.bet == 45) { //apuesta a docena 2
-									for (int i = 0; i < 12; i++) {
-										if (randomNumber == docenaB[i]) {
-											apuestaGanancia = player.betMoney * 3;
-										}
-									}
-								}
-								if (player.bet == 46) { //apuesta a docena 3
-									for (int i = 0; i < 12; i++) {
-										if (randomNumber == docenaC[i]) {
-											apuestaGanancia = player.betMoney * 3;
-										}
-									}
-								}
-
-								if (player.bet == 47) { //apuesta a 0-18
-									for (int i = 0; i < 12; i++) {
-										if (randomNumber == mA[i]) {
-											apuestaGanancia = player.betMoney * 2;
-										}
-									}
-								}
-
-								if (player.bet == 48) { //apuesta a 18-0
-									for (int i = 0; i < 12; i++) {
-										if (randomNumber == mB[i]) {
-											apuestaGanancia = player.betMoney * 2;
-										}
-									}
-								}
-								if (player.bet == randomNumber) { //acierta numero exacto
-									apuestaGanancia = player.betMoney * 36;
-								}
-
-								player.money += apuestaGanancia;
-								mesage = "GAME INFO: -- You win [" + std::to_string(apuestaGanancia) + "]$ your current creadit is [" + std::to_string(player.money) + "]$";
-								packSend << mesage;
-								player.sock->send(packSend);
-								packSend.clear();
-								mesage = "GAME INFO: -- Chatting time has started -- Enter 'ready' to start a new game";
-								packSend << mesage;
-								player.sock->send(packSend);
-								packSend.clear();
+						else {
+							packSend.clear();
+							std::string mesage = "GAME INFO: -- This number doesn't exist, please enter a valid number";
+							packSend << mesage;
+							if (iPlayer.IDGame == IDG) {
+								iPlayer.sock->send(packSend);
 							}
 						}
 					}
 				}
+				if (ArePlayersReady(IDG)) {
+					currentState = "chat_mode";
+					packSend.clear();
+					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+						Player& player = **it;
+						std::string mesage = "GAME INFO: -- You bet [" + std::to_string(player.betMoney) + "]$ on number [" + std::to_string(player.bet) + "]  -- You have a total credit of [" + std::to_string(player.money) + "]$";
+						//player.sock->send(mesage.c_str(), mesage.length() + 1);
+						//mesage = "GAME INFO: -- You have a total credit of [" + std::to_string(player.money) + "]$";
+						//packSend << mesage;
+						if (player.IDGame == IDG) {//hago todo el proceso si es de l partida
+							player.sock->send(packSend);
+							packSend.clear();
+							player.isReady = false;
+							srand(time(NULL));
+							int randomNumber = rand() % 37;
+							std::cout << randomNumber << std::endl;
+
+
+							mesage = "GAME INFO: -- Winner number: " + std::to_string(randomNumber) + " !!!!!";
+							packSend << mesage;
+							player.sock->send(packSend);
+							packSend.clear();
+
+							int rojos[] = { 1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36 }; //18 -->37
+							int negros[] = { 2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35 }; //18 -->38
+							int par[] = { 0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34 }; //19 -->39
+							int impar[] = { 1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33 }; //18 -->40
+							int filaA[] = { 3,6,9,12,15,18,21,24,27,30,33,36 }; //12 -->41
+							int filaB[] = { 2,5,8,11,14,17,20,23,26,29,32,35 }; //12 -->42
+							int filaC[] = { 1,4,7,10,13,16,19,22,25,28,31,34 }; //12 -->43
+							int docenaA[] = { 1,2,3,4,5,6,7,8,9,10,11,12 }; //12 -->44
+							int docenaB[] = { 13,14,15,16,17,18,19,20,21,22,23,24 }; //12 -->45
+							int docenaC[] = { 25,26,27,28,29,30,31,32,33,34,35,36 }; //12 -->46
+							int mA[] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18 }; //18 -->47
+							int mB[] = { 19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36 }; //18 -->48
+
+
+							int apuestaGanancia = 0;
+							if (player.bet == 37) { //apuesta a rojos
+								for (int i = 0; i < 18; i++) {
+									if (randomNumber == rojos[i]) {
+										apuestaGanancia = player.betMoney * 2;
+									}
+								}
+							}
+
+							if (player.bet == 38) { //apuesta a negros
+								for (int i = 0; i < 18; i++) {
+									if (randomNumber == negros[i]) {
+										apuestaGanancia = player.betMoney * 2;
+									}
+								}
+							}
+
+							if (player.bet == 39) { //apuesta a pares
+								for (int i = 0; i < 19; i++) {
+									if (randomNumber == par[i]) {
+										apuestaGanancia = player.betMoney * 2;
+									}
+								}
+							}
+
+							if (player.bet == 40) { //apuesta a impares
+								for (int i = 0; i < 19; i++) {
+									if (randomNumber == impar[i]) {
+										apuestaGanancia = player.betMoney * 2;
+									}
+								}
+							}
+
+							if (player.bet == 41) { //apuesta a fila 1
+								for (int i = 0; i < 12; i++) {
+									if (randomNumber == filaA[i]) {
+										apuestaGanancia = player.betMoney * 3;
+									}
+								}
+							}
+							if (player.bet == 42) { //apuesta a fila 2
+								for (int i = 0; i < 12; i++) {
+									if (randomNumber == filaB[i]) {
+										apuestaGanancia = player.betMoney * 3;
+									}
+								}
+							}
+							if (player.bet == 43) { //apuesta a fila 3
+								for (int i = 0; i < 12; i++) {
+									if (randomNumber == filaC[i]) {
+										apuestaGanancia = player.betMoney * 3;
+									}
+								}
+							}
+
+							if (player.bet == 44) { //apuesta a docena 1
+								for (int i = 0; i < 12; i++) {
+									if (randomNumber == docenaA[i]) {
+										apuestaGanancia = player.betMoney * 3;
+									}
+								}
+							}
+
+							if (player.bet == 45) { //apuesta a docena 2
+								for (int i = 0; i < 12; i++) {
+									if (randomNumber == docenaB[i]) {
+										apuestaGanancia = player.betMoney * 3;
+									}
+								}
+							}
+							if (player.bet == 46) { //apuesta a docena 3
+								for (int i = 0; i < 12; i++) {
+									if (randomNumber == docenaC[i]) {
+										apuestaGanancia = player.betMoney * 3;
+									}
+								}
+							}
+
+							if (player.bet == 47) { //apuesta a 0-18
+								for (int i = 0; i < 12; i++) {
+									if (randomNumber == mA[i]) {
+										apuestaGanancia = player.betMoney * 2;
+									}
+								}
+							}
+
+							if (player.bet == 48) { //apuesta a 18-0
+								for (int i = 0; i < 12; i++) {
+									if (randomNumber == mB[i]) {
+										apuestaGanancia = player.betMoney * 2;
+									}
+								}
+							}
+							if (player.bet == randomNumber) { //acierta numero exacto
+								apuestaGanancia = player.betMoney * 36;
+							}
+
+							player.money += apuestaGanancia;
+							mesage = "GAME INFO: -- You win [" + std::to_string(apuestaGanancia) + "]$ your current creadit is [" + std::to_string(player.money) + "]$";
+							packSend << mesage;
+							player.sock->send(packSend);
+							packSend.clear();
+							mesage = "GAME INFO: -- Chatting time has started -- Enter 'ready' to start a new game";
+							packSend << mesage;
+							player.sock->send(packSend);
+							packSend.clear();
+						}
+					}
+				}
 			}
-			}
-		//}
+		}
 	}
 }
 class GamesManager
@@ -500,10 +561,40 @@ bool CheckGame(std::string name, Player* player) { //comprueba que se peudan uni
 	}
 }
 
-
+void SelectGame(Player* newPlayer) {
+	std::string mesage = " Introduce el nombre de la partida ";
+	packSend.clear();
+	packSend << mesage;
+	newPlayer->sock->send(packSend);
+	if (!newPlayer->game) {
+		newPlayer->sock->receive(packRecv);
+		packRecv >> mesage;
+		if (CheckGame(mesage, newPlayer)) {
+			//elimino otro
+			std::string welcome = "Te has conectado a la partida: " + mesage;
+			newPlayer->IDGame = gameManager.find(mesage)->second->IDG;
+			packSend.clear();
+			packSend << welcome;
+			newPlayer->sock->send(packSend);
+			std::string comand = "CMD_WELCOME";
+			packSend.clear();
+			packSend << comand << gameManager.find(mesage)->second->IDG;
+			newPlayer->sock->send(packSend);
+			packSend.clear();
+			InfoNewPlayer(newPlayer);
+			newPlayer->game = true;
+		}
+		else {
+			std::string a = " Esa partida no existe o no puedes conectarte por los requisitos ";
+			packSend.clear();
+			packSend << a;
+			newPlayer->sock->send(packSend);
+		}
+	}
+}
 void ListAvailableGames(Player* actualPlayer) {
 
-	sf::TcpSocket* newClient = new sf::TcpSocket;
+	/*sf::TcpSocket* newClient = new sf::TcpSocket;
 
 	Player* newPlayer_1 = new Player(newClient, "");
 	Player* newPlayer_2 = new Player(newClient, "");
@@ -522,102 +613,70 @@ void ListAvailableGames(Player* actualPlayer) {
 
 	gameManagerAux->CreateGame(newPlayer_3, "Test_Game_Non_Functional_3", 2, 100, IDGame);
 	IDGame++;
-	gameManager.insert(std::pair<std::string, GamesManager*>("Test_Game_Non_Functional_3", gameManagerAux));
+	gameManager.insert(std::pair<std::string, GamesManager*>("Test_Game_Non_Functional_3", gameManagerAux));*/
 
 	packCreate << "LISTA DE PARTIDAS DISPONIBLES: \n";
 	actualPlayer->sock->send(packCreate);
 	packCreate.clear();
-
 
 	for (std::map<std::string, GamesManager*>::iterator it = gameManager.begin(); it != gameManager.end(); it++) {
 		std::cout << "Nombre partida: " << it->first << std::endl;
 
 		std::string text = "NOMBRE: " + it->first;
 		packCreate << text;
+		actualPlayer->sock->send(packCreate);
+		packCreate.clear();
 	}
+	SelectGame(actualPlayer);
 }
 
 void CrearUnir(Player* newPlayer, std::string name) {
-
-	
-
 	std::string modo;
-	/*packSend.clear();
-	packSend << newPlayer->money;
-	newPlayer->sock->send(packSend);*/
-	std::string confirmText = "Bienvenido [ " + name + " ], Si quieres crear una partida aprieta 1, si quieres unirte a una ya creado apreta 2 ";
+	std::string confirmText = "Bienvenido [ " + name + " ], Si quieres crear una partida aprieta C, si quieres ver las partidas aprieta V ";
 	packCreate << confirmText;
 	newPlayer->sock->send(packCreate);
 	packCreate.clear();
-	std::cout << "antes rcv unirse" << std::endl;
-	newPlayer->sock->receive(packCreate);
-	std::cout << "despues rcv unirse" << std::endl;
-	packCreate >> modo;
-	packCreate.clear();
-	if (stoi(modo) == 1) { // crear una partida
-		std::string maxPlayers, maxMoney, name;
-		GamesManager *gameManagerAux = new GamesManager();
-		std::string specs = " Introduce el nombre de la partida, el numero max de jugadores y dinero";
-		packCreate.clear();
-		packCreate << specs;
-		newPlayer->sock->send(packCreate);
-		packCreate.clear();
+	if (!newPlayer->game) {
+		std::cout << "antes rcv unirse" << std::endl;
 		newPlayer->sock->receive(packCreate);
-		packCreate >> name;
+		std::cout << "despues rcv unirse" << std::endl;
+		packCreate >> modo;
 		packCreate.clear();
-		newPlayer->sock->receive(packCreate);
-		packCreate >> maxPlayers;
-		packCreate.clear();
-		newPlayer->sock->receive(packCreate);
-		packCreate >> maxMoney;
-		packCreate.clear();
-		std::string comand = "CMD_WELCOME";
-		packSend.clear();
-		packSend << comand << IDGame;
-		newPlayer->sock->send(packSend);
-		newPlayer->IDGame = IDGame;
-		//mySocketSelector.remove(*newPlayer->sock);
-		//socketSelectorGame.add(*newPlayer->sock);
-		gameManagerAux->CreateGame(newPlayer, name, stoi(maxPlayers), stoi(maxMoney), IDGame);
-		IDGame++;
-		gameManager.insert(std::pair<std::string, GamesManager*>(name, gameManagerAux));
-		std::cout << "creo y aumento" << std::endl;
-	}
-	else if (stoi(modo) == 2) {
-		std::string mesage = " Introduce el nombre de la partida ";
-		packSend.clear();
-		packSend << mesage;
-		newPlayer->sock->send(packSend);
-		newPlayer->sock->receive(packRecv);
-		packRecv >> mesage;
-		if (CheckGame(mesage, newPlayer)) {
-			//mySocketSelector.remove(*newPlayer->sock);
-			//socketSelectorGame.add(*newPlayer->sock);
-			//elimino otro
-			std::string welcome = "Te has conectado a la partida: " + mesage;
-			newPlayer->IDGame = gameManager.find(mesage)->second->IDG;
-			packSend.clear();
-			packSend << welcome;
-			newPlayer->sock->send(packSend);
+		if (modo == "C") { // crear una partida
+			std::string maxPlayers, maxMoney, name;
+			GamesManager *gameManagerAux = new GamesManager();
+			std::string specs = " Introduce el nombre de la partida, el numero max de jugadores y dinero";
+			packCreate.clear();
+			packCreate << specs;
+			newPlayer->sock->send(packCreate);
+			packCreate.clear();
+			newPlayer->sock->receive(packCreate);
+			packCreate >> name;
+			packCreate.clear();
+			newPlayer->sock->receive(packCreate);
+			packCreate >> maxPlayers;
+			packCreate.clear();
+			newPlayer->sock->receive(packCreate);
+			packCreate >> maxMoney;
+			packCreate.clear();
 			std::string comand = "CMD_WELCOME";
 			packSend.clear();
-			packSend << comand << gameManager.find(mesage)->second->IDG;
+			packSend << comand << IDGame;
 			newPlayer->sock->send(packSend);
-			packSend.clear();
-			InfoNewPlayer(newPlayer);
+			newPlayer->IDGame = IDGame;
+			//mySocketSelector.remove(*newPlayer->sock);
+			//socketSelectorGame.add(*newPlayer->sock);
+			gameManagerAux->CreateGame(newPlayer, name, stoi(maxPlayers), stoi(maxMoney), IDGame);
+			newPlayer->game = true;
+			IDGame++;
+			gameManager.insert(std::pair<std::string, GamesManager*>(name, gameManagerAux));
+			std::cout << "creo y aumento" << std::endl;
 		}
-		else {
-			std::string a = " Esa partida no existe o no puedes conectarte por los requisitos ";
-			packSend.clear();
-			packSend << a;
-			newPlayer->sock->send(packSend);
+		if (modo == "V") {
+			ListAvailableGames(newPlayer);
 		}
-	}
-	else if (stoi(modo) == 3) {
-		ListAvailableGames(newPlayer);
 	}
 }
-
 
 void NewConnection() {
 	std::string modo;
@@ -632,72 +691,74 @@ void NewConnection() {
 				//Antes de añadir el nuevo cliente para no tener que comparalos.
 
 				mySocketSelector.add(*newPlayer->sock);
-				packLogin.clear();
-				std::string login = "Si tienes una cuenta aprieta 1, si tienes que registrarte aprieta 2 ";
-				packCreate << login;
-				newPlayer->sock->send(packCreate);
-				packCreate.clear();
-				std::cout << "antes rcv hello" << std::endl;
-				newPlayer->sock->receive(packCreate);
-				std::cout << "despues rcv hello" << std::endl;
-				packCreate >> modo;
-				packCreate.clear();
-				if (stoi(modo) == 1) {
-					std::string nameAux, paswordAux;
-					login = "Introduce tu usuario y contraseña en orden ";
-					packSend.clear();
-					packSend << login;
-					newPlayer->sock->send(packSend);
-					packRecv.clear();
-					newPlayer->sock->receive(packRecv);
-					packRecv >> nameAux;
-					packRecv.clear();
-					newPlayer->sock->receive(packRecv);
-					packRecv >> paswordAux;
-					for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-						Player& iPlayer = **it;
+				if (!newPlayer->game) {
+					packLogin.clear();
+					std::string login = "Si tienes una cuenta aprieta L, si tienes que registrarte aprieta R ";
+					packCreate << login;
+					newPlayer->sock->send(packCreate);
+					packCreate.clear();
+					std::cout << "antes rcv hello" << std::endl;
+					newPlayer->sock->receive(packCreate);
+					std::cout << "despues rcv hello" << std::endl;
+					packCreate >> modo;
+					packCreate.clear();
+					if (modo == "L") {
+						std::string nameAux, paswordAux;
+						login = "Introduce tu usuario y contraseña en orden ";
+						packSend.clear();
+						packSend << login;
+						newPlayer->sock->send(packSend);
+						packRecv.clear();
+						newPlayer->sock->receive(packRecv);
+						packRecv >> nameAux;
+						packRecv.clear();
+						newPlayer->sock->receive(packRecv);
+						packRecv >> paswordAux;
+						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+							Player& iPlayer = **it;
 
-						if (iPlayer.nickname == nameAux && iPlayer.pasword == paswordAux) {
-							//
-							std::cout << "conexion de " << iPlayer.nickname << "  " << iPlayer.pasword << std::endl;
-							login = "CMD_WB";
-							packSend.clear();
-							packSend << login << iPlayer.nickname;
-							newPlayer->sock->send(packSend);
-							CrearUnir(newPlayer, iPlayer.nickname);
+							if (iPlayer.nickname == nameAux && iPlayer.pasword == paswordAux) {
+								//
+								std::cout << "conexion de " << iPlayer.nickname << "  " << iPlayer.pasword << std::endl;
+								login = "CMD_WB";
+								packSend.clear();
+								packSend << login << iPlayer.nickname;
+								newPlayer->sock->send(packSend);
+								CrearUnir(newPlayer, iPlayer.nickname);
+							}
+							else {
+								login = "El usuario o constraseña no existe, cierra y vuelve a intentarlo";
+								packSend.clear();
+								packSend << login;
+								newPlayer->sock->send(packSend);
+								std::cout << "no existe";
+							}
 						}
-						else {
-							login = "El usuario o constraseña no existe, cierra y vuelve a intentarlo";
-							packSend.clear();
-							packSend << login;
-							newPlayer->sock->send(packSend);
-							std::cout << "no existe";
-						}
-					}		
-				}
-				if (stoi(modo) == 2) {
-					std::string money;
-					std::string login = "Introduce por orden tu usuario, contrareña y dinero ";
-					packSend.clear();
-					packSend << login;
-					newPlayer->sock->send(packSend);
-					packRecv.clear();
-					newPlayer->sock->receive(packRecv);
-					packRecv >> newPlayer->nickname;
-					packRecv.clear();
-					newPlayer->sock->receive(packRecv);
-					packRecv >> newPlayer->pasword;
-					packRecv.clear();
-					newPlayer->sock->receive(packRecv);
-					packRecv >> money;
-					newPlayer->money = stoi(money);
-					aPlayers.push_back(newPlayer);
-					std::cout << "Se ha logeado [" << newPlayer->nickname << "] con pasword [" << newPlayer->pasword << "] y dinero [" << newPlayer->money << "]"  << std::endl;
-					login = "CMD_LOGED";
-					packSend.clear();
-					packSend << login << newPlayer->nickname;
-					newPlayer->sock->send(packSend);
-					CrearUnir(newPlayer, newPlayer->nickname);
+					}
+					if (modo == "R") {
+						std::string money;
+						std::string login = "Introduce por orden tu usuario, contrareña y dinero ";
+						packSend.clear();
+						packSend << login;
+						newPlayer->sock->send(packSend);
+						packRecv.clear();
+						newPlayer->sock->receive(packRecv);
+						packRecv >> newPlayer->nickname;
+						packRecv.clear();
+						newPlayer->sock->receive(packRecv);
+						packRecv >> newPlayer->pasword;
+						packRecv.clear();
+						newPlayer->sock->receive(packRecv);
+						packRecv >> money;
+						newPlayer->money = stoi(money);
+						aPlayers.push_back(newPlayer);
+						std::cout << "Se ha logeado [" << newPlayer->nickname << "] con pasword [" << newPlayer->pasword << "] y dinero [" << newPlayer->money << "]" << std::endl;
+						login = "CMD_LOGED";
+						packSend.clear();
+						packSend << login << newPlayer->nickname;
+						newPlayer->sock->send(packSend);
+						CrearUnir(newPlayer, newPlayer->nickname);
+					}
 				}
 			}
 			else {
@@ -705,8 +766,6 @@ void NewConnection() {
 				delete newClient;
 			}
 		}
-
-
 	}
 }
 
