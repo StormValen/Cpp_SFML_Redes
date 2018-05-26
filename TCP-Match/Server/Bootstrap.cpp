@@ -543,7 +543,12 @@ void InfoNewPlayer(Player* player) {
 		if (player->IDGame == iPlayer.IDGame && iPlayer.nickname != player->nickname) {
 			std::string connectedMesage = " GAME INFO: -- " + player->nickname + " se ha conectado";
 			packLogin << connectedMesage;
-			iPlayer.sock->send(packLogin);
+			status = iPlayer.sock->send(packLogin);
+			if (status == sf::Socket::Done) {
+			}
+			else if (status == sf::Socket::Disconnected) {
+				std::cout << "Ha habido una desconexion al informar New Player" << std::endl;
+			}
 		}
 	}
 }
@@ -558,35 +563,47 @@ bool CheckGame(std::string name, Player* player) { //comprueba que se peudan uni
 }
 
 void SelectGame(Player* newPlayer) {
+	sf::Socket::Status statusRecv;
 	std::string mesage = " Introduce el nombre de la partida ";
 	packSend.clear();
 	packSend << mesage;
-	newPlayer->sock->send(packSend);
-	if (!newPlayer->game) {
-		newPlayer->sock->receive(packRecv);
-		packRecv >> mesage;
-		if (CheckGame(mesage, newPlayer)) {
-			//elimino otro
-			std::string welcome = "Te has conectado a la partida: " + mesage;
-			newPlayer->IDGame = gameManager.find(mesage)->second->IDG;
-			packSend.clear();
-			packSend << welcome;
-			newPlayer->sock->send(packSend);
-			std::string comand = "CMD_WELCOME";
-			packSend.clear();
-			packSend << comand << gameManager.find(mesage)->second->IDG;
-			newPlayer->sock->send(packSend);
-			packSend.clear();
-			InfoNewPlayer(newPlayer);
-			newPlayer->game = true;
-		}
-		else {
-			std::string a = " Esa partida no existe o no puedes conectarte por los requisitos ";
-			packSend.clear();
-			packSend << a;
-			newPlayer->sock->send(packSend);
+	status = newPlayer->sock->send(packSend);
+	if (status == sf::Socket::Done) {
+		if (!newPlayer->game) {
+			statusRecv = newPlayer->sock->receive(packRecv);
+			if (statusRecv == sf::Socket::Done) {
+				packRecv >> mesage;
+				if (CheckGame(mesage, newPlayer)) {
+					//elimino otro
+					std::string welcome = "Te has conectado a la partida: " + mesage;
+					newPlayer->IDGame = gameManager.find(mesage)->second->IDG;
+					packSend.clear();
+					packSend << welcome;
+					newPlayer->sock->send(packSend);
+					std::string comand = "CMD_WELCOME";
+					packSend.clear();
+					packSend << comand << gameManager.find(mesage)->second->IDG;
+					newPlayer->sock->send(packSend);
+					packSend.clear();
+					InfoNewPlayer(newPlayer);
+					newPlayer->game = true;
+				}
+				else {
+					std::string a = " Esa partida no existe o no puedes conectarte por los requisitos ";
+					packSend.clear();
+					packSend << a;
+					newPlayer->sock->send(packSend);
+				}
+			}
+			else if (status == sf::Socket::Disconnected) {
+				std::cout << "Se ha descoenctado alguien al seleccionar la partida" << std::endl; //no envio nada a los jugadores pq aun no esta en nignuna partidaa
+			}
 		}
 	}
+	else if (status == sf::Socket::Disconnected) {
+		std::cout << "Se ha descoenctado alguien al seleccionar la partida" << std::endl; //no envio nada a los jugadores pq aun no esta en nignuna partidaa
+	}
+	
 }
 void ListAvailableGames(Player* actualPlayer) {
 	packCreate << "LISTA DE PARTIDAS DISPONIBLES: \n";
@@ -598,68 +615,94 @@ void ListAvailableGames(Player* actualPlayer) {
 
 		std::string text = "NOMBRE: " + it->first;
 		packCreate << text;
-		actualPlayer->sock->send(packCreate);
-		packCreate.clear();
+		status = actualPlayer->sock->send(packCreate);
+		if (status == sf::Socket::Done) {
+			packCreate.clear();
+
+		}
+		else if (status == sf::Socket::Disconnected) {
+			std::cout << "Ha habido una desconexion al mostrar partidas" << std::endl; //no se envia aun
+		}
 	}
 	SelectGame(actualPlayer);
 }
 
 void CrearUnir(Player* newPlayer, std::string name) {
+	sf::Socket::Status statusRecv;
 	std::string modo;
 	std::string confirmText = "Bienvenido [ " + name + " ], Si quieres crear una partida aprieta C, si quieres ver las partidas aprieta V ";
 	packCreate << confirmText;
-	newPlayer->sock->send(packCreate);
-	packCreate.clear();
-	if (!newPlayer->game) {
-		std::cout << "antes rcv unirse" << std::endl;
-		newPlayer->sock->receive(packCreate);
-		std::cout << "despues rcv unirse" << std::endl;
-		packCreate >> modo;
+	status = newPlayer->sock->send(packCreate);
+	if (status == sf::Socket::Done) {
 		packCreate.clear();
-		if (modo == "C") { // crear una partida
-			std::string maxPlayers, maxMoney, name;
-			GamesManager *gameManagerAux = new GamesManager();
-			std::string specs = " Introduce el nombre de la partida, el numero max de jugadores y dinero";
-			packCreate.clear();
-			packCreate << specs;
-			newPlayer->sock->send(packCreate);
-			packCreate.clear();
-			newPlayer->sock->receive(packCreate);
-			packCreate >> name;
-			packCreate.clear();
-			newPlayer->sock->receive(packCreate);
-			packCreate >> maxPlayers;
-			packCreate.clear();
-			newPlayer->sock->receive(packCreate);
-			packCreate >> maxMoney;
-			packCreate.clear();
-			std::string comand = "CMD_WELCOME";
-			packSend.clear();
-			packSend << comand << IDGame;
-			newPlayer->sock->send(packSend);
-			newPlayer->IDGame = IDGame;
-			//mySocketSelector.remove(*newPlayer->sock);
-			//socketSelectorGame.add(*newPlayer->sock);
-			gameManagerAux->CreateGame(newPlayer, name, stoi(maxPlayers), stoi(maxMoney), IDGame);
-			newPlayer->game = true;
-			IDGame++;
-			gameManager.insert(std::pair<std::string, GamesManager*>(name, gameManagerAux));
-			std::cout << "creo y aumento" << std::endl;
-		}
-		if (modo == "V") {
-			ListAvailableGames(newPlayer);
+		if (!newPlayer->game) {
+			std::cout << "antes rcv unirse" << std::endl;
+			statusRecv = newPlayer->sock->receive(packCreate);
+			if (statusRecv == sf::Socket::Done) {
+				std::cout << "despues rcv unirse" << std::endl;
+				packCreate >> modo;
+				packCreate.clear();
+				if (modo == "C") { // crear una partida
+					std::string maxPlayers, maxMoney, name;
+					GamesManager *gameManagerAux = new GamesManager();
+					std::string specs = " Introduce el nombre de la partida, el numero max de jugadores y dinero";
+					packCreate.clear();
+					packCreate << specs;
+					newPlayer->sock->send(packCreate);
+					packCreate.clear();
+					statusRecv = newPlayer->sock->receive(packCreate);
+					if (statusRecv == sf::Socket::Done) {
+						packCreate >> name;
+						packCreate.clear();
+						statusRecv = newPlayer->sock->receive(packCreate);
+						if (statusRecv == sf::Socket::Done) {
+							packCreate >> maxPlayers;
+							packCreate.clear();
+							statusRecv = newPlayer->sock->receive(packCreate);
+							if (statusRecv == sf::Socket::Done) {
+								packCreate >> maxMoney;
+								packCreate.clear();
+								std::string comand = "CMD_WELCOME";
+								packSend.clear();
+								packSend << comand << IDGame;
+								status = newPlayer->sock->send(packSend);
+								if (status == sf::Socket::Done) {
+									newPlayer->IDGame = IDGame;
+									//mySocketSelector.remove(*newPlayer->sock);
+									//socketSelectorGame.add(*newPlayer->sock);
+									gameManagerAux->CreateGame(newPlayer, name, stoi(maxPlayers), stoi(maxMoney), IDGame);
+									newPlayer->game = true;
+									IDGame++;
+									gameManager.insert(std::pair<std::string, GamesManager*>(name, gameManagerAux));
+									std::cout << "creo y aumento" << std::endl;
+								}		
+							}
+						}
+					}
+				}
+				if (modo == "V") {
+					ListAvailableGames(newPlayer);
+				}
+			}
+			else if (statusRecv == sf::Socket::Disconnected) {
+				std::cout << "Se ha producido una desconexion" << std::endl;
+			}
+			
 		}
 	}
+	else if (status == sf::Socket::Disconnected) {
+		std::cout << "Se ha producido una desconexion" << std::endl;
+	}
+	
 }
 
 void NewConnection() {
 	std::string modo;
+	sf::Socket::Status statusRcv;
 	if (mySocketSelector.wait()) {
 		if (mySocketSelector.isReady(listener)) { //gamerady
 			sf::TcpSocket* newClient = new sf::TcpSocket;
 			Player* newPlayer = new Player(newClient, "");
-
-			std::size_t received;
 			if (listener.accept(*newPlayer->sock) == sf::Socket::Done) {
 				//Bucle para todos los clientes -> Nuevo cliente conectado.
 				//Antes de añadir el nuevo cliente para no tener que comparalos.
@@ -669,70 +712,105 @@ void NewConnection() {
 					packLogin.clear();
 					std::string login = "Si tienes una cuenta aprieta L, si tienes que registrarte aprieta R ";
 					packCreate << login;
-					newPlayer->sock->send(packCreate);
-					packCreate.clear();
-					std::cout << "antes rcv hello" << std::endl;
-					newPlayer->sock->receive(packCreate);
-					std::cout << "despues rcv hello" << std::endl;
-					packCreate >> modo;
-					packCreate.clear();
-					if (modo == "L") {
-						std::string nameAux, paswordAux;
-						login = "Introduce tu usuario y contraseña en orden ";
-						packSend.clear();
-						packSend << login;
-						newPlayer->sock->send(packSend);
-						packRecv.clear();
-						newPlayer->sock->receive(packRecv);
-						packRecv >> nameAux;
-						packRecv.clear();
-						newPlayer->sock->receive(packRecv);
-						packRecv >> paswordAux;
-						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-							Player& iPlayer = **it;
-
-							if (iPlayer.nickname == nameAux && iPlayer.pasword == paswordAux) {
-								std::cout << "conexion de " << iPlayer.nickname << "  " << iPlayer.pasword << std::endl;
-								login = "CMD_WB";
-								packSend.clear();
-								packSend << login << iPlayer.nickname;
-								newPlayer->sock->send(packSend);
-								CrearUnir(newPlayer, iPlayer.nickname);
-							}
-							else {
-								login = "El usuario o constraseña no existe, cierra y vuelve a intentarlo";
+					status = newPlayer->sock->send(packCreate);
+					if (status == sf::Socket::Done) {
+						packCreate.clear();
+						std::cout << "antes rcv hello" << std::endl;
+						statusRcv = newPlayer->sock->receive(packCreate);
+						if (statusRcv == sf::Socket::Done) {
+							std::cout << "despues rcv hello" << std::endl;
+							packCreate >> modo;
+							packCreate.clear();
+							if (modo == "L") {
+								std::string nameAux, paswordAux;
+								login = "Introduce tu usuario y contraseña en orden ";
 								packSend.clear();
 								packSend << login;
-								newPlayer->sock->send(packSend);
-								std::cout << "no existe";
+								status = newPlayer->sock->send(packSend);
+								if (status == sf::Socket::Done) {
+									packRecv.clear();
+									statusRcv = newPlayer->sock->receive(packRecv);
+									if (statusRcv == sf::Socket::Done) {
+										packRecv >> nameAux;
+										packRecv.clear();
+										statusRcv = newPlayer->sock->receive(packRecv);
+										if (statusRcv == sf::Socket::Done) {
+											packRecv >> paswordAux;
+											for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+												Player& iPlayer = **it;
+
+												if (iPlayer.nickname == nameAux && iPlayer.pasword == paswordAux) {
+													std::cout << "conexion de " << iPlayer.nickname << "  " << iPlayer.pasword << std::endl;
+													login = "CMD_WB";
+													packSend.clear();
+													packSend << login << iPlayer.nickname;
+													status = newPlayer->sock->send(packSend);
+													if (status == sf::Socket::Done) {
+														CrearUnir(newPlayer, iPlayer.nickname);
+													}
+													else {
+														std::cout << "No puede crear/unir" << std::endl;
+													}
+												}
+												else {
+													login = "El usuario o constraseña no existe, cierra y vuelve a intentarlo";
+													packSend.clear();
+													packSend << login;
+													status = newPlayer->sock->send(packSend);
+													if (status == sf::Socket::Done) {
+														std::cout << "no existe";
+													}
+												}
+											}
+										}
+										
+									}
+								}
 							}
-						}
+							if (modo == "R") {
+								std::string money;
+								std::string login = "Introduce por orden tu usuario, contrareña y dinero ";
+								packSend.clear();
+								packSend << login;
+								status = newPlayer->sock->send(packSend);
+								if (status == sf::Socket::Done) {
+									packRecv.clear();
+									statusRcv = newPlayer->sock->receive(packRecv);
+									if (statusRcv == sf::Socket::Done) {
+										packRecv >> newPlayer->nickname;
+										packRecv.clear();
+										statusRcv = newPlayer->sock->receive(packRecv);
+										if (statusRcv == sf::Socket::Done) {
+											packRecv >> newPlayer->pasword;
+											packRecv.clear();
+											statusRcv = newPlayer->sock->receive(packRecv);
+											if (statusRcv == sf::Socket::Done) {
+												packRecv >> money;
+												newPlayer->money = stoi(money);
+												aPlayers.push_back(newPlayer);
+												std::cout << "Se ha logeado [" << newPlayer->nickname << "] con pasword [" << newPlayer->pasword << "] y dinero [" << newPlayer->money << "]" << std::endl;
+												login = "CMD_LOGED";
+												packSend.clear();
+												packSend << login << newPlayer->nickname;
+												status = newPlayer->sock->send(packSend);
+												if (status == sf::Socket::Done) {
+													CrearUnir(newPlayer, newPlayer->nickname);
+
+												}
+												else {
+													std::cout << "No puede unir/crear" << std::endl;
+												}
+											}							
+										}									
+									}									
+								}
+							}
+						}		
 					}
-					if (modo == "R") {
-						std::string money;
-						std::string login = "Introduce por orden tu usuario, contrareña y dinero ";
-						packSend.clear();
-						packSend << login;
-						newPlayer->sock->send(packSend);
-						packRecv.clear();
-						newPlayer->sock->receive(packRecv);
-						packRecv >> newPlayer->nickname;
-						packRecv.clear();
-						newPlayer->sock->receive(packRecv);
-						packRecv >> newPlayer->pasword;
-						packRecv.clear();
-						newPlayer->sock->receive(packRecv);
-						packRecv >> money;
-						newPlayer->money = stoi(money);
-						aPlayers.push_back(newPlayer);
-						std::cout << "Se ha logeado [" << newPlayer->nickname << "] con pasword [" << newPlayer->pasword << "] y dinero [" << newPlayer->money << "]" << std::endl;
-						login = "CMD_LOGED";
-						packSend.clear();
-						packSend << login << newPlayer->nickname;
-						newPlayer->sock->send(packSend);
-						CrearUnir(newPlayer, newPlayer->nickname);
+					if (status == sf::Socket::Disconnected) {
+						std::cout << "Desconexion al hacer conexion" << std::endl;
 					}
-				}
+				}	
 			}
 			else {
 				std::cout << "ERROR: Can't set connection" << std::endl;
