@@ -34,39 +34,31 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 	while (tBucle) {
 		status = socket.receive(packRecv);
 		int timer = 0;
-		//socket.receive(&timer, sizeof(timer), received);
-		//std::cout << timer << std::endl;
-
-		//std::cout << string << std::endl;
+		packRecv >> string;
+		std::cout << cmd;
 		if (status == sf::Socket::Done) {
-			packRecv >> cmd;
-			if (cmd == ">exit") {
+			if (string == ">exit") {
 				aMensajes->push_back("La sesion ha finalizado");
 				tBucle = false;
 			}
-			if (cmd == "CMD_WELCOME") {
+			if (string == "CMD_WELCOME") {
 				packRecv >> IDGame;
 				std::cout << IDGame << std::endl;
 				createGame = true;
-				//string = "";
+				string = "";
 			}
-			if (cmd == "CMD_LOGED") {
+			if (string == "CMD_LOGED") {
 				packRecv >> clientName;
 				logged = true;
-				//string = "";
+				string = "";
 			}
-			if (cmd == "CMD_WB") {
+			if (string == "CMD_WB") {
 				packRecv >> clientName;
 				logged = true;
-				//string = "";
-			}
-			if (cmd == "Final"){
-				packRecv >> string;
-				std::cout << string << std::endl;
-				//shared_msg(aMensajes, string);
+				string = "";
 			}
 			else {
-				packRecv >> string;
+				//packRecv >> string;
 				shared_msg(aMensajes, string);
 			}
 			packRecv.clear();

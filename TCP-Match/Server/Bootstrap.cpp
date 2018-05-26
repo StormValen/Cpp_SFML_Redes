@@ -150,8 +150,22 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 		for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); ++it) {
 			Player& iplayer = **it;
 			if (mySocketSelector.wait() && iplayer.game == true) {
-				std::cout << "estoy esperando" << std::endl;
+				//std::cout << "estoy esperando" << std::endl;
 				if (mySocketSelector.isReady(*iplayer.sock) && iplayer.IDGame == IDG) {
+					if (currentState == "end_mode" && !gameIsReady) {
+						std::string choice;
+						std::string mesage = "GAME INFO: -- Se ha acabado la partida, si quieres continuar aqui aprieta C, si quieres vovler al lobby aprieta B";
+						packSend << mesage;
+						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+							Player& bPlayer = **it;
+							if (bPlayer.IDGame == IDG) {
+								status = bPlayer.sock->send(packSend);
+								if (status == sf::Socket::Done) {
+									packSend.clear();
+								}
+							}
+						}
+					}
 					if (currentState == "chat_mode" && !gameIsReady) {
 						//std::cout << "Crep un THREAD" << std::endl;
 						//Server recibe mensajes
@@ -179,6 +193,9 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 							if (mesage == "ready") {
 								std::cout << "Client [" << iplayer.nickname << "] is ready: " << mesage << std::endl;
 								iplayer.isReady = true;
+							}
+							if (mesage == "back") {
+								std::cout << "QUIERT IR ATRASSS" << std::endl;
 							}
 						}
 
@@ -258,7 +275,7 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 							gameIsReady = false;
 							aPlayers = auxPlayers;
 						}
-						if (ArePlayersReady(IDG)) {
+						if (ArePlayersReady(IDG)) { //!!!!!!!!!!!!!!!!!!!!!!!????
 							currentState = "countdown_mode";
 							for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 								Player& player = **it;
@@ -280,16 +297,7 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 					}
 					else if (currentState == "bet_money_mode" && iplayer.IDGame == IDG) {
 						packRecv.clear();
-					//	for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-							//Player& iPlayer = **it;
-
-							//if (socketSelectorGame.isReady(*iPlayer.sock) && !iPlayer.isReady) {
-
-								//Server recibe apuestas
 								std::string mesage;
-
-								//char buffer[2000];
-								//std::size_t received;
 								status = iplayer.sock->receive(packRecv);
 								packRecv >> IDAux >> mesage;
 								std::cout << " P " << maxMoney << " J " << mesage << "  " << iplayer.money << std::endl;
@@ -373,9 +381,6 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 					}
 					else if (currentState == "bet_number_mode" && iplayer.IDGame == IDG) {
 						packRecv.clear();
-					//	for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
-							//Player& iPlayer = **it;
-							//if (socketSelectorGame.isReady(*iPlayer.sock) && !iPlayer.isReady) {
 
 								//Server recibe apuestas
 								std::string mesage;
@@ -428,7 +433,7 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 								}
 							//}
 							if (ArePlayersReady(IDG)) {
-								currentState = "end_mode";
+								currentState = "chat_mode";
 								packSend.clear();
 								for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 									Player& player = **it;
@@ -566,37 +571,30 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 										packSend << mesage;
 										player.sock->send(packSend);
 										packSend.clear();
-										/*mesage = "GAME INFO: -- Chatting time has started -- Enter 'ready' to start a new game";
+										mesage = "GAME INFO: -- Chatting time has started -- Enter 'ready' to start a new game, enter 'back' to go to the Lobby";
 										packSend << mesage;
 										player.sock->send(packSend);
-										packSend.clear();*/
+										packSend.clear();
 									}
 								}
+								
 							}
 						//}
 					}
-					else if (currentState == "end_mode") {
+					/*else if (currentState == "end_mode" && iplayer.IDGame == IDG) {
 						std::string choice;
 						std::string mesage = "GAME INFO: -- Se ha acabado la partida, si quieres continuar aqui aprieta C, si quieres vovler al lobby aprieta B";
 						packSend << mesage;
-						status = iplayer.sock->send(packSend);
-						if (status == sf::Socket::Done) {
-							packSend.clear();
-							packRecv.clear();
-							status = iplayer.sock->receive(packRecv);
-							if (status == sf::Socket::Done) {
-								packRecv >> choice;
-								if (choice == "C") {
-									std::cout << "continuar" << std::endl;
-								}
-								if (choice == "B") {
-									std::cout << "Lobbyu" << std::endl;
+						for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
+							Player& bPlayer = **it;
+							if (bPlayer.IDGame == IDG) {
+								status = bPlayer.sock->send(packSend);
+								if (status == sf::Socket::Done) {
+									packSend.clear();
 								}
 							}
-							
 						}
-					
-					}
+					}*/
 				}
 			}
 		}
