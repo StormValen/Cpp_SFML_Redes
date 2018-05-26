@@ -15,6 +15,7 @@ std::mutex mu;
 bool done, createGame, logged;
 int IDGame;
 sf::Packet packRecv;
+std::string cmd, string;
 std::string clientName = "";
 // ----- MUTEX ----- //
 void shared_msg(std::vector<std::string> *aMensajes, sf::String string) {
@@ -35,32 +36,37 @@ void thread_recived(std::vector<std::string> *aMensajes) {
 		int timer = 0;
 		//socket.receive(&timer, sizeof(timer), received);
 		//std::cout << timer << std::endl;
-		std::string string;
-		packRecv >> string;
 
 		//std::cout << string << std::endl;
 		if (status == sf::Socket::Done) {
-			if (string == ">exit") {
+			packRecv >> cmd;
+			if (cmd == ">exit") {
 				aMensajes->push_back("La sesion ha finalizado");
 				tBucle = false;
 			}
-			if (string == "CMD_WELCOME") {
+			if (cmd == "CMD_WELCOME") {
 				packRecv >> IDGame;
 				std::cout << IDGame << std::endl;
 				createGame = true;
-				string = "";
+				//string = "";
 			}
-			if (string == "CMD_LOGED") {
+			if (cmd == "CMD_LOGED") {
 				packRecv >> clientName;
 				logged = true;
-				string = "";
+				//string = "";
 			}
-			if (string == "CMD_WB") {
+			if (cmd == "CMD_WB") {
 				packRecv >> clientName;
 				logged = true;
-				string = "";
+				//string = "";
+			}
+			if (cmd == "Final"){
+				packRecv >> string;
+				std::cout << string << std::endl;
+				//shared_msg(aMensajes, string);
 			}
 			else {
+				packRecv >> string;
 				shared_msg(aMensajes, string);
 			}
 			packRecv.clear();
@@ -161,6 +167,12 @@ int main()
 					}
 					if (createGame) {
 						packSend << IDGame << Stext;
+					}
+					if (cmd == "Final") {
+						if (Stext == "B") {
+							createGame = false;
+							IDGame = NULL;
+						}
 					}
 					status = socket.send(packSend);
 					if (logged) {
