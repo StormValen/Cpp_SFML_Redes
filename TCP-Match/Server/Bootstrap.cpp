@@ -739,7 +739,7 @@ void CrearUnir(Player* newPlayer, std::string name) {
 				if (modo == "C") { // crear una partida
 					std::string maxPlayers, maxMoney, name;
 					GamesManager *gameManagerAux = new GamesManager();
-					std::string specs = " Introduce el nombre de la partida, el numero max de jugadores y dinero";
+					std::string specs = " Introduce el nombre de la partida, el numero max de jugadores y dinero maximo que se podra apostar";
 					packCreate.clear();
 					packCreate << specs;
 					newPlayer->sock->send(packCreate);
