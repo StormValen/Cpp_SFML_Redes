@@ -1,5 +1,5 @@
 ﻿  Cliente.cpp
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\cliente\cliente.cpp(206): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\cliente\cliente.cpp(203): warning C4244: 'argumento': conversión de '::size_t' a 'float'; posible pérdida de datos
 c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\cliente\cliente.cpp(118): warning C4101: 'received': variable local sin referencia
 c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\cliente\cliente.cpp(115): warning C4101: 'connectionType': variable local sin referencia
 c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\cliente\cliente.cpp(107): warning C4101: 'money': variable local sin referencia

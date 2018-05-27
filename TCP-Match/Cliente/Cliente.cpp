@@ -152,7 +152,6 @@ int main()
 					window.close();
 				else if (evento.key.code == sf::Keyboard::Return)
 				{
-
 					Stext = mensaje;
 					if (!createGame) {
 						packSend << Stext;
@@ -160,11 +159,9 @@ int main()
 					if (createGame) {
 						packSend << IDGame << Stext;
 					}
-					if (cmd == "Final") {
-						if (Stext == "B") {
-							createGame = false;
-							IDGame = NULL;
-						}
+					if (Stext == "back") {
+						createGame = false;
+						IDGame = NULL;
 					}
 					status = socket.send(packSend);
 					if (logged) {
