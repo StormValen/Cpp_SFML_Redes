@@ -1,6 +1,6 @@
 ﻿  Bootstrap.cpp
   Unknown compiler version - please run the configure tests and report the results
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(446): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(942): warning C4101: 'name': variable local sin referencia
-c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(943): warning C4101: 'money': variable local sin referencia
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(448): warning C4244: 'argumento': conversión de 'time_t' a 'unsigned int'; posible pérdida de datos
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(946): warning C4101: 'name': variable local sin referencia
+c:\users\sobre\desktop\2semestre\redes\cpp_sfml_redes\tcp-match\server\bootstrap.cpp(947): warning C4101: 'money': variable local sin referencia
   Server.vcxproj -> C:\Users\sobre\Desktop\2Semestre\Redes\Cpp_SFML_Redes\TCP-Match\x64\Debug\Server.exe

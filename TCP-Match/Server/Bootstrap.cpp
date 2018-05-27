@@ -164,7 +164,9 @@ void GameLoop(int IDG, int maxPlayers, int maxMoney, Player* player, std::string
 		for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); ++it) {
 			Player& iplayer = **it;
  				if (mySocketSelector.wait() ) {
+					std::cout << "Hola";
 					if (mySocketSelector.isReady(*iplayer.sock) && iplayer.game == true && iplayer.IDGame == IDG) {
+						std::cout << iplayer.nickname << std::endl;
 						if (currentState == "chat_mode" && !gameIsReady) {
 							std::string mesage;
 							packRecv.clear();
@@ -654,6 +656,7 @@ void SelectGame(Player* newPlayer) {
 					packSend.clear();
 					InfoNewPlayer(newPlayer);
 					newPlayer->game = true;
+					std::cout << newPlayer->nickname << "  " << newPlayer->IDGame << std::endl;
 				}
 				else {
 					std::string a = " Esa partida no existe o no puedes conectarte por los requisitos ";
@@ -837,6 +840,7 @@ void NewConnection() {
 												packSend << login << newPlayer->nickname;
 												status = newPlayer->sock->send(packSend);
 												if (status == sf::Socket::Done) {
+													aPlayers.push_back(newPlayer);
 													CrearUnir(newPlayer, newPlayer->nickname);
 												}
 											}
