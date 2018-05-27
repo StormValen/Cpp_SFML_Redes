@@ -18,7 +18,7 @@
 #define HOST "tcp://192.168.1.40:3306"
 #define user "root"
 #define PASWORD "123456"
-#define schema "RuletaDB"
+#define schema "RuletaBD"
 
 std::string execute;
 class DBManager
@@ -33,7 +33,7 @@ public:
 		driver = get_driver_instance();
 		con = driver->connect(HOST, user, PASWORD);
 		stmt = con->createStatement();
-		//stmt->execute("USE RuletaDB");
+		stmt->execute("USE RuletaBD");
 		//con->setSchema(schema);
 	}
 	bool Registrar(std::string name, std::string pasword, std::string money) {
@@ -41,18 +41,21 @@ public:
 		std::string comand = "SELECT COUNT(*) FROM UserAcount WHERE NameUser=";
 		comand += "'"+name+"'";
 		rs = stmt->executeQuery(comand.c_str()); //quiero comrpoar si hay alguien con ese nombre
-		if (rs->next()) {//retorna un bool
+
+		rs->next(); //retorna un bool
+		std::cout << rs << std::endl;
 			int num = rs->getInt(1);// poner el numero de la columna que queramos saber
 			delete rs;
 			if (num == 0) {//se puede hacer el insert
 				execute = "INSERT INTO UserAcount(NameUser, Pasword, Money) VALUES(";
 				execute += "'" + name + "'," + "'" + pasword + "'," + "'" + money + "') ";
-				std::cout << execute.c_str();
+				//std::cout << execute.c_str();
 				stmt->execute(execute.c_str());//creo q tmb habra q meter el id
 				return true;
 			}
-		}
+		
 		else {
+			std::cout << "NOO";
 			return false;
 		}
 	}
@@ -61,15 +64,17 @@ public:
 		std::string command = "SELECT COUNT(*) FROM UserAcount WHERE NameUser=";
 		command += "'" + name + "' and Pasword=" + "'" + pasword + "'";
 		 rs = stmt->executeQuery(command.c_str());
-		if (rs->next()) {
+		 rs->next();
+		 std::cout << rs << std::endl;
 			int adAc = rs->getInt(1); //numero columna
 			if (adAc == 1) {
 				delete rs;
 				return true;
 			}
-		}
+		
 		else {	
 			delete rs;
+			std::cout << "NOOOO";
 			return false;
 		}
 	}
@@ -833,8 +838,13 @@ void NewConnection() {
 												status = newPlayer->sock->send(packSend);
 												if (status == sf::Socket::Done) {
 													CrearUnir(newPlayer, newPlayer->nickname);
-
 												}
+											}
+											if (!log) {
+												std::string mesage = "Usuario o pasword incorrecta";
+												packSend.clear();
+												packSend << mesage;
+												status = newPlayer->sock->send(packSend);
 											}
 											/*for (std::list<Player*>::iterator it = aPlayers.begin(); it != aPlayers.end(); it++) {
 												Player& iPlayer = **it;
@@ -887,9 +897,9 @@ void NewConnection() {
 											if (statusRcv == sf::Socket::Done) {
 												packRecv >> money;
 												newPlayer->money = stoi(money);
-												//bool reg = dbManager->Registrar(newPlayer->nickname, newPlayer->pasword, std::to_string(newPlayer->money));
-												//if (reg) {
-													std::cout << "hola";
+												bool reg = dbManager->Registrar(newPlayer->nickname, newPlayer->pasword, std::to_string(newPlayer->money));
+												if (reg) {
+													//std::cout << "hola";
 													aPlayers.push_back(newPlayer);
 													std::cout << "Se ha logeado [" << newPlayer->nickname << "] con pasword [" << newPlayer->pasword << "] y dinero [" << newPlayer->money << "]" << std::endl;
 													login = "CMD_LOGED";
@@ -898,12 +908,9 @@ void NewConnection() {
 													status = newPlayer->sock->send(packSend);
 													if (status == sf::Socket::Done) {
 														CrearUnir(newPlayer, newPlayer->nickname);
-
 													}
-													else {
-													//}
-												//}
-												//if (!reg) {
+												}
+												if (!reg) {
 													std::string mesage = "Ese usuario esta ocupado, cierra y escribe otro";
 													packSend.clear();
 													packSend << mesage;
